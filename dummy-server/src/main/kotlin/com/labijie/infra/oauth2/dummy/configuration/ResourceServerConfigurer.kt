@@ -1,4 +1,4 @@
-package io.xstar.infra.dummy.auth.configuration
+package com.labijie.infra.oauth2.dummy.configuration
 
 import com.labijie.infra.oauth2.hasAttachedFiledValue
 import com.labijie.infra.oauth2.twoFactorRequired
