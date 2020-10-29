@@ -3,7 +3,7 @@ buildscript {
         kotlin_version = '1.4.10'
 
         infra_caching_version='1.2.1'
-        infra_commons_version='2.0.0'
+        infra_commons_version='2.0.1'
 
         spring_boot_version = '2.3.4.RELEASE'
         spring_cloud_version='Hoxton.SR8'
@@ -109,31 +109,36 @@ allprojects {
         }
     }
 
-    test {
-        useJUnitPlatform()
-    }
-
     configurations.all {
+        exclude group: "junit", module: "junit"
+        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         resolutionStrategy {
             eachDependency { DependencyResolveDetails details ->
-                if (details.requested.group == 'org.jetbrains.kotlin') {
-                    details.useVersion netty_version
+                if (details.requested.group == "org.jetbrains.kotlin") {
+                    details.useVersion kotlin_version
                 }
             }
         }
     }
 
 
+
+
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-        testCompile group: 'org.jetbrains.kotlin', name: 'kotlin-test-junit5', version: kotlin_version
-        testImplementation("org.junit.jupiter:junit-jupiter-api:$junit_verions")
-        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junit_verions")
-        testCompile "org.mockito:mockito-all:$mockito_version"
-        //compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-//        compile ("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"){
-//            transitive = false
-//        }
+        compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
+        testImplementation "org.jetbrains.kotlin:kotlin-test-junit5:$kotlin_version"
+        testImplementation(platform("org.junit:junit-bom:$junit_verions"))
+        testImplementation "org.junit.jupiter:junit-jupiter"
+
+        testImplementation "org.mockito:mockito-all:$mockito_version"
+    }
+
+
+
+    test {
+        useJUnitPlatform()
     }
 }
 
