@@ -18,12 +18,14 @@ buildscript {
         lettuce_version = '5.3.4.RELEASE'
         mockito_version = '1.10.19'
 
-        maven_repo= System.getenv("MAVEN_PROXY") ?: 'http://maven.aliyun.com/nexus/content/groups/public/'
+        maven_repo= System.getenv("MAVEN_PROXY") //?: 'http://maven.aliyun.com/nexus/content/groups/public/'
         nexus_staging_version = '0.22.0'
     }
     repositories {
         mavenLocal()
-        maven { url maven_repo }
+        if(maven_repo != null) {
+            maven { url maven_repo }
+        }
         mavenCentral()
         maven { url 'https://repo.spring.io/plugins-snapshot' }
     }
@@ -97,7 +99,9 @@ allprojects {
 
     repositories {
         mavenLocal()
-        maven { url maven_repo }
+        if(maven_repo != null) {
+            maven { url maven_repo }
+        }
         mavenCentral()
     }
 
