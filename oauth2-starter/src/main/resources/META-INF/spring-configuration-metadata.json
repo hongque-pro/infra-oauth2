@@ -1,0 +1,82 @@
+{
+  "group":[
+    {
+      "name":"infra.oauth2",
+      "type": "com.labijie.infra.oauth2.configuration.OAuth2ServerConfig",
+      "description": "oauth configuration based on spring cloud oauth2"
+    },
+    {
+      "name":"infra.oauth2.token",
+      "type": "com.labijie.infra.oauth2.configuration.TokenSettings",
+      "description": "token configuration"
+    },
+    {
+      "name":"infra.oauth2.token.jwt",
+      "type": "com.labijie.infra.oauth2.configuration.JwtSettings",
+      "description": "oauth jwt token configuration"
+    },
+    {
+      "name":"infra.oauth2.token.jwt.rsa",
+      "type": "com.labijie.infra.oauth2.configuration.RSASettings",
+      "description": "oauth jwt rsa key configuration"
+    }
+  ],
+  "properties":[
+    {
+      "name":"infra.oauth2.token.jwt.keyType",
+      "type": "com.labijie.infra.oauth2.configuration.JwtKeyType",
+      "sourceType": "com.labijie.infra.oauth2.configuration.JwtSettings",
+      "defaultValue": "simple"
+    },
+    {
+      "name":"infra.oauth2.token.jwt.simpleKey",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.JwtSettings",
+      "defaultValue": ""
+    },
+    {
+      "name":"infra.oauth2.token.jwt.rsa.privateKey",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.RSASettings",
+      "defaultValue": ""
+    },
+    {
+      "name":"infra.oauth2.token.jwt.rsa.publicKey",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.RSASettings",
+      "defaultValue": ""
+    },
+
+    {
+      "name":"infra.oauth2.token.reuseRefreshTokens",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
+      "defaultValue": true
+    },
+    {
+      "name":"infra.oauth2.token.refreshTokenEnabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
+      "defaultValue": true
+    },
+    {
+      "name":"infra.oauth2.token.reuseRefreshTokens",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
+      "defaultValue": true
+    },
+    {
+      "name":"infra.oauth2.token.accessTokenExpiration",
+      "type": "java.time.Duration",
+      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
+      "defaultValue": "1h"
+    },
+    {
+      "name":"infra.oauth2.token.accessTokenExpiration",
+      "type": "java.time.Duration",
+      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
+      "defaultValue": "1d"
+    }
+
+  ]
+}

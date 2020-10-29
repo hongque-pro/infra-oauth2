@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+    com.labijie.infra.oauth2.configuration.ResourceTokenAutoConfiguration
+

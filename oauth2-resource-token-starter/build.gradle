@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":oauth2-starter")
+    compileOnly "com.labijie:caching-kotlin:$infra_caching_version"
+}
