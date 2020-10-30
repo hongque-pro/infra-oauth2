@@ -19,6 +19,7 @@ import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.ProviderManager
 import org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper
 import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerEndpointsConfiguration
@@ -106,6 +107,8 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
     }
 
     override fun configure(security: AuthorizationServerSecurityConfigurer) {
+        //兼容旧版代码， client detail secrect 不应该进行加密处理
+        security.passwordEncoder(NoOpPasswordEncoder.getInstance())
         security.checkTokenAccess("permitAll()")
         security.allowFormAuthenticationForClients()
     }

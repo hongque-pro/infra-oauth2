@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.factory.PasswordEncoderFactories
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.provider.ClientDetailsService
 import org.springframework.security.oauth2.provider.endpoint.AuthorizationEndpoint
@@ -36,8 +38,11 @@ class OAuth2CustomizationAutoConfiguration(
     protected class OAuth2PasswordEncoderConfiguration {
         @Bean
         @ConditionalOnMissingBean(PasswordEncoder::class)
-        fun encoder(): BCryptPasswordEncoder {
-            return BCryptPasswordEncoder()
+        fun oauth2PasswordEncoder(): PasswordEncoder {
+            val encoder = PasswordEncoderFactories .createDelegatingPasswordEncoder() as DelegatingPasswordEncoder
+            return encoder.apply {
+                this.setDefaultPasswordEncoderForMatches(BCryptPasswordEncoder())
+            }
         }
     }
 
