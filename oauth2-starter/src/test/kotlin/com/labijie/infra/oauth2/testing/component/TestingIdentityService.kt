@@ -17,7 +17,7 @@ class TestingIdentityService: IIdentityService {
     override fun getUserByName(userName: String): ITwoFactorUserDetails {
         val obj = object: ITwoFactorUserDetails {
 
-            private val passwordHash = OAuth2TestingUtils.passwordEncoder.encode("11223344")
+            private val passwordHash = OAuth2TestingUtils.passwordEncoder.encode(OAuth2TestingUtils.TestUserPassword)
 
             override fun getUserId(): String {
                 return DebugIdGenerator().newId().toString()

@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.configuration
 
+import com.labijie.infra.oauth2.CompositeOAuth2RequestValidator
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
 import com.labijie.infra.oauth2.error.IOAuth2ExceptionHandler
 import com.labijie.infra.oauth2.filter.ClientDetailsArgumentResolver
@@ -48,7 +49,7 @@ import java.util.*
 class OAuth2ServerAutoConfiguration @Autowired constructor(
         @param:Autowired(required = false)
         @JvmField private val oauth2ExceptionHandler: IOAuth2ExceptionHandler?,
-        @JvmField private val serverConfig: OAuth2ServerConfig,
+        @JvmField private val serverProperties: OAuth2ServerProperties,
         @JvmField private val oauth2RequestFactory: OAuth2RequestFactory,
         @param:Autowired(required = false)
         @JvmField private val accessTokenConverter: AccessTokenConverter?,
@@ -69,10 +70,10 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
         tokenServices.setClientDetailsService(clientDetailsService)
         tokenServices.setTokenStore(this.tokenStore)
         tokenServices.setTokenEnhancer(tokenEnhancer)
-        tokenServices.setReuseRefreshToken(serverConfig.token.reuseRefreshToken)
-        tokenServices.setSupportRefreshToken(serverConfig.token.refreshTokenEnabled)
-        tokenServices.setAccessTokenValiditySeconds(Math.max(1, serverConfig.token.accessTokenExpiration.seconds.toInt()))
-        tokenServices.setRefreshTokenValiditySeconds(Math.max(1, serverConfig.token.refreshTokenExpiration.seconds.toInt()).toInt())
+        tokenServices.setReuseRefreshToken(serverProperties.token.reuseRefreshToken)
+        tokenServices.setSupportRefreshToken(serverProperties.token.refreshTokenEnabled)
+        tokenServices.setAccessTokenValiditySeconds(Math.max(1, serverProperties.token.accessTokenExpiration.seconds.toInt()))
+        tokenServices.setRefreshTokenValiditySeconds(Math.max(1, serverProperties.token.refreshTokenExpiration.seconds.toInt()).toInt())
 
         val provider = TwoFactorPreAuthenticationProvider()
         provider.setPreAuthenticatedUserDetailsService(UserDetailsByNameServiceWrapper(
@@ -116,6 +117,7 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
 
     @Throws(Exception::class)
     override fun configure(endpoints: AuthorizationServerEndpointsConfigurer) {
+        endpoints.requestValidator(CompositeOAuth2RequestValidator(serverProperties))
         val enhancer = if (accessTokenConverter is JwtAccessTokenConverter) {
             val tokenEnhancerChain = TokenEnhancerChain()
             tokenEnhancerChain.setTokenEnhancers(listOf(UserInfoTokenEnhancer(), accessTokenConverter))

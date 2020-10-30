@@ -4,7 +4,7 @@ import com.labijie.infra.oauth2.AuthorizationServerSwitch
 import com.labijie.infra.oauth2.ResourceServerSwitch
 import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.configuration.JwtKeyType
-import com.labijie.infra.oauth2.configuration.OAuth2ServerConfig
+import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.labijie.infra.oauth2.token.TwoFactorAuthenticationConverter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,7 +37,7 @@ class JwtTokenStoreConfiguration {
     }
 
     @Bean
-    fun jwtAccessTokenConverter(oAuth2Config: OAuth2ServerConfig): JwtAccessTokenConverter {
+    fun jwtAccessTokenConverter(oAuth2Config: OAuth2ServerProperties): JwtAccessTokenConverter {
 
         val converter = JwtAccessTokenConverter()
         converter.accessTokenConverter = DefaultAccessTokenConverter().apply {
@@ -60,7 +60,7 @@ class JwtTokenStoreConfiguration {
         return converter
     }
 
-    private fun configAuthenticationRSA(converter: JwtAccessTokenConverter, oAuth2Config: OAuth2ServerConfig) {
+    private fun configAuthenticationRSA(converter: JwtAccessTokenConverter, oAuth2Config: OAuth2ServerProperties) {
         if (oAuth2Config.token.jwt.rsa.privateKey.isBlank()) {
             throw IllegalArgumentException("miss configuration property: infra.oauth2.token.jwt.rsa.privateKey")
         }

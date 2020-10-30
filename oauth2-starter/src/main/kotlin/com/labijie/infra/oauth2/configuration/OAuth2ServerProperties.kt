@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * @date 2019-02-23
  */
 @ConfigurationProperties("infra.oauth2")
-data class OAuth2ServerConfig(
-        var token:TokenSettings = TokenSettings()
+data class OAuth2ServerProperties(
+        var token:TokenSettings = TokenSettings(),
+        var scopeValidationEnabled: Boolean = false
 )

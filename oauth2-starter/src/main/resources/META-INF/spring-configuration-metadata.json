@@ -2,7 +2,7 @@
   "group":[
     {
       "name":"infra.oauth2",
-      "type": "com.labijie.infra.oauth2.configuration.OAuth2ServerConfig",
+      "type": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
       "description": "oauth configuration based on spring cloud oauth2"
     },
     {
@@ -22,6 +22,12 @@
     }
   ],
   "properties":[
+    {
+      "name":"infra.oauth2.scope-validation-enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "defaultValue": false
+    },
     {
       "name":"infra.oauth2.token.jwt.keyType",
       "type": "com.labijie.infra.oauth2.configuration.JwtKeyType",
