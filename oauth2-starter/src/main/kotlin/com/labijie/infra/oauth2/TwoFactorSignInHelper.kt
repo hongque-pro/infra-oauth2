@@ -1,7 +1,9 @@
 package com.labijie.infra.oauth2
 
+import com.labijie.infra.oauth2.events.UserSignedInEvent
 import com.labijie.infra.oauth2.token.TwoFactorAuthenticationConverter
 import com.labijie.infra.utils.logger
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.GrantedAuthority
@@ -14,8 +16,6 @@ import org.springframework.security.oauth2.provider.OAuth2RequestFactory
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices
-import org.springframework.security.oauth2.provider.token.TokenEnhancer
-import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,6 +23,7 @@ import org.springframework.security.oauth2.provider.token.UserAuthenticationConv
  * @date 2019-02-21
  */
 class TwoFactorSignInHelper(
+        private val eventPublisher: ApplicationEventPublisher,
         private val clientDetailsService: ClientDetailsService,
         private val oauth2RequestFactory: OAuth2RequestFactory,
         private val tokenServices: AuthorizationServerTokenServices) {
@@ -94,6 +95,7 @@ class TwoFactorSignInHelper(
             this.isAuthenticated = true
         }
 
+        this.eventPublisher.publishEvent(UserSignedInEvent(this, authentication))
         return tokenServices.createAccessToken(authentication)
     }
 

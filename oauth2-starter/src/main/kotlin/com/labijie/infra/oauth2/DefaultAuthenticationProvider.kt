@@ -1,13 +1,14 @@
 package com.labijie.infra.oauth2
 
 import com.labijie.infra.oauth2.Constants.TOKEN_ATTACHED_FIELD_PREFIX
+import com.labijie.infra.oauth2.events.UserSignedInEvent
 import org.slf4j.LoggerFactory
-import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationContextAware
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.core.Ordered
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.crypto.password.PasswordEncoder
 
@@ -16,7 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
  * @author Anders Xiao
  * @date 2019-02-21
  */
-class DefaultAuthenticationProvider(svc: DefaultUserService, passwordEncoder: PasswordEncoder) :
+class DefaultAuthenticationProvider(private val eventPublisher: ApplicationEventPublisher, svc: DefaultUserService, passwordEncoder: PasswordEncoder) :
         DaoAuthenticationProvider(), Ordered {
     companion object {
         val slf4jLogger = LoggerFactory.getLogger(DefaultAuthenticationProvider::class.java)!!
@@ -83,4 +84,11 @@ class DefaultAuthenticationProvider(svc: DefaultUserService, passwordEncoder: Pa
         authentication.details = map
     }
 
+
+    override fun createSuccessAuthentication(principal: Any?, authentication: Authentication?, user: UserDetails?): Authentication {
+        val r = super.createSuccessAuthentication(principal, authentication, user)
+        val event = UserSignedInEvent(this, r)
+        this.eventPublisher.publishEvent(event)
+        return r
+    }
 }

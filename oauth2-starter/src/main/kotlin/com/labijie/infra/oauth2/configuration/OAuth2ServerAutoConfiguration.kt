@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -103,8 +104,9 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
 
 
     @Bean
-    fun twoFactorSignInHelper(tokenServices: AuthorizationServerTokenServices): TwoFactorSignInHelper {
-        return TwoFactorSignInHelper(clientDetailsService, oauth2RequestFactory, tokenServices)
+    fun twoFactorSignInHelper(tokenServices: AuthorizationServerTokenServices,
+                              eventPublisher: ApplicationEventPublisher): TwoFactorSignInHelper {
+        return TwoFactorSignInHelper(eventPublisher, clientDetailsService, oauth2RequestFactory, tokenServices)
     }
 
     override fun configure(security: AuthorizationServerSecurityConfigurer) {
