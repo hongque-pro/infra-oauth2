@@ -36,7 +36,7 @@ class TestingClientDetailServiceFactory : IClientDetailsServiceFactory {
                         Constants.GRANT_TYPE_CLIENT_CREDENTIALS,
                         Constants.GRANT_TYPE_IMPLICIT,
                         Constants.GRANT_TYPE_REFRESH_TOKEN)) //refresh 也是一种 grant_type, 必须支持才能返回 refresh token
-                this.setResourceIds(setOf("api", "auth"))
+                this.setResourceIds(setOf(OAuth2TestingUtils.ResourceId))
             }
             return details
         }

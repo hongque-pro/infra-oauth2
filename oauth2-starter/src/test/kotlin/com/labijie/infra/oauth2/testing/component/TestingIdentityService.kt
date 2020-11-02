@@ -20,7 +20,7 @@ class TestingIdentityService: IIdentityService {
             private val passwordHash = OAuth2TestingUtils.passwordEncoder.encode(OAuth2TestingUtils.TestUserPassword)
 
             override fun getUserId(): String {
-                return DebugIdGenerator().newId().toString()
+                return "123456789"
             }
 
             override fun getAuthorities(): MutableCollection<out GrantedAuthority> {

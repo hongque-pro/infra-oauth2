@@ -2,8 +2,10 @@ package com.labijie.infra.oauth2.testing.component
 
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.utils.logger
+import org.springframework.http.HttpHeaders
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.test.web.servlet.ResultActions
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 
 object OAuth2TestingUtils {
         val passwordEncoder = BCryptPasswordEncoder()
@@ -12,6 +14,7 @@ object OAuth2TestingUtils {
         const val TestUserPassword = "pass0rd"
         const val TestClientId = "testClient"
         const val TestClientSecret = "good@play"
+        const val ResourceId = "test-resources"
 
         fun ResultActions.readToMap(logResult: Boolean = true): Map<String, Any> {
                 val resultString = this.andReturn().response.contentAsString
@@ -21,5 +24,12 @@ object OAuth2TestingUtils {
                         logger.debug("Http Result: ${System.lineSeparator()}$pretty")
                 }
                 return map
+        }
+
+        fun MockHttpServletRequestBuilder.withBearerToken(token: String?): MockHttpServletRequestBuilder {
+                if(token.isNullOrBlank()){
+                        return this
+                }
+                return this.header(HttpHeaders.AUTHORIZATION, "Bearer $token")
         }
 }

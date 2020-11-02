@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2
 
+import com.labijie.infra.oauth2.token.TwoFactorAuthenticationConverter
 import com.labijie.infra.utils.logger
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -13,8 +14,8 @@ import org.springframework.security.oauth2.provider.OAuth2RequestFactory
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices
+import org.springframework.security.oauth2.provider.token.TokenEnhancer
 import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter
-import java.lang.IllegalArgumentException
 
 /**
  * Created with IntelliJ IDEA.
@@ -80,26 +81,17 @@ class TwoFactorSignInHelper(
 
         val tokenRequest = oauth2RequestFactory.createTokenRequest(request, Constants.GRANT_TYPE_PASSWORD)
         val oauth2Request = oauth2RequestFactory.createOAuth2Request(client, tokenRequest)
+
         val userAuthentication = UsernamePasswordAuthenticationToken(user, "", authorityObjects)
                 .apply {
                     val map = mutableMapOf<String, Any>()
+                    TwoFactorAuthenticationConverter.setUserDetails(map, user)
 
-                    attachedFields.forEach {
-                        if (it.value.isNotBlank()) {
-                            map["${Constants.TOKEN_ATTACHED_FIELD_PREFIX}${it.key}"] = it.value
-                        }
-                    }
-                    map[Constants.USER_ID_PROPERTY] = user.getUserId()
-                    map[UserAuthenticationConverter.USERNAME] = userName
-                    if (twoFactorGranted != null) {
-                        map[Constants.USER_TWO_FACTOR_PROPERTY] = twoFactorGranted
-                    }
                     this.details = map
                 }
 
         val authentication = OAuth2Authentication(oauth2Request, userAuthentication).apply {
             this.isAuthenticated = true
-
         }
 
         return tokenServices.createAccessToken(authentication)
@@ -118,15 +110,17 @@ class TwoFactorSignInHelper(
 //        }
 //    }
 
+
     private fun signInTwoFactorCore(auth: OAuth2Authentication?): OAuth2AccessToken {
-        if (auth == null || auth.userAuthentication.principal !is ITwoFactorUserDetails) {
-            throw BadCredentialsException("Two factor sign in was not supported at current oauth2 authentication token.")
+        if (auth == null) {
+            throw BadCredentialsException("Current authentication is not authenticated.")
         }
+        val principal = auth.twoFactorPrincipal
         if (auth.isAuthenticated) {
             val userName = auth.userAuthentication.name
             val clientId = auth.oAuth2Request.clientId
             val scope = auth.oAuth2Request.scope
-            val userId = (auth.userAuthentication.principal as ITwoFactorUserDetails).getUserId()
+            val userId = principal.userId
             this.signOut()
             return signIn(clientId, userId, userName, true, true, auth.authorities, scope)
         } else {

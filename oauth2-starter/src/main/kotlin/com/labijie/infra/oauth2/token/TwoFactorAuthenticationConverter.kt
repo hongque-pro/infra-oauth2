@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.token
 
 import com.labijie.infra.oauth2.Constants
+import com.labijie.infra.oauth2.Constants.TOKEN_ATTACHED_FIELD_PREFIX
 import com.labijie.infra.oauth2.Constants.USER_ID_PROPERTY
 import com.labijie.infra.oauth2.Constants.USER_TWO_FACTOR_PROPERTY
 import com.labijie.infra.oauth2.ITwoFactorUserDetails
@@ -37,16 +38,23 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
 
         val user = authentication.principal as? ITwoFactorUserDetails
         if(user != null) {
-            details[UserAuthenticationConverter.USERNAME] = user.username
-            details[USER_ID_PROPERTY] = user.getUserId()
-            //details[USER_TWO_FACTOR_PROPERTY] = user.isTwoFactorEnabled()
-
-            user.getAttachedTokenFields().forEach {
-                details["${Constants.TOKEN_ATTACHED_FIELD_PREFIX}${it.key}"] = it.value
-            }
+            setUserDetails(details, user)
         }
 
         return details
+    }
+
+    fun setUserDetails(details: MutableMap<String, Any>, user: ITwoFactorUserDetails, twoFactorGranted: Boolean? = null) {
+        details[USERNAME] = user.username
+        details[USER_ID_PROPERTY] = user.getUserId()
+        //details[USER_TWO_FACTOR_PROPERTY] = user.isTwoFactorEnabled()
+
+        user.getAttachedTokenFields().forEach {
+            details["${TOKEN_ATTACHED_FIELD_PREFIX}${it.key}"] = it.value
+        }
+        if (twoFactorGranted != null) {
+            details[USER_TWO_FACTOR_PROPERTY] = twoFactorGranted
+        }
     }
 
     override fun extractAuthentication(map: MutableMap<String, *>): Authentication {

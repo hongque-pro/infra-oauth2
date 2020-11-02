@@ -5,9 +5,11 @@ import com.labijie.infra.oauth2.annotation.EnableOAuth2Server
 import com.labijie.infra.oauth2.annotation.OAuth2ServerType
 import com.labijie.infra.oauth2.configuration.OAuth2CustomizationAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
+import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
-import com.labijie.infra.oauth2.testing.configuration.OAuth2TestAutoConfiguration
+import com.labijie.infra.oauth2.testing.configuration.OAuth2TestServerAutoConfiguration
+import com.labijie.infra.utils.ShortId
 import com.labijie.infra.utils.logger
 import org.junit.jupiter.api.Assertions
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,6 +19,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -25,43 +28,16 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import kotlin.test.Test
 
+
 @ContextConfiguration(classes = [
     OAuth2CustomizationAutoConfiguration::class,
     OAuth2ServerAutoConfiguration::class,
-    OAuth2TestAutoConfiguration::class])
+    OAuth2TestServerAutoConfiguration::class])
 @WebMvcTest
 @EnableOAuth2Server(OAuth2ServerType.Authorization)
-class OAuth2ServerTester {
-
+class OAuth2ServerTester : OAuth2Tester() {
     @Autowired
-    private lateinit var mockMvc: MockMvc
-
-    @Throws(Exception::class)
-    fun obtainAccessToken(username: String = OAuth2TestingUtils.TestUserNme, password: String = OAuth2TestingUtils.TestUserPassword): String? {
-        val result: ResultActions = performTokenAction(username, password)
-                .andExpect(status().isOk)
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-
-        val map = result.readToMap()
-        val json = map["access_token"]?.toString()
-
-        return json
-    }
-
-
-
-    private fun performTokenAction(username: String = OAuth2TestingUtils.TestUserNme, password: String = OAuth2TestingUtils.TestUserPassword, clientId:String =OAuth2TestingUtils.TestClientId, clientSecret: String = OAuth2TestingUtils.TestClientSecret): ResultActions {
-        val params: MultiValueMap<String, String> = LinkedMultiValueMap()
-        params.add("grant_type", "password")
-        params.add("scope", "api")
-        params.add("username", username)
-        params.add("password", password)
-        return mockMvc.perform(post("/oauth/token")
-                .params(params)
-                .header(HttpHeaders.AUTHORIZATION,
-                        "Basic " + Base64Utils.encodeToString("$clientId:$clientSecret".toByteArray(Charsets.UTF_8)))
-                .accept(MediaType.APPLICATION_JSON))
-    }
+    override lateinit var mockMvc: MockMvc
 
     @Test
     fun testCorrectPasswordLogin() {
@@ -102,5 +78,34 @@ class OAuth2ServerTester {
         val map = result.readToMap()
         val refreshedToken = map["access_token"]?.toString()
         Assertions.assertFalse(refreshedToken.isNullOrBlank())
+    }
+
+    @Test
+    fun testCheckToken(){
+        val tokenResult = this.performTokenAction().readToMap()
+        Assertions.assertTrue(tokenResult.containsKey("access_token"))
+
+        val tokenValue = tokenResult["access_token"]?.toString()
+
+        val result = mockMvc.perform(get("/oauth/check_token")
+                .queryParam("token", tokenValue)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk)
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+        val map = result.readToMap()
+        logger.debug(JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
+    }
+
+    @Test
+    fun testCheckBadToken(){
+        val result = mockMvc.perform(get("/oauth/check_token")
+                .queryParam("token", ShortId.newId())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().`is`(400))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+        val map = result.readToMap()
+        logger.debug(JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
     }
 }
