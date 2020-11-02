@@ -17,7 +17,7 @@ open class Rfc6238TokenServiceTester {
 
     @Test
     fun generateTest(){
-        repeat(100000){
+        repeat(1000){
             val modifier = UUID.randomUUID().toString()
             val code =  rfc6238TokenService.generateCodeString(securityToken.toString(Charsets.UTF_8),  modifier)
             Assertions.assertTrue(code.length == 6)
