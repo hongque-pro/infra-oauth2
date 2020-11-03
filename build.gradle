@@ -112,13 +112,6 @@ allprojects {
     configurations.all {
         exclude group: "junit", module: "junit"
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
-//        resolutionStrategy {
-//            eachDependency { DependencyResolveDetails details ->
-//                if (details.requested.group == "org.jetbrains.kotlin") {
-//                    details.useVersion kotlin_version
-//                }
-//            }
-//        }
     }
 
 
