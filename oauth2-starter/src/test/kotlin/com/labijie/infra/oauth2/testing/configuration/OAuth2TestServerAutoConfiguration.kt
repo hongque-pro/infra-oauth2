@@ -23,4 +23,8 @@ class OAuth2TestServerAutoConfiguration {
         return TestingIdentityService()
     }
 
+    @Bean
+    fun eventTestSubscription(): EventTestSubscription{
+        return EventTestSubscription()
+    }
 }

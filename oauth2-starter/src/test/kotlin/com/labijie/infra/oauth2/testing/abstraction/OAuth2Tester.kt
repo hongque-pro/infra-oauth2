@@ -2,6 +2,9 @@ package com.labijie.infra.oauth2.testing.abstraction
 
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
+import com.labijie.infra.oauth2.testing.configuration.EventTestSubscription
+import org.junit.jupiter.api.Assertions
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -36,10 +39,15 @@ abstract class OAuth2Tester {
         params.add("scope", OAuth2TestingUtils.ResourceId)
         params.add("username", username)
         params.add("password", password)
-        return mockMvc.perform(MockMvcRequestBuilders.post("/oauth/token")
+
+        EventTestSubscription.resetFireCount()
+        val result = mockMvc.perform(MockMvcRequestBuilders.post("/oauth/token")
                 .params(params)
                 .header(HttpHeaders.AUTHORIZATION,
                         "Basic " + Base64Utils.encodeToString("$clientId:$clientSecret".toByteArray(Charsets.UTF_8)))
                 .accept(MediaType.APPLICATION_JSON))
+
+        Assertions.assertEquals(1, EventTestSubscription.fireCount.get())
+        return result
     }
 }

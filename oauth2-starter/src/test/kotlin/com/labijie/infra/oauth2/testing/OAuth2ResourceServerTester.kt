@@ -11,6 +11,7 @@ import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readAs
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.withBearerToken
+import com.labijie.infra.oauth2.testing.configuration.EventTestSubscription
 import com.labijie.infra.oauth2.testing.configuration.OAuth2TestResServerAutoConfiguration
 import com.labijie.infra.oauth2.testing.configuration.OAuth2TestServerAutoConfiguration
 import org.junit.jupiter.api.Assertions
@@ -64,6 +65,7 @@ class OAuth2ResourceServerTester : OAuth2Tester() {
     fun testTwoFactorAllowed() {
         val token = this.obtainAccessToken()
 
+        EventTestSubscription.resetFireCount()
         val result = mockMvc.perform(MockMvcRequestBuilders.post("/test/signin-2f")
                 .withBearerToken(token)
                 .accept(MediaType.APPLICATION_JSON))
@@ -73,11 +75,15 @@ class OAuth2ResourceServerTester : OAuth2Tester() {
         val map = result.readToMap(true)
         val accessToken = map["access_token"]?.toString().orEmpty()
 
+        //验证事件触发情况
+        Assertions.assertEquals(1, EventTestSubscription.fireCount.get())
+
         mockMvc.perform(MockMvcRequestBuilders.get("/test/2fac")
                 .withBearerToken(accessToken)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
     }
 
     private fun refreshToken(refreshTokenValue: String): String {

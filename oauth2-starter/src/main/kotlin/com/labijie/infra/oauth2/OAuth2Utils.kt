@@ -36,10 +36,14 @@ object OAuth2Utils {
 
     @Throws(BadCredentialsException::class)
     internal fun getTwoFactorPrincipal(authentication:Authentication): TwoFactorPrincipal{
-        val auth = (authentication as? OAuth2Authentication) ?: throw BadCredentialsException("current authentication was not an OAuth2Authentication")
 
+        val userAuthentication = if (authentication is OAuth2Authentication){
+            authentication.userAuthentication //带 token 请求时
+        }else{
+            authentication //登录成功时
+        }
 
-        val map = auth.userAuthentication.details as? Map<*,*> ?: throw BadCredentialsException("Current authentication dose not contains any user details")
+        val map = userAuthentication.details as? Map<*,*> ?: throw BadCredentialsException("Current authentication dose not contains any user details")
         val attachments = mutableMapOf<String, String>()
         map.filter { kv -> kv.key != null && kv.key.toString().startsWith(Constants.TOKEN_ATTACHED_FIELD_PREFIX) && kv.value != null }.forEach {
             val key = it.key.toString().removePrefix(Constants.TOKEN_ATTACHED_FIELD_PREFIX)
@@ -50,9 +54,9 @@ object OAuth2Utils {
 
         return TwoFactorPrincipal(
                 map.getOrDefault(USER_ID_PROPERTY, "").toString(),
-                auth.userAuthentication.name,
+                userAuthentication.name,
                 isTwoFactorGranted = map.getOrDefault(USER_TWO_FACTOR_PROPERTY, "false").toString().toBoolean(),
-                authorities = auth.authorities,
+                authorities = userAuthentication.authorities,
                 attachedFields = attachments
         )
     }

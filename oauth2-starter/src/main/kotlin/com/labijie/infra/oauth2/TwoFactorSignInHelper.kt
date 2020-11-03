@@ -95,8 +95,9 @@ class TwoFactorSignInHelper(
             this.isAuthenticated = true
         }
 
+        val token = tokenServices.createAccessToken(authentication)
         this.eventPublisher.publishEvent(UserSignedInEvent(this, authentication))
-        return tokenServices.createAccessToken(authentication)
+        return token
     }
 
     fun signInTwoFactor(): OAuth2AccessToken {
