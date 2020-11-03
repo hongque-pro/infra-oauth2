@@ -128,12 +128,12 @@ allprojects {
         implementation enforcedPlatform("org.springframework.boot:spring-boot-dependencies:${spring_boot_version}")
         implementation enforcedPlatform("org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}")
         implementation enforcedPlatform("org.jetbrains.kotlin:kotlin-bom")
+        testImplementation enforcedPlatform("org.junit:junit-bom:$junit_verions")
 
         compile "org.jetbrains.kotlin:kotlin-stdlib"
         compile "org.jetbrains.kotlin:kotlin-reflect"
 
         testImplementation "org.jetbrains.kotlin:kotlin-test-junit5"
-        testImplementation(platform("org.junit:junit-bom:$junit_verions"))
         testImplementation "org.junit.jupiter:junit-jupiter"
 
         testImplementation "org.mockito:mockito-all:$mockito_version"
