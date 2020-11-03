@@ -20,26 +20,26 @@ buildscript {
 
         maven_repo= System.getenv("MAVEN_PROXY") //?: 'http://maven.aliyun.com/nexus/content/groups/public/'
         nexus_staging_version = '0.22.0'
-    }
-    repositories {
-        mavenLocal()
-        if(maven_repo != null) {
-            maven { url maven_repo }
+
+        repositories {
+            mavenLocal()
+            if(maven_repo != null) {
+                maven { url maven_repo }
+            }
+            jcenter()
+            mavenCentral()
+            maven { url 'https://repo.spring.io/plugins-snapshot' }
         }
-        mavenCentral()
-        maven { url 'https://repo.spring.io/plugins-snapshot' }
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:$spring_boot_version")
-        // https://mvnrepository.com/artifact/io.spring.gradle/dependency-management-plugin
-        classpath "io.spring.gradle:dependency-management-plugin:$spring_dep_mgn_version"
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
-        classpath("org.jetbrains.kotlin:kotlin-allopen:$kotlin_version")
-        classpath("io.codearte.gradle.nexus:gradle-nexus-staging-plugin:$nexus_staging_version")
     }
 }
 
-apply plugin: 'io.codearte.nexus-staging'
+plugins {
+    id "org.jetbrains.kotlin.plugin.spring" version "$kotlin_version" apply false
+    id "org.springframework.boot" version "$spring_boot_version" apply false
+    id "org.jetbrains.kotlin.jvm" version "$kotlin_version" apply false
+    id "io.spring.dependency-management" version "$spring_dep_mgn_version" apply false
+    id "io.codearte.nexus-staging" version "$nexus_staging_version"
+}
 
 static Boolean  isNotNullOrBlank(Object s){
     return !(s == null || s.toString().trim().length() == 0)
@@ -66,8 +66,10 @@ allprojects {
     apply plugin: 'kotlin-spring'
     apply plugin: 'java-library'
     apply plugin: 'io.spring.dependency-management'
+
     if(!project.name.startsWith("dummy")) {
         apply plugin: 'maven-publish'
+        apply plugin: 'signing'
     }
 
     compileJava.options.encoding = "UTF-8"
@@ -102,37 +104,35 @@ allprojects {
         if(maven_repo != null) {
             maven { url maven_repo }
         }
+        jcenter()
         mavenCentral()
-    }
-
-    dependencyManagement {
-        imports {
-            //spring bom helps us to declare dependencies without specifying version numbers.
-            mavenBom "org.springframework.cloud:spring-cloud-dependencies:$spring_cloud_version"
-            mavenBom "org.springframework.boot:spring-boot-dependencies:$spring_boot_version"
-        }
+        maven { url 'https://repo.spring.io/plugins-snapshot' }
     }
 
     configurations.all {
         exclude group: "junit", module: "junit"
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
-        resolutionStrategy {
-            eachDependency { DependencyResolveDetails details ->
-                if (details.requested.group == "org.jetbrains.kotlin") {
-                    details.useVersion kotlin_version
-                }
-            }
-        }
+//        resolutionStrategy {
+//            eachDependency { DependencyResolveDetails details ->
+//                if (details.requested.group == "org.jetbrains.kotlin") {
+//                    details.useVersion kotlin_version
+//                }
+//            }
+//        }
     }
 
 
 
 
     dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-        compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+        implementation enforcedPlatform("org.springframework.boot:spring-boot-dependencies:${spring_boot_version}")
+        implementation enforcedPlatform("org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}")
+        implementation enforcedPlatform("org.jetbrains.kotlin:kotlin-bom")
 
-        testImplementation "org.jetbrains.kotlin:kotlin-test-junit5:$kotlin_version"
+        compile "org.jetbrains.kotlin:kotlin-stdlib"
+        compile "org.jetbrains.kotlin:kotlin-reflect"
+
+        testImplementation "org.jetbrains.kotlin:kotlin-test-junit5"
         testImplementation(platform("org.junit:junit-bom:$junit_verions"))
         testImplementation "org.junit.jupiter:junit-jupiter"
 

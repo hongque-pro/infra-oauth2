@@ -1,5 +1,7 @@
 package com.labijie.infra.oauth2.testing
 
+import com.labijie.infra.oauth2.OAuth2Utils
+import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.oauth2.common.OAuth2AccessToken
@@ -7,12 +9,13 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.nio.file.attribute.UserPrincipal
 
 @RestController
 @RequestMapping("/test")
 class TestController {
     @Autowired
-    private lateinit var signInHelper : TwoFactorSignInHelper
+    private lateinit var signInHelper: TwoFactorSignInHelper
 
     @PostMapping("/signin-2f")
     fun twoFacSignIn(): OAuth2AccessToken {
@@ -25,7 +28,12 @@ class TestController {
     }
 
     @GetMapping("/1fac")
-    fun oneFacAction(): String{
+    fun oneFacAction(): String {
         return "ok"
+    }
+
+    @GetMapping("/current-user")
+    fun currentUser(): TwoFactorPrincipal {
+        return OAuth2Utils.currentTwoFactorPrincipal()
     }
 }

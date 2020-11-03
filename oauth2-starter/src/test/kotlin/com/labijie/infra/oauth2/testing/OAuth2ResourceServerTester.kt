@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.testing
 
+import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.annotation.EnableOAuth2Server
 import com.labijie.infra.oauth2.annotation.OAuth2ServerType
 import com.labijie.infra.oauth2.configuration.OAuth2CustomizationAutoConfiguration
@@ -7,6 +8,7 @@ import com.labijie.infra.oauth2.configuration.OAuth2ResourceServerAutoConfigurat
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
+import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readAs
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.withBearerToken
 import com.labijie.infra.oauth2.testing.configuration.OAuth2TestResServerAutoConfiguration
@@ -37,10 +39,10 @@ class OAuth2ResourceServerTester : OAuth2Tester() {
     override lateinit var mockMvc: MockMvc
 
     @Test
-    fun testOneFactorAllow(){
+    fun testOneFactorAllow() {
         val token = this.obtainAccessToken()
 
-        val result = mockMvc.perform(MockMvcRequestBuilders.get("/test/1fac")
+        mockMvc.perform(MockMvcRequestBuilders.get("/test/1fac")
                 .withBearerToken(token)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk)
@@ -48,7 +50,7 @@ class OAuth2ResourceServerTester : OAuth2Tester() {
     }
 
     @Test
-    fun testTwoFactorReject(){
+    fun testTwoFactorReject() {
         val token = this.obtainAccessToken()
 
         mockMvc.perform(MockMvcRequestBuilders.get("/test/2fac")
@@ -59,7 +61,7 @@ class OAuth2ResourceServerTester : OAuth2Tester() {
     }
 
     @Test
-    fun testTwoFactorAllowed(){
+    fun testTwoFactorAllowed() {
         val token = this.obtainAccessToken()
 
         val result = mockMvc.perform(MockMvcRequestBuilders.post("/test/signin-2f")
@@ -78,7 +80,7 @@ class OAuth2ResourceServerTester : OAuth2Tester() {
                 .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
     }
 
-    private fun refreshToken(refreshTokenValue: String): String{
+    private fun refreshToken(refreshTokenValue: String): String {
         val params: MultiValueMap<String, String> = LinkedMultiValueMap()
         params.add("grant_type", "refresh_token")
         //params.add("scope", "api")
@@ -99,7 +101,7 @@ class OAuth2ResourceServerTester : OAuth2Tester() {
     }
 
     @Test
-    fun testTwoFactorTokenRefresh(){
+    fun testTwoFactorTokenRefresh() {
         val token = this.obtainAccessToken()
 
         //登录 2 段 token
@@ -119,5 +121,23 @@ class OAuth2ResourceServerTester : OAuth2Tester() {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+    }
+
+    @Test
+    fun testGetCurrentPrincipal() {
+        val token = this.obtainAccessToken()
+
+        val result = mockMvc.perform(MockMvcRequestBuilders.get("/test/current-user")
+                .withBearerToken(token)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+        val principal = result.readToMap()
+        Assertions.assertTrue(principal.containsKey(TwoFactorPrincipal::userId.name))
+        Assertions.assertTrue(principal.containsKey(TwoFactorPrincipal::userName.name))
+        Assertions.assertTrue(principal.containsKey(TwoFactorPrincipal::authorities.name))
+        Assertions.assertTrue(principal.containsKey(TwoFactorPrincipal::attachedFields.name))
+        Assertions.assertTrue(principal.containsKey(TwoFactorPrincipal::roleNames.name))
     }
 }

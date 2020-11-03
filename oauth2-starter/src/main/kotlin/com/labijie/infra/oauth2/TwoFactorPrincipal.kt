@@ -12,4 +12,8 @@ data class TwoFactorPrincipal(
         val userName: String,
         val isTwoFactorGranted: Boolean,
         val authorities:Iterable<GrantedAuthority>,
-        val attachedFields: Map<String, String>)
+        val attachedFields: Map<String, String>){
+    val roleNames: List<String> by lazy {
+        this.authorities.map { it.authority }
+    }
+}

@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
+import kotlin.reflect.KClass
 
 object OAuth2TestingUtils {
         val passwordEncoder = BCryptPasswordEncoder()
@@ -24,6 +25,11 @@ object OAuth2TestingUtils {
                         logger.debug("Http Result: ${System.lineSeparator()}$pretty")
                 }
                 return map
+        }
+
+        fun <T: Any> ResultActions.readAs(type: KClass<T>): T {
+                val resultString = this.andReturn().response.contentAsString
+               return JacksonHelper.deserialize(resultString.toByteArray(Charsets.UTF_8), type)
         }
 
         fun MockHttpServletRequestBuilder.withBearerToken(token: String?): MockHttpServletRequestBuilder {
