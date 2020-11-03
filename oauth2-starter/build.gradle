@@ -1,14 +1,11 @@
 dependencies {
-  compile "com.labijie.infra:commons:$infra_commons_version"
-  compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-oauth2'
-  compile group: 'org.springframework.security', name: 'spring-security-jwt', version: spring_security_jwt_version
+  api "com.labijie.infra:commons:$infra_commons_version"
+  api group: 'org.springframework.cloud', name: 'spring-cloud-starter-oauth2'
+  api group: 'org.springframework.security', name: 'spring-security-jwt', version: spring_security_jwt_version
   compileOnly group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis'
   compileOnly "org.springframework.boot:spring-boot-starter-web"
   compileOnly "org.springframework.boot:spring-boot-starter-webflux"
 
-  testCompile "org.springframework.boot:spring-boot-starter-web"
-  testCompile ("org.springframework.boot:spring-boot-starter-test:$spring_boot_version"){
-    exclude group: 'junit', module: 'junit' //by both name and group
-    exclude group: 'org.junit.vintage', module:'junit-vintage-engine'
-  }
+  testImplementation "org.springframework.boot:spring-boot-starter-web"
+  testImplementation ("org.springframework.boot:spring-boot-starter-test:$spring_boot_version")
 }

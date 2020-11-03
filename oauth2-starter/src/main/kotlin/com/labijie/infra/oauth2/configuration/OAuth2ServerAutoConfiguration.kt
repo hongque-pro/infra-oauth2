@@ -21,7 +21,7 @@ import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.ProviderManager
 import org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper
 import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.crypto.password.NoOpPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerEndpointsConfiguration
@@ -66,7 +66,7 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
 //        createAuthServerTokenServices(tokenServices)
 //    }
 
-    private fun createAuthServerTokenServices( tokenEnhancer: TokenEnhancer): AuthorizationServerTokenServices {
+    private fun createAuthServerTokenServices(tokenEnhancer: TokenEnhancer): AuthorizationServerTokenServices {
         val tokenServices = DefaultTokenServices()
         tokenServices.setClientDetailsService(clientDetailsService)
         tokenServices.setTokenStore(this.tokenStore)
@@ -109,12 +109,24 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
         return TwoFactorSignInHelper(eventPublisher, clientDetailsService, oauth2RequestFactory, tokenServices)
     }
 
+
+    private class NonePasswordEncoder : PasswordEncoder {
+        override fun encode(rawPassword: CharSequence): String {
+            return rawPassword.toString()
+        }
+
+        override fun matches(rawPassword: CharSequence, encodedPassword: String): Boolean {
+            return rawPassword.toString() == encodedPassword
+        }
+    }
+
     override fun configure(security: AuthorizationServerSecurityConfigurer) {
         //兼容旧版代码， client detail secrect 不应该进行加密处理
-        security.passwordEncoder(NoOpPasswordEncoder.getInstance())
+        security.passwordEncoder(NonePasswordEncoder())
         security.checkTokenAccess("permitAll()")
         security.allowFormAuthenticationForClients()
     }
+
 
 
     @Throws(Exception::class)

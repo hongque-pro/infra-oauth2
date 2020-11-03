@@ -113,21 +113,19 @@ allprojects {
         exclude group: "junit", module: "junit"
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
     }
-
-
-
-
     dependencies {
-        implementation enforcedPlatform("org.springframework.boot:spring-boot-dependencies:${spring_boot_version}")
-        implementation enforcedPlatform("org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}")
         implementation enforcedPlatform("org.jetbrains.kotlin:kotlin-bom")
         testImplementation platform("org.junit:junit-bom:$junit_verions")
+        implementation platform("org.springframework.boot:spring-boot-dependencies:${spring_boot_version}")
+        implementation platform("org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}")
 
-        compile "org.jetbrains.kotlin:kotlin-stdlib"
-        compile "org.jetbrains.kotlin:kotlin-reflect"
+        api "org.jetbrains.kotlin:kotlin-stdlib"
+        api "org.jetbrains.kotlin:kotlin-reflect"
 
-        testImplementation "org.jetbrains.kotlin:kotlin-test-junit5"
         testImplementation "org.junit.jupiter:junit-jupiter"
+        testImplementation("org.jetbrains.kotlin:kotlin-test-junit5"){
+            exclude group:"org.junit"
+        }
 
         testImplementation "org.mockito:mockito-all:$mockito_version"
     }
