@@ -6,6 +6,7 @@ import com.labijie.infra.oauth2.testing.configuration.EventTestSubscription
 import org.junit.jupiter.api.Assertions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
@@ -47,7 +48,11 @@ abstract class OAuth2Tester {
                         "Basic " + Base64Utils.encodeToString("$clientId:$clientSecret".toByteArray(Charsets.UTF_8)))
                 .accept(MediaType.APPLICATION_JSON))
 
-        Assertions.assertEquals(1, EventTestSubscription.fireCount.get())
+        result.andExpect {
+            if(it.response.status == HttpStatus.OK.value()){
+                Assertions.assertEquals(1, EventTestSubscription.fireCount.get())
+            }
+        }
         return result
     }
 }
