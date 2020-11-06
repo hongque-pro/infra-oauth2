@@ -101,8 +101,6 @@ class ResourceServerConfigurer : ResourceServerConfigurerAdapter() {
 |   spring framework    |      5.2.9.RELEASE   |           |
 |   spring dpendency management    |      1.0.10.RELEASE    |           |
 
-一切开始的地方，所有组件的依赖项.
-
 ## 发布到自己的 Nexus
 
 在项目根目录下新建 gradle.properties 文件，添加如下内容
