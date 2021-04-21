@@ -6,8 +6,13 @@
 
 完全兼容 Spring security 5.4.x
 
->> Spring security break changes:    
->>  https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2
+> Spring Security 5.4 带来大量破坏性变化（breaking changes）:   
+>  具体来说就是 Resources Server 被弃用，Auth Server 已经出现一个实验性项目，不久将来将弃用，参考：      
+>  - https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2   
+>   
+>  - https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Features-Matrix   
+>   
+>  - https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Migration-Guide
 
 ## 引入依赖（Gradle）
 
