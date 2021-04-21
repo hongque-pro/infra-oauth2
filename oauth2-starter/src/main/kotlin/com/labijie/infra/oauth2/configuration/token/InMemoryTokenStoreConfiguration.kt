@@ -1,9 +1,7 @@
 package com.labijie.infra.oauth2.configuration.token
 
 import org.springframework.context.annotation.Bean
-import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore
-import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore
 
 /**
  * Created with IntelliJ IDEA.

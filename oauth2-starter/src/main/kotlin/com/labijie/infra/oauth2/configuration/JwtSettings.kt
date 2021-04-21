@@ -1,7 +1,5 @@
 package com.labijie.infra.oauth2.configuration
 
-import org.springframework.security.oauth2.provider.token.store.JwtClaimsSetVerifier
-import java.security.KeyPair
 
 /**
  * Created with IntelliJ IDEA.

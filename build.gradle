@@ -2,20 +2,20 @@ buildscript {
     ext {
         kotlin_version = '1.4.10'
 
-        infra_caching_version='1.2.1'
-        infra_commons_version='2.0.1'
+        infra_caching_version='1.2.2'
+        infra_commons_version='2.1.0'
 
-        spring_boot_version = '2.3.4.RELEASE'
-        spring_cloud_version='Hoxton.SR8'
-        spring_version = '5.2.9.RELEASE'
+        spring_boot_version = '2.4.5'
+        spring_cloud_version='2020.0.2'
+        spring_version = '5.3.6'
         spring_dep_mgn_version='1.0.10.RELEASE'
         spring_security_jwt_version='1.1.1.RELEASE'
 
-        kryo_version = '5.0.0'
+        kryo_version = '5.1.0'
 
         junit_verions = '5.7.0'
 
-        lettuce_version = '5.3.4.RELEASE'
+        lettuce_version = '6.1.1.RELEASE'
         mockito_version = '1.10.19'
 
         maven_repo= System.getenv("MAVEN_PROXY") //?: 'http://maven.aliyun.com/nexus/content/groups/public/'
