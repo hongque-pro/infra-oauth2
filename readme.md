@@ -4,6 +4,11 @@
 ![workflow status](https://img.shields.io/github/workflow/status/hongque-pro/infra-oauth2/Gradle%20Build%20And%20Release?label=CI%20publish&style=flat-square)
 ![license](https://img.shields.io/github/license/hongque-pro/infra-oauth2?style=flat-square)
 
+完全兼容 Spring security 5.4.x
+
+>> Spring security break changes:    
+>>  https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2
+
 ## 引入依赖（Gradle）
 
 ```groovy
