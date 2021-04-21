@@ -1,6 +1,7 @@
 apply plugin: "org.springframework.boot"
 dependencies {
-    implementation project(":oauth2-starter")
+    implementation project(":oauth2-auth-server-starter")
+    implementation project(":oauth2-resource-server-starter")
     implementation "org.springframework.boot:spring-boot-starter-web"
     implementation "org.springframework.boot:spring-boot-starter-data-redis"
 }

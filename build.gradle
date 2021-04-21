@@ -9,7 +9,13 @@ buildscript {
         spring_cloud_version='2020.0.2'
         spring_version = '5.3.6'
         spring_dep_mgn_version='1.0.10.RELEASE'
-        spring_security_jwt_version='1.1.1.RELEASE'
+
+        //auth
+        spring_security_boot_version='2.4.4'
+        nimbus_jose_jwt_version='8.21'
+        //resource
+        spring_security_version='5.4.6'
+        oauth2_oidc_sdk_version='8.36.2'
 
         kryo_version = '5.1.0'
 

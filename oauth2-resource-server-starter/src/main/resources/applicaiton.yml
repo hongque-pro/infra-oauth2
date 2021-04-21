@@ -1,0 +1,7 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        o
+        jwt:
+          jwk-set-uri:

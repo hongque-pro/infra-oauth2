@@ -3,9 +3,6 @@ package com.labijie.infra.oauth2.dummy
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
-import com.labijie.infra.oauth2.annotation.EnableOAuth2Server
-import com.labijie.infra.oauth2.annotation.OAuth2ServerType
-import com.labijie.infra.oauth2.annotation.TokenStoreType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -22,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController
  * @author Anders Xiao
  * @date 2019-02-21
  */
-@EnableOAuth2Server(OAuth2ServerType.Authorization, OAuth2ServerType.Resource, tokeStore = TokenStoreType.InMemory)
 @SpringBootApplication
 @RestController
 class DummyAuthServer {

@@ -1,0 +1,10 @@
+dependencies {
+    api project(":oauth2-commons")
+    api group: 'org.springframework.security', name: 'spring-security-oauth2-resource-server', version: spring_security_version
+    api group: 'org.springframework.security', name: 'spring-security-oauth2-jose', version: spring_security_version
+    api group: 'org.springframework.boot', name: 'spring-boot-starter-security'
+    // https://mvnrepository.com/artifact/com.nimbusds/oauth2-oidc-sdk
+
+    testImplementation "org.springframework.boot:spring-boot-starter-web"
+    testImplementation ("org.springframework.boot:spring-boot-starter-test:$spring_boot_version")
+}
