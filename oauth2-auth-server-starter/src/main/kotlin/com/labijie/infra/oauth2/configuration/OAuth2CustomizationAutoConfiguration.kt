@@ -35,9 +35,10 @@ import javax.servlet.http.HttpServletRequest
  * @date 2019-02-22
  * 用户必须实现的依赖
  */
+
 @AutoConfigureAfter(AuthenticationProvider::class)
 @AutoConfigureBefore(UserDetailsServiceAutoConfiguration::class)
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(OAuth2ServerProperties::class)
 @Import(IntrospectEndpoint::class, JwkSetEndpoint::class)
 class OAuth2CustomizationAutoConfiguration(
