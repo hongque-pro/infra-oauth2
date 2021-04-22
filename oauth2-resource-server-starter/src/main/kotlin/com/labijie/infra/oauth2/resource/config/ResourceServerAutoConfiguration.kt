@@ -3,6 +3,7 @@ package com.labijie.infra.oauth2.resource.config
 import com.labijie.infra.oauth2.Constants
 import com.labijie.infra.oauth2.ITokenIntrospectParser
 import com.labijie.infra.oauth2.RsaUtils
+import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
 import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorSecurityExpressionHandler
 import org.springframework.beans.factory.ObjectProvider
@@ -107,29 +108,32 @@ class ResourceServerAutoConfiguration(
 
         val converter = MappedJwtClaimSetConverter
                 .withDefaults(mapOf(
+                        Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
                         Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
                         Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
-                        Constants.CLAIM_ROLES to collectionStringConverter
+                        Constants.CLAIM_AUTHORITIES to collectionStringConverter
                 ))
         return converter
     }
 
     override fun configure(http: HttpSecurity) {
-        http
+
+
+        val settings = http
                 .authorizeRequests { authorize ->
+                    resourceConfigurers.orderedStream().forEach {
+                        it.configure(authorize)
+                    }
+
                     authorize
                             .expressionHandler(OAuth2TwoFactorSecurityExpressionHandler(http))
-                            .also {
-                                this.resourceConfigurers.orderedStream().forEach { c ->
-                                    c.configure(it)
-                                }
-                            }
                             .anyRequest().authenticated()
                 }
-                .oauth2ResourceServer { obj ->
-                    obj.jwt().also {
-                        this.applyJwtConfiguration(it)
-                    }
-                }
+
+        settings.oauth2ResourceServer { obj ->
+            obj.jwt().also {
+                this.applyJwtConfiguration(it)
+            }
+        }
     }
 }

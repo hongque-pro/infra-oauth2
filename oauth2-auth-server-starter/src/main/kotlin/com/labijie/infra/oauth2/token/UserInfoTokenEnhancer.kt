@@ -24,12 +24,11 @@ class UserInfoTokenEnhancer : TokenEnhancer {
 
         if(!authentication.authorities.isNullOrEmpty())
         {
-            additionalInfo[Constants.CLAIM_ROLES] = AuthorityUtils.authorityListToSet(authentication.authorities)
+            additionalInfo[Constants.CLAIM_AUTHORITIES] = AuthorityUtils.authorityListToSet(authentication.authorities)
         }
 
         if (user != null) {
             additionalInfo[Constants.CLAIM_USER_NAME] = user.username
-            additionalInfo[Constants.CLAIM_ROLES] = AuthorityUtils.authorityListToSet(user.authorities)
         }
 
         val details = authentication.userAuthentication.details as? Map<*, *>

@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.token
 
+import com.labijie.infra.oauth2.Constants
 import com.labijie.infra.oauth2.ITokenIntrospectParser
 import com.labijie.infra.oauth2.copyAttributesTo
 import com.nimbusds.oauth2.sdk.Scope
@@ -21,6 +22,11 @@ import java.util.*
  */
 
 class OAuth2TokenIntrospectParser(private val tokenStore: TokenStore) : ITokenIntrospectParser {
+
+    companion object {
+        private const val ROLE_PREFIX = "ROLE_"
+        private const val SCOPE_PREFIX = "SCOPE_"
+    }
 
     override fun parse(token: String): TokenIntrospectionResponse {
         if (token.isBlank()) {
@@ -45,9 +51,32 @@ class OAuth2TokenIntrospectParser(private val tokenStore: TokenStore) : ITokenIn
                     } else {
                         this.tokenType(AccessTokenType(accessToken.tokenType))
                     }
+
+                    val authorities = mutableSetOf<String>()
+                    if (accessToken.additionalInformation.containsKey(Constants.CLAIM_ROLES)) {
+                        val roles = accessToken.additionalInformation[Constants.CLAIM_ROLES] as? Iterable<*>
+                        roles?.forEach {
+                            if(it != null){
+                                authorities.add("$ROLE_PREFIX$it")
+                            }
+                        }
+                    }
+
+                    if (accessToken.additionalInformation.containsKey(Constants.CLAIM_AUTHORITIES)) {
+                        val roles = accessToken.additionalInformation[Constants.CLAIM_AUTHORITIES] as? Iterable<*>
+                        roles?.forEach {
+                            if(it != null){
+                                authorities.add(it.toString())
+                            }
+                        }
+                    }
+
+                    this.parameter(Constants.CLAIM_AUTHORITIES, authorities)
                 }
                 .apply {
-                    accessToken.additionalInformation.forEach { (key, v) ->
+                    accessToken.additionalInformation.filter {
+                        it.key != Constants.CLAIM_AUTHORITIES && it.key != Constants.CLAIM_ROLES
+                    }.forEach { (key, v) ->
                         this.parameter(key, v)
                     }
                 }.build()

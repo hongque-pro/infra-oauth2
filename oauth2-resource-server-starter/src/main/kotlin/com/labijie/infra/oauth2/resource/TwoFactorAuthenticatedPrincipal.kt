@@ -27,7 +27,6 @@ class TwoFactorAuthenticatedPrincipal(private val delegate: TwoFactorPrincipal) 
         map[OAuth2IntrospectionClaimNames.ACTIVE] = true
         map[Constants.CLAIM_USER_ID] = delegate.userId
         map[OAuth2IntrospectionClaimNames.USERNAME] = delegate.userName
-        map[Constants.CLAIM_ROLES] = delegate.roleNames.joinToString(" ")
 
         if (delegate.attachedFields.containsKey(Constants.CLAIM_EXP)) {
             map[OAuth2IntrospectionClaimNames.EXPIRES_AT] = delegate.attachedFields.getOrDefault(Constants.CLAIM_EXP, "")
