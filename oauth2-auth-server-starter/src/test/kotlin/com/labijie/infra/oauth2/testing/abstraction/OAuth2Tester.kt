@@ -41,7 +41,7 @@ abstract class OAuth2Tester {
     protected fun performTokenAction(username: String = OAuth2TestingUtils.TestUserNme, password: String = OAuth2TestingUtils.TestUserPassword, clientId: String = OAuth2TestingUtils.TestClientId, clientSecret: String = OAuth2TestingUtils.TestClientSecret): ResultActions {
         val params: MultiValueMap<String, String> = LinkedMultiValueMap()
         params.add("grant_type", "password")
-        params.add("scope", OAuth2TestingUtils.ResourceId)
+        params.add("scope", OAuth2TestingUtils.Scope)
         params.add("username", username)
         params.add("password", password)
 

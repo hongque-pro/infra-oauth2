@@ -65,6 +65,7 @@ class TokenStoreFactoryBean(
 
     private fun createJwtTokenStore(): TokenStore {
         val converter = jwtAccessTokenConverter(this.serverProperties)
+
         return JwtTokenStore(converter)
     }
 

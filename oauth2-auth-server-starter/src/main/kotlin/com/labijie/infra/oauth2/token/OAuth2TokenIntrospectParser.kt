@@ -2,15 +2,19 @@ package com.labijie.infra.oauth2.token
 
 import com.labijie.infra.oauth2.Constants
 import com.labijie.infra.oauth2.ITokenIntrospectParser
-import com.labijie.infra.oauth2.copyAttributesTo
 import com.nimbusds.oauth2.sdk.Scope
 import com.nimbusds.oauth2.sdk.TokenIntrospectionErrorResponse
 import com.nimbusds.oauth2.sdk.TokenIntrospectionResponse
 import com.nimbusds.oauth2.sdk.TokenIntrospectionSuccessResponse
-import com.nimbusds.oauth2.sdk.id.Subject
+import com.nimbusds.oauth2.sdk.id.Audience
 import com.nimbusds.oauth2.sdk.token.AccessTokenType
 import com.nimbusds.oauth2.sdk.token.BearerTokenError
+import org.springframework.security.oauth2.common.OAuth2AccessToken
+import org.springframework.security.oauth2.common.exceptions.InvalidTokenException
+import org.springframework.security.oauth2.provider.OAuth2Authentication
+import org.springframework.security.oauth2.provider.token.AccessTokenConverter
 import org.springframework.security.oauth2.provider.token.TokenStore
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter
 import java.time.Instant
 import java.util.*
 
@@ -42,14 +46,20 @@ class OAuth2TokenIntrospectParser(private val tokenStore: TokenStore) : ITokenIn
             return TokenIntrospectionErrorResponse(BearerTokenError.INVALID_TOKEN)
         }
 
+        val authentication = tokenStore.readAuthentication(token)
+
         return TokenIntrospectionSuccessResponse.Builder(true)
-                .expirationTime(Date.from(Instant.ofEpochMilli(accessToken.expiration.time)))
+                .expirationTime(accessToken.expiration)
                 .scope(Scope.parse(accessToken.scope))
                 .apply {
                     if (accessToken.tokenType.isBlank()) {
                         this.tokenType(AccessTokenType.UNKNOWN)
                     } else {
                         this.tokenType(AccessTokenType(accessToken.tokenType))
+                    }
+
+                    authentication?.oAuth2Request?.resourceIds?.also {
+                        this.audience(it.map { item-> Audience(item)  })
                     }
 
                     val authorities = mutableSetOf<String>()

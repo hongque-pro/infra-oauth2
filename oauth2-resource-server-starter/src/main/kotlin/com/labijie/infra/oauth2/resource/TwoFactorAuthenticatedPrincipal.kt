@@ -52,7 +52,7 @@ class TwoFactorAuthenticatedPrincipal(private val delegate: TwoFactorPrincipal) 
             map[OAuth2IntrospectionClaimNames.SUBJECT] = delegate.attachedFields.getOrDefault(Constants.CLAIM_SUB, "")
         }
 
-        delegate.attachedFields.forEach { t, u ->
+        delegate.attachedFields.forEach { (t, u) ->
             when (t) {
                 Constants.CLAIM_EXP,
                 Constants.CLAIM_AUD,

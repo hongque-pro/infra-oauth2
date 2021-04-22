@@ -14,6 +14,10 @@ import org.springframework.security.web.access.expression.WebSecurityExpressionR
 class OAuth2TwoFactorExpressionRoot(a: Authentication?, fi: FilterInvocation?)
     : WebSecurityExpressionRoot(a, fi) {
 
+    companion object {
+        const val SCOPE_PREFIX = "SCOPE_"
+    }
+
     fun twoFactorRequired() : Boolean {
         return this.authentication.isTwoFactorGranted
     }
@@ -21,6 +25,8 @@ class OAuth2TwoFactorExpressionRoot(a: Authentication?, fi: FilterInvocation?)
     fun hasAttachedFieldValue(fieldName: String, value: String): Boolean {
         return this.authentication.getAttachedField(fieldName) == value
     }
+
+
 
 //    private fun getAuthoritySet(): Set<String?>? {
 //

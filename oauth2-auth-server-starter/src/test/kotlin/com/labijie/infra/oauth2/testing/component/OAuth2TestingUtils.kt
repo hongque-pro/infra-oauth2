@@ -16,6 +16,7 @@ object OAuth2TestingUtils {
         const val TestClientId = "testClient"
         const val TestClientSecret = "good@play"
         const val ResourceId = "test-resources"
+        const val Scope = "test-scope"
 
         fun ResultActions.readToMap(logResult: Boolean = true): Map<String, Any> {
                 val resultString = this.andReturn().response.contentAsString

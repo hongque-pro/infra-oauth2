@@ -32,6 +32,7 @@ object Constants {
     const val CLAIM_AUD = "aud"
     const val CLAIM_JTI = "jti"
 
+    const val SCOPE_AUTHORITY_PREFIX = "SCOPE_"
 }
 
 

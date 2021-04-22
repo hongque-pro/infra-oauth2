@@ -28,10 +28,8 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
 
 
         val map = authentication.details as? Map<*, *>
-        if (map != null) {
-            map.forEach {
-                details[it.key.toString()] = map.getOrDefault(it.key.toString(), "")!!
-            }
+        map?.forEach {
+            details[it.key.toString()] = map.getOrDefault(it.key.toString(), "")!!
         }
 
         val user = authentication.principal as? ITwoFactorUserDetails
