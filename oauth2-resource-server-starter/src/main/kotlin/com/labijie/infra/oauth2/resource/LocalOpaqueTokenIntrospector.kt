@@ -1,9 +1,8 @@
 package com.labijie.infra.oauth2.resource
 
-import com.labijie.infra.oauth2.ITokenIntrospectionParser
+import com.labijie.infra.oauth2.ITokenIntrospectParser
 import com.nimbusds.oauth2.sdk.TokenIntrospectionSuccessResponse
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal
 import org.springframework.security.oauth2.server.resource.introspection.*
@@ -18,7 +17,7 @@ import java.util.*
  */
 
 class LocalOpaqueTokenIntrospector(
-        private val tokenParser: ITokenIntrospectionParser
+        private val tokenParser: ITokenIntrospectParser
 ) : OpaqueTokenIntrospector {
 
     companion object{

@@ -8,6 +8,6 @@ import com.nimbusds.oauth2.sdk.TokenIntrospectionResponse
  * @Date: 2021-04-21 17:40
  * @Description:
  */
-interface ITokenIntrospectionParser {
+interface ITokenIntrospectParser {
     fun parse(token: String) : TokenIntrospectionResponse
 }

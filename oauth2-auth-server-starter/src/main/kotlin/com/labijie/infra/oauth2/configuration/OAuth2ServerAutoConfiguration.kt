@@ -7,7 +7,7 @@ import com.labijie.infra.oauth2.error.IOAuth2ExceptionHandler
 import com.labijie.infra.oauth2.filter.ClientDetailsArgumentResolver
 import com.labijie.infra.oauth2.filter.ClientDetailsInterceptorAdapter
 import com.labijie.infra.oauth2.preauth.TwoFactorPreAuthenticationProvider
-import com.labijie.infra.oauth2.token.OAuth2TokenIntrospectionParser
+import com.labijie.infra.oauth2.token.OAuth2TokenIntrospectParser
 import com.labijie.infra.oauth2.token.UserInfoTokenEnhancer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -59,8 +59,8 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
         @JvmField private val oauth2RequestFactory: OAuth2RequestFactory,
         @JvmField private val userDetailsService: UserDetailsService,
         @JvmField private val clientDetailsService: ClientDetailsService,
-        @Autowired(required = false)
-        tokenStore: TokenStore?) : AuthorizationServerConfigurerAdapter() {
+        @Autowired
+        tokenStore: TokenStore) : AuthorizationServerConfigurerAdapter() {
 
     private val tokenStore = tokenStore ?: InMemoryTokenStore()
 
@@ -71,9 +71,7 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
 //        createAuthServerTokenServices(tokenServices)
 //    }
 
-    @Bean
-    @ConditionalOnMissingBean(TokenStore::class)
-    fun inMemoryTokenStore(): TokenStore = tokenStore
+
 
     private fun createAuthServerTokenServices(tokenEnhancer: TokenEnhancer): AuthorizationServerTokenServices {
         val tokenServices = DefaultTokenServices()
@@ -95,8 +93,8 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
     }
 
     @Bean
-    fun oauth2TokenIntrospectionParser(tokenStore: TokenStore): OAuth2TokenIntrospectionParser {
-        return OAuth2TokenIntrospectionParser(tokenStore)
+    fun oauth2TokenIntrospectionParser(tokenStore: TokenStore): OAuth2TokenIntrospectParser {
+        return OAuth2TokenIntrospectParser(tokenStore)
     }
 
     @Configuration

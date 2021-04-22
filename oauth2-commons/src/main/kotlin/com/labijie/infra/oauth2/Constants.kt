@@ -8,6 +8,9 @@ import com.nimbusds.openid.connect.sdk.claims.ClaimType
  * @date 2019-02-22
  */
 object Constants {
+    const val DEFAULT_JWK_SET_ENDPOINT_PATH = "/oauth/.well-known/jwks.json"
+    const val DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH ="/oauth/introspect"
+
     const val GRANT_TYPE_PASSWORD = "password"
     const val GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code"
     const val GRANT_TYPE_REFRESH_TOKEN = "refresh_token"

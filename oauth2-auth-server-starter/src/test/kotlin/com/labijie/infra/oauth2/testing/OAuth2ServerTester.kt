@@ -1,6 +1,8 @@
 package com.labijie.infra.oauth2.testing
 
 import com.labijie.infra.json.JacksonHelper
+import com.labijie.infra.oauth2.Constants.DEFAULT_JWK_SET_ENDPOINT_PATH
+import com.labijie.infra.oauth2.Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH
 import com.labijie.infra.oauth2.configuration.OAuth2CustomizationAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
@@ -106,6 +108,40 @@ class OAuth2ServerTester : OAuth2Tester() {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 
         val map = result.readToMap()
+        logger.debug(JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
+    }
+
+    @Test
+    fun testIntrospectEndpoint(){
+        val tokenResult = this.performTokenAction().readToMap()
+        Assertions.assertTrue(tokenResult.containsKey("access_token"))
+
+        val tokenValue = tokenResult["access_token"]?.toString()
+
+        val result = mockMvc.perform(post(DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH)
+                .param("token", tokenValue)
+                .header(HttpHeaders.AUTHORIZATION,
+                        "Basic " + Base64Utils.encodeToString("${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)))
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk)
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+        val map = result.readToMap()
+        //Assertions.assertEquals(map["active"]?.toString(), "true")
+
+        logger.debug(JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
+    }
+
+    @Test
+    fun testJwkSetEndpoint(){
+        val result = mockMvc.perform(get(DEFAULT_JWK_SET_ENDPOINT_PATH)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk)
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+        val map = result.readToMap()
+        //Assertions.assertEquals(map["active"]?.toString(), "true")
+
         logger.debug(JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
     }
 }

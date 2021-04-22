@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.provider.token.store.InMemoryTokenSto
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore
+import org.springframework.util.Base64Utils
 import java.security.KeyPair
 
 /**
@@ -43,6 +44,8 @@ class TokenStoreFactoryBean(
         private fun configAuthenticationRSA(converter: JwtAccessTokenConverter, oAuth2Config: OAuth2ServerProperties) {
             val kp = if (oAuth2Config.token.jwt.rsa.privateKey.isBlank() || oAuth2Config.token.jwt.rsa.publicKey.isBlank()) {
                 logger.warn("Jwt token store rsa key pair not found, default key will be used.")
+                oAuth2Config.token.jwt.rsa.privateKey = Base64Utils.encodeToString(RsaUtils.defaultKeyPair.private.encoded)
+                oAuth2Config.token.jwt.rsa.publicKey = Base64Utils.encodeToString(RsaUtils.defaultKeyPair.public.encoded)
                 RsaUtils.defaultKeyPair
             }else{
                 val privateKey = RsaUtils.getPrivateKey(oAuth2Config.token.jwt.rsa.privateKey)

@@ -1,7 +1,7 @@
 package com.labijie.infra.oauth2.resource.config
 
 import com.labijie.infra.oauth2.Constants
-import com.labijie.infra.oauth2.ITokenIntrospectionParser
+import com.labijie.infra.oauth2.ITokenIntrospectParser
 import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
 import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorSecurityExpressionHandler
@@ -25,21 +25,18 @@ import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
-import java.security.KeyFactory
 import java.security.interfaces.RSAPublicKey
-import java.security.spec.X509EncodedKeySpec
 import java.time.Duration
-import java.util.*
 
 
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
-@EnableConfigurationProperties(ResourceServerProperties::class)
+@EnableConfigurationProperties(OAuth2ResourceServerProperties::class)
 @ConditionalOnBean(OAuth2ResourceServerProperties::class)
 class ResourceServerAutoConfiguration(
         private val oauth2ResProperties: OAuth2ResourceServerProperties,
         private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>,
-        private val resourceServerProperties: ResourceServerProperties) : WebSecurityConfigurerAdapter(false) {
+        private val resourceServerProperties: com.labijie.infra.oauth2.resource.config.ResourceServerProperties) : WebSecurityConfigurerAdapter(false) {
 
 
     companion object {
@@ -61,16 +58,16 @@ class ResourceServerAutoConfiguration(
 
     @Bean
     @ConditionalOnMissingBean(LocalOpaqueTokenIntrospector::class)
-    @ConditionalOnBean(ITokenIntrospectionParser::class)
-    fun localOpaqueTokenIntrospector(tokenIntrospectionParser: ITokenIntrospectionParser): LocalOpaqueTokenIntrospector {
-        return LocalOpaqueTokenIntrospector(tokenIntrospectionParser)
+    @ConditionalOnBean(ITokenIntrospectParser::class)
+    fun localOpaqueTokenIntrospector(tokenIntrospectParser: ITokenIntrospectParser): LocalOpaqueTokenIntrospector {
+        return LocalOpaqueTokenIntrospector(tokenIntrospectParser)
     }
 
     fun applyJwtConfiguration(
             configurer: OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer): OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer {
         //参考：https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2resourceserver-jwt-decoder-secret-key
-        val decoder = if (resourceServerProperties.jwt.jwkPubKey.isNotBlank()) {
-            val rsaPubKey = RsaUtils.getPublicKey(resourceServerProperties.jwt.jwkPubKey) as RSAPublicKey
+        val decoder = if (resourceServerProperties.jwt.rsaPubKey.isNotBlank()) {
+            val rsaPubKey = RsaUtils.getPublicKey(resourceServerProperties.jwt.rsaPubKey) as RSAPublicKey
             NimbusJwtDecoder.withPublicKey(rsaPubKey)
                     .build()
         } else if (!oauth2ResProperties.jwt.jwkSetUri.isNullOrBlank()) {
