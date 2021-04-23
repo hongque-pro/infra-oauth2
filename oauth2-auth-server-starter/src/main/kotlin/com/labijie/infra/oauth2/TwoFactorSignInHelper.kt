@@ -8,6 +8,7 @@ import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.common.OAuth2AccessToken
 import org.springframework.security.oauth2.provider.AuthorizationRequest
@@ -96,7 +97,7 @@ class TwoFactorSignInHelper(
             attachedFields: Map<String, String> = mapOf()
     ): OAuth2AccessToken {
 
-        val authorityObjects = ArrayList(authorities.map { GrantedAuthorityObject(it) })
+        val authorityObjects = ArrayList(authorities.map { SimpleGrantedAuthority(it) })
         val client = clientDetailsService.loadClientByClientId(clientId)
         val user = SimpleTwoFactorUserDetails(
                 userId, userName,

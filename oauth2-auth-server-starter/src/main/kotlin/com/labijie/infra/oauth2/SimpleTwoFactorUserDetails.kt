@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2
 
 import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import java.io.Serializable
 
 /**
@@ -17,7 +18,7 @@ open class SimpleTwoFactorUserDetails(
         @JvmField private val accountNonExpired:Boolean = false,
         @JvmField private val accountNonLocked:Boolean = false,
         @JvmField private val twoFactorEnabled: Boolean = false,
-        @JvmField private val authorities:ArrayList<GrantedAuthorityObject> = arrayListOf(),
+        @JvmField private val authorities:ArrayList<SimpleGrantedAuthority> = arrayListOf(),
         @JvmField  private val attachedFields:Map<String, String> = mapOf()) : ITwoFactorUserDetails, Serializable {
 
     override fun getUserId(): String {
@@ -39,7 +40,7 @@ open class SimpleTwoFactorUserDetails(
                     userDetails.isAccountNonExpired,
                     userDetails.isAccountNonLocked,
                     userDetails.isTwoFactorEnabled(),
-                    ArrayList(userDetails.authorities.map { g->GrantedAuthorityObject(g.authority) }),
+                    ArrayList(userDetails.authorities.map { g->SimpleGrantedAuthority(g.authority) }),
                     userDetails.getTokenAttributes())
         }
     }

@@ -1,11 +1,8 @@
 package com.labijie.infra.oauth2.testing.component
 
-import com.labijie.infra.impl.DebugIdGenerator
-import com.labijie.infra.oauth2.IIdentityService
 import com.labijie.infra.oauth2.*
 import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.stereotype.Service
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,7 +21,7 @@ class TestingIdentityService: IIdentityService {
             }
 
             override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
-                return mutableListOf(GrantedAuthorityObject("aa"))
+                return mutableListOf(SimpleGrantedAuthority("aa"))
             }
 
             override fun isEnabled(): Boolean = true
