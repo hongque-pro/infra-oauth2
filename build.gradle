@@ -74,7 +74,7 @@ allprojects {
     apply plugin: 'kotlin-spring'
     apply plugin: 'java-library'
 
-    if(!project.name.startsWith("dummy") && !project.name == "oauth2-resource-token-starter") {
+    if(!project.name.startsWith("dummy") && project.name != "oauth2-resource-token-starter") {
         apply plugin: 'maven-publish'
         apply plugin: 'signing'
     }
@@ -149,7 +149,7 @@ subprojects {
     def p =getPropertyOrCmdArgs(project, "PUB_PWD", "p")
     def s = getPropertyOrCmdArgs(project, "PUB_URL", "s")
 
-    if(!project.name.startsWith("dummy") && !project.name == "oauth2-resource-token-starter") {
+    if(!project.name.startsWith("dummy") && project.name != "oauth2-resource-token-starter") {
         publishing {
             publications {
                 mavenJava(MavenPublication) {
