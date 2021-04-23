@@ -113,7 +113,7 @@ registry
 |   kotlin    |      1.4.10    |           |
 |   jdk    |      1.8   |           |
 |   spring boot    |      2.4.5    |           |
-|   spring security    |     5.4.6    |      这是当前版本 spring 推荐的方式     |
+|   spring security    |     5.4.6    |      Spring 版本重大变化     |
 |   spring framework    |      5.3.6   |           |
 |   spring dpendency management    |      1.0.10.RELEASE    |           |
 
