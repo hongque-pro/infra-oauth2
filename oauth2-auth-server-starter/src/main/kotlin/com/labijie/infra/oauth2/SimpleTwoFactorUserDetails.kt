@@ -40,7 +40,7 @@ open class SimpleTwoFactorUserDetails(
                     userDetails.isAccountNonLocked,
                     userDetails.isTwoFactorEnabled(),
                     ArrayList(userDetails.authorities.map { g->GrantedAuthorityObject(g.authority) }),
-                    userDetails.getAttachedTokenFields())
+                    userDetails.getTokenAttributes())
         }
     }
 
@@ -62,7 +62,7 @@ open class SimpleTwoFactorUserDetails(
 
     override fun isAccountNonLocked() = accountNonLocked
 
-    override fun getAttachedTokenFields(): Map<String, String> {
+    override fun getTokenAttributes(): Map<String, String> {
         return attachedFields
     }
 }

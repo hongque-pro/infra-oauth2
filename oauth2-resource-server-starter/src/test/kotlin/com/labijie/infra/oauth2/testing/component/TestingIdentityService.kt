@@ -41,7 +41,7 @@ class TestingIdentityService: IIdentityService {
 
             override fun isTwoFactorEnabled(): Boolean = true
 
-            override fun getAttachedTokenFields(): Map<String, String> {
+            override fun getTokenAttributes(): Map<String, String> {
                 return mapOf("aaa" to "test")
             }
         }

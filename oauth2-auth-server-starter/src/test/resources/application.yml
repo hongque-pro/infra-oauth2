@@ -1,2 +1,4 @@
 infra:
   oauth2:
+    token:
+      store: InMemory

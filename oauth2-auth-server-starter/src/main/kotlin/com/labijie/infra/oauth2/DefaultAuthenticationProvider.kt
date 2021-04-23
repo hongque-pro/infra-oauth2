@@ -74,7 +74,7 @@ class DefaultAuthenticationProvider(private val eventPublisher: ApplicationEvent
         @Suppress("UNCHECKED_CAST")
         val map = (authentication.details as? MutableMap<String, Any>) ?: mutableMapOf()
 
-        val attachedFields = user.getAttachedTokenFields()
+        val attachedFields = user.getTokenAttributes()
         attachedFields.forEach { (k, v) -> map[k] = v  }
 
         map[Constants.CLAIM_TWO_FACTOR] = granted

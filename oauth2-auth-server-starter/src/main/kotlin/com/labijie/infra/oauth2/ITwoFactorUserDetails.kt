@@ -11,7 +11,7 @@ interface ITwoFactorUserDetails : UserDetails {
     fun getUserId(): String
     fun isTwoFactorEnabled(): Boolean
 
-    fun getAttachedTokenFields() : Map<String, String> {
+    fun getTokenAttributes() : Map<String, String> {
         return mapOf()
     }
 }

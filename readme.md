@@ -7,68 +7,53 @@
 完全兼容 Spring security 5.4.x
 
 > Spring Security 5.4 带来大量破坏性变化（breaking changes）:   
+
+**Spring Security 5.4.6** 已经**弃用** spring cloud oauth2 和以前的 spring security oauth2, 具体参考这个文档：
+
+https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Features-Matrix
+
+
 >  具体来说就是 Resources Server 被弃用，Auth Server 已经出现一个实验性项目，不久将来将弃用，参考：      
 >  - https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2   
->   
->  - https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Features-Matrix   
->   
+>
 >  - https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Migration-Guide
+---
 
-## 引入依赖（Gradle）
-
-```groovy
-    compile "com.labijie.infra:oauth2-starter:$infra_oauth2_version"
-```
-
-扩展 Spring Cloud OAuth2 能力，极大的简化 Spring Security 使用。
+> 注意，该项目仅支持 servlet 应用，webflux 不提供支持
 
 ## 如何实现一个 OAuth2 授权服务器？
-屏蔽所有复杂的细节，当你需要一个OAuth2 服务器时，你只需要三个步骤：
+屏蔽所有复杂的细节，当你需要一个OAuth2 授权服务器时，你只需要三个步骤：
 
-1. 实现 **IIdentityService** 接口作为一个 Bean 注册给 Spring
-2. 实现 **IClientDetailsServiceFactory** 接口作为一个 Bean 注册给 Spring
-3. 在你的启动程序注解 @EnableOAuth2Server, 如下：
-
-```kotlin
-@EnableOAuth2Server(OAuth2ServerType.Authorization)
-@SpringBootApplication
-class DummyAuthServer
+【1】 引入依赖
+```groovy
+    compile "com.labijie.infra:oauth2-auth-server-starter:$infra_oauth2_version"
 ```
+【2】实现 **IIdentityService** 接口作为一个 Bean 注册给 Spring   
+
+【3】 实现 **IClientDetailsServiceFactory** 接口作为一个 Bean 注册给 Spring   
+
 
 ## 如何实现一个使用上面的 OAuth2 授权服务器授权的资源服务器？
-在你的启动程序注解 @EnableOAuth2Server, 如下：
-```kotlin
-@EnableOAuth2Server(OAuth2ServerType.Resource)
-@SpringBootApplication
-class DummyResourceServer
+引入依赖包即可：
+
+```groovy
+    compile "com.labijie.infra:oauth2-resource-server-starter:$infra_oauth2_version"
 ```
 
-## 如何是一个OAuth2 服务器同时本身又包含需要授权的资源？
-参见 OAuth2 授权服务器实现步骤 1、 2 ， 在第 3 步时稍微改一下注解：
 
-```kotlin
-@EnableOAuth2Server(OAuth2ServerType.Authorization, OAuth2ServerType.Resource)
-@SpringBootApplication
-class DummyAuthServer
-```
+## 如何是一个OAuth2 服务器同时本身又包含需要授权的资源？   
+授权服务器项目包含资源服务器依赖包即可！
 
 ## 灵活切换 JWT, Memory, Redis 的 OAuth2 Token 存储实现：
-- Jwt:
-```kotlin
-@EnableOAuth2Server(OAuth2ServerType.Authorization, tokeStore = TokenStoreType.Jwt)
-class DummyAuthServer
+使用配置 （ store 配置可用值：Jwt,  InMemory, Redis, 默认未 Jwt）：   
+```yaml
+infra:
+  oauth2:
+    token:
+      store: InMemory 
 ```
-> Jwt 是默认实现，可以省略 **tokeStore** 参数
-- InMemory:
-```kotlin
-@EnableOAuth2Server(OAuth2ServerType.Authorization, tokeStore = TokenStoreType.InMemory)
-class DummyAuthServer
-```
-- Redis:
-```kotlin
-@EnableOAuth2Server(OAuth2ServerType.Authorization, tokeStore = TokenStoreType.Redis)
-class DummyAuthServer
-```
+
+> 注意 redis 需要自己引入 Spring 官方的 **spring-boot-starter-data-redis** 包
 
 ## 如何实现真正的两段身份验证？
 
@@ -97,8 +82,29 @@ class ResourceServerConfigurer : ResourceServerConfigurerAdapter() {
 
 ## 更多能力
 
-- 同一个接口即可实现 Token 中插入自定义字段，直接通过 token 访问该字段以减少数据库查询
-- Resource Token 缓存，减少和 OAuth 服务器的交互（oauth2-resource-token-starter）
+- 实现 Token 中插入自定义字段，直接通过 token 访问该字段以减少数据库查询：
+```kotlin
+interface IIdentityService {
+
+    val customPasswordChecks: Boolean
+        get() = false
+
+    @Throws(UsernameNotFoundException::class, InternalAuthenticationServiceException::class)
+    fun getUserByName(userName: String): ITwoFactorUserDetails
+
+    fun authenticationChecks(authenticationCheckingContext: AuthenticationCheckingContext): SignInResult
+}
+```   
+上面的 **IIdentityService** 接口中 getUserByName 实现的返回值未 **ITwoFactorUserDetails**,  ITwoFactorUserDetails 的 getTokenAttributes 返回的 Map 对象会放入 Token 中。
+
+字符串的自定义字段还支持 spring security 验证
+
+```kotlin
+registry
+         .mvcMatchers("/test/field-aaa-test").hasTokenAttributeValue("aaa", "test")
+```
+
+上述规则要求 token 中必须包含 aaa 属性，同时值必须未 test 。
 
 ## 开发环境兼容性：
 
@@ -106,9 +112,9 @@ class ResourceServerConfigurer : ResourceServerConfigurerAdapter() {
 |--------|--------|--------|
 |   kotlin    |      1.4.10    |           |
 |   jdk    |      1.8   |           |
-|   spring boot    |      2.3.4.RELEASE    |           |
-|  spring cloud    |      Hoxton.SR8    |   通过 BOM 控制版本，因为 cloud 组件版本混乱，无法统一指定  |
-|   spring framework    |      5.2.9.RELEASE   |           |
+|   spring boot    |      2.4.5    |           |
+|   spring security    |     5.4.6    |      这是当前版本 spring 推荐的方式     |
+|   spring framework    |      5.3.6   |           |
 |   spring dpendency management    |      1.0.10.RELEASE    |           |
 
 ## 发布到自己的 Nexus

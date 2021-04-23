@@ -41,7 +41,7 @@ class DummyIdentityService: IIdentityService {
 
             override fun isTwoFactorEnabled(): Boolean = true
 
-            override fun getAttachedTokenFields(): Map<String, String> {
+            override fun getTokenAttributes(): Map<String, String> {
                 return mapOf("test-attached-field" to "tf-value")
             }
         }

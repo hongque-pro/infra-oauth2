@@ -42,7 +42,7 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
 
     fun setUserDetails(details: MutableMap<String, Any>, user: ITwoFactorUserDetails, twoFactorGranted: Boolean? = null) {
 
-        user.getAttachedTokenFields().forEach {
+        user.getTokenAttributes().forEach {
             details[it.key] = it.value
         }
 

@@ -3,7 +3,6 @@ package com.labijie.infra.oauth2
 import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.labijie.infra.oauth2.events.UserSignedInEvent
 import com.labijie.infra.oauth2.token.TwoFactorAuthenticationConverter
-import com.labijie.infra.utils.logger
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -15,7 +14,6 @@ import org.springframework.security.oauth2.provider.AuthorizationRequest
 import org.springframework.security.oauth2.provider.ClientDetailsService
 import org.springframework.security.oauth2.provider.OAuth2Authentication
 import org.springframework.security.oauth2.provider.OAuth2RequestFactory
-import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices
 import org.springframework.security.oauth2.provider.token.TokenStore
@@ -63,7 +61,7 @@ class TwoFactorSignInHelper(
                 user.isTwoFactorEnabled(),
                 user.authorities,
                 scopes,
-                user.getAttachedTokenFields()
+                user.getTokenAttributes()
         )
     }
 
