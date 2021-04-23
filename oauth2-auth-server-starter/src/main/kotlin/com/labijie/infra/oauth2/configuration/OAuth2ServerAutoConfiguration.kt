@@ -52,15 +52,16 @@ import java.util.*
 @AutoConfigureAfter(OAuth2CustomizationAutoConfiguration::class)
 @AutoConfigureBefore(AuthorizationServerEndpointsConfiguration::class)
 class OAuth2ServerAutoConfiguration @Autowired constructor(
-        @JvmField private val authenticationManager: AuthenticationManager,
-        @param:Autowired(required = false)
-        @JvmField private val oauth2ExceptionHandler: IOAuth2ExceptionHandler?,
-        @JvmField private val serverProperties: OAuth2ServerProperties,
-        @JvmField private val oauth2RequestFactory: OAuth2RequestFactory,
-        @JvmField private val userDetailsService: UserDetailsService,
-        @JvmField private val clientDetailsService: ClientDetailsService,
-        @Autowired
-        tokenStore: TokenStore) : AuthorizationServerConfigurerAdapter() {
+    @JvmField private val authenticationManager: AuthenticationManager,
+    @param:Autowired(required = false)
+    @JvmField private val oauth2ExceptionHandler: IOAuth2ExceptionHandler?,
+    @JvmField private val serverProperties: OAuth2ServerProperties,
+    @JvmField private val oauth2RequestFactory: OAuth2RequestFactory,
+    @JvmField private val userDetailsService: UserDetailsService,
+    @JvmField private val clientDetailsService: ClientDetailsService,
+    @Autowired
+    tokenStore: TokenStore
+) : AuthorizationServerConfigurerAdapter() {
 
     private val tokenStore = tokenStore ?: InMemoryTokenStore()
 
@@ -72,7 +73,6 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
 //    }
 
 
-
     private fun createAuthServerTokenServices(tokenEnhancer: TokenEnhancer): AuthorizationServerTokenServices {
         val tokenServices = DefaultTokenServices()
         tokenServices.setClientDetailsService(clientDetailsService)
@@ -80,14 +80,27 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
         tokenServices.setTokenEnhancer(tokenEnhancer)
         tokenServices.setReuseRefreshToken(serverProperties.token.reuseRefreshToken)
         tokenServices.setSupportRefreshToken(serverProperties.token.refreshTokenEnabled)
-        tokenServices.setAccessTokenValiditySeconds(Math.max(1, serverProperties.token.accessTokenExpiration.seconds.toInt()))
-        tokenServices.setRefreshTokenValiditySeconds(Math.max(1, serverProperties.token.refreshTokenExpiration.seconds.toInt()).toInt())
+        tokenServices.setAccessTokenValiditySeconds(
+            Math.max(
+                1,
+                serverProperties.token.accessTokenExpiration.seconds.toInt()
+            )
+        )
+        tokenServices.setRefreshTokenValiditySeconds(
+            Math.max(
+                1,
+                serverProperties.token.refreshTokenExpiration.seconds.toInt()
+            ).toInt()
+        )
 
         val provider = TwoFactorPreAuthenticationProvider()
-        provider.setPreAuthenticatedUserDetailsService(UserDetailsByNameServiceWrapper(
-                userDetailsService))
+        provider.setPreAuthenticatedUserDetailsService(
+            UserDetailsByNameServiceWrapper(
+                userDetailsService
+            )
+        )
         tokenServices
-                .setAuthenticationManager(ProviderManager(Arrays.asList<AuthenticationProvider>(provider)))
+            .setAuthenticationManager(ProviderManager(Arrays.asList<AuthenticationProvider>(provider)))
 
         return tokenServices
     }
@@ -116,9 +129,19 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
 
 
     @Bean
-    fun twoFactorSignInHelper(tokenServices: AuthorizationServerTokenServices,
-                              eventPublisher: ApplicationEventPublisher): TwoFactorSignInHelper {
-        return TwoFactorSignInHelper(eventPublisher, clientDetailsService, oauth2RequestFactory, tokenServices)
+    fun twoFactorSignInHelper(
+        tokenStore: TokenStore,
+        tokenServices: AuthorizationServerTokenServices,
+        eventPublisher: ApplicationEventPublisher
+    ): TwoFactorSignInHelper {
+
+        return TwoFactorSignInHelper(
+            tokenStore,
+            eventPublisher,
+            clientDetailsService,
+            oauth2RequestFactory,
+            tokenServices
+        )
     }
 
 

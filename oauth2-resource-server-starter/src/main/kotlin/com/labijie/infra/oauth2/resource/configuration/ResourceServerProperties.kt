@@ -1,4 +1,4 @@
-package com.labijie.infra.oauth2.resource.config
+package com.labijie.infra.oauth2.resource.configuration
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 

@@ -1,4 +1,4 @@
-package com.labijie.infra.oauth2.resource.config
+package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.Constants
 import com.labijie.infra.oauth2.ITokenIntrospectParser
@@ -6,13 +6,16 @@ import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
 import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorSecurityExpressionHandler
+import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -32,12 +35,13 @@ import java.time.Duration
 
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
-@EnableConfigurationProperties(OAuth2ResourceServerProperties::class)
-@ConditionalOnBean(OAuth2ResourceServerProperties::class)
+@EnableConfigurationProperties(ResourceServerProperties::class)
+@Order(99)
 class ResourceServerAutoConfiguration(
-        private val oauth2ResProperties: OAuth2ResourceServerProperties,
-        private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>,
-        private val resourceServerProperties: com.labijie.infra.oauth2.resource.config.ResourceServerProperties) : WebSecurityConfigurerAdapter(false) {
+    private val oauth2ResProperties: OAuth2ResourceServerProperties,
+    private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>,
+    private val resourceServerProperties: ResourceServerProperties
+) : WebSecurityConfigurerAdapter(false) {
 
 
     companion object {
@@ -47,7 +51,9 @@ class ResourceServerAutoConfiguration(
 
 
         private fun getConverter(targetDescriptor: TypeDescriptor): Converter<Any, *> {
-            return Converter { source: Any -> ClaimConversionService.getSharedInstance().convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor) }
+            return Converter { source: Any ->
+                ClaimConversionService.getSharedInstance().convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor)
+            }
         }
 
 
@@ -58,6 +64,11 @@ class ResourceServerAutoConfiguration(
     }
 
     @Bean
+    fun bearTokenValueResolver(): BearTokenValueResolver {
+        return BearTokenValueResolver()
+    }
+
+    @Bean
     @ConditionalOnMissingBean(LocalOpaqueTokenIntrospector::class)
     @ConditionalOnBean(ITokenIntrospectParser::class)
     fun localOpaqueTokenIntrospector(tokenIntrospectParser: ITokenIntrospectParser): LocalOpaqueTokenIntrospector {
@@ -65,22 +76,23 @@ class ResourceServerAutoConfiguration(
     }
 
     fun applyJwtConfiguration(
-            configurer: OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer): OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer {
+        configurer: OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer
+    ): OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer {
         //参考：https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2resourceserver-jwt-decoder-secret-key
         val decoder = if (resourceServerProperties.jwt.rsaPubKey.isNotBlank()) {
             val rsaPubKey = RsaUtils.getPublicKey(resourceServerProperties.jwt.rsaPubKey) as RSAPublicKey
             NimbusJwtDecoder.withPublicKey(rsaPubKey)
-                    .build()
+                .build()
         } else if (!oauth2ResProperties.jwt.jwkSetUri.isNullOrBlank()) {
             NimbusJwtDecoder.withJwkSetUri(oauth2ResProperties.jwt.jwkSetUri)
-                    .build()
-        } else if (!oauth2ResProperties.jwt.publicKeyLocation.exists()) {
+                .build()
+        } else if (oauth2ResProperties.jwt.publicKeyLocation?.exists() == true) {
             val pubKey = RsaUtils.getPublicKey(oauth2ResProperties.jwt.readPublicKey())
             NimbusJwtDecoder.withPublicKey(pubKey)
-                    .build()
+                .build()
         } else {
             NimbusJwtDecoder.withPublicKey(RsaUtils.defaultKeyPair.public as RSAPublicKey)
-                    .build()
+                .build()
         }
 
         val withClockSkew: OAuth2TokenValidator<Jwt> = createOAuth2TokenValidator()
@@ -96,7 +108,8 @@ class ResourceServerAutoConfiguration(
 
     private fun createOAuth2TokenValidator(): OAuth2TokenValidator<Jwt> {
         val withClockSkew: OAuth2TokenValidator<Jwt> = DelegatingOAuth2TokenValidator(
-                JwtTimestampValidator(Duration.ofSeconds(60)))
+            JwtTimestampValidator(Duration.ofSeconds(60))
+        )
 
 
         return withClockSkew
@@ -104,15 +117,18 @@ class ResourceServerAutoConfiguration(
 
     private fun createJwtClaimSetConverter(): MappedJwtClaimSetConverter {
         val collectionStringConverter = getConverter(
-                TypeDescriptor.collection(MutableCollection::class.java, STRING_TYPE_DESCRIPTOR))
+            TypeDescriptor.collection(MutableCollection::class.java, STRING_TYPE_DESCRIPTOR)
+        )
 
         val converter = MappedJwtClaimSetConverter
-                .withDefaults(mapOf(
-                        Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
-                        Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
-                        Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
-                        Constants.CLAIM_AUTHORITIES to collectionStringConverter
-                ))
+            .withDefaults(
+                mapOf(
+                    Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
+                    Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
+                    Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
+                    Constants.CLAIM_AUTHORITIES to collectionStringConverter
+                )
+            )
         return converter
     }
 
@@ -120,15 +136,15 @@ class ResourceServerAutoConfiguration(
 
 
         val settings = http
-                .authorizeRequests { authorize ->
-                    resourceConfigurers.orderedStream().forEach {
-                        it.configure(authorize)
-                    }
-
-                    authorize
-                            .expressionHandler(OAuth2TwoFactorSecurityExpressionHandler(http))
-                            .anyRequest().authenticated()
+            .authorizeRequests { authorize ->
+                resourceConfigurers.orderedStream().forEach {
+                    it.configure(authorize)
                 }
+
+                authorize
+                    .expressionHandler(OAuth2TwoFactorSecurityExpressionHandler(http))
+                    .anyRequest().authenticated()
+            }
 
         settings.oauth2ResourceServer { obj ->
             obj.jwt().also {

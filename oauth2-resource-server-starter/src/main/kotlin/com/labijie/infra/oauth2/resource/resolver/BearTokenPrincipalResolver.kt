@@ -1,9 +1,10 @@
-package com.labijie.infra.oauth2.resource
+package com.labijie.infra.oauth2.resource.resolver
 
 import com.labijie.infra.oauth2.Constants
 import com.labijie.infra.oauth2.IPrincipalResolver
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.isWellKnownClaim
+import com.labijie.infra.oauth2.resource.TwoFactorAuthenticatedPrincipal
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken
 

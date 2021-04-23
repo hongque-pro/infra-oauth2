@@ -13,11 +13,11 @@ import java.nio.file.attribute.UserPrincipal
 
 @RestController
 @RequestMapping("/test")
-class TestController {
+class ResourceTestController {
     @Autowired
     private lateinit var signInHelper: TwoFactorSignInHelper
-
-    @PostMapping("/signin-2f")
+    
+    @PostMapping("/sign-2f")
     fun twoFacSignIn(): OAuth2AccessToken {
         return signInHelper.signInTwoFactor()
     }

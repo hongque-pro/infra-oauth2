@@ -1,5 +1,9 @@
-package com.labijie.infra.oauth2
+package com.labijie.infra.oauth2.resolver
 
+import com.labijie.infra.oauth2.Constants
+import com.labijie.infra.oauth2.IPrincipalResolver
+import com.labijie.infra.oauth2.TwoFactorPrincipal
+import com.labijie.infra.oauth2.isWellKnownClaim
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.provider.OAuth2Authentication
