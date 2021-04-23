@@ -4,20 +4,24 @@
 ![workflow status](https://img.shields.io/github/workflow/status/hongque-pro/infra-oauth2/Gradle%20Build%20And%20Release?label=CI%20publish&style=flat-square)
 ![license](https://img.shields.io/github/license/hongque-pro/infra-oauth2?style=flat-square)
 
-完全兼容 Spring security 5.4.x
+## 新版本 1.1.0 破坏性变化（breaking changes） :
 
-> Spring Security 5.4 带来大量破坏性变化（breaking changes）:   
+- 完全兼容 Spring security 5.4.x
+- 使用方式由原来的注解变为 ” starter" + 配置。
+- Spring Cloud OAuth2 被移除（官方不再支持）
+- EnableResourceServer 的方式被移除（官方不再支持）
 
-**Spring Security 5.4.6** 已经**弃用** spring cloud oauth2 和以前的 spring security oauth2, 具体参考这个文档：
+> Spring Security 5.4 带来大量破坏性变化（程序中大量的类已经被标记为过时），使得该项目不得不跟随变化
 
+**Spring Security 5.4.6** 已经**弃用**spring cloud oauth2 和以前的 spring security oauth2, 具体对比参考这个文档:   
 https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Features-Matrix
 
 
->  具体来说就是 Resources Server 被弃用，Auth Server 已经出现一个实验性项目，不久将来将弃用，参考：      
->  - https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2   
->
->  - https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Migration-Guide
----
+Spring 官方迁移说明：   
+https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Migration-Guide
+
+新版 Spring Security Resource Server 文档:   
+https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2   
 
 > 注意，该项目仅支持 servlet 应用，webflux 不提供支持
 
