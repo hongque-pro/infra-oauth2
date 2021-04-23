@@ -108,7 +108,7 @@ registry
          .mvcMatchers("/test/field-aaa-test").hasTokenAttributeValue("aaa", "test")
 ```
 
-上述规则要求 token 中必须包含 aaa 属性，同时值必须未 test 。
+上述规则要求 token 中必须包含 aaa 属性，同时值必须是 test 。
 
 ## 开发环境兼容性：
 
