@@ -1,6 +1,6 @@
 package com.labijie.infra.oauth2.resource.expression
 
-import com.labijie.infra.oauth2.resource.getAttachedField
+import com.labijie.infra.oauth2.resource.getTokenAttributes
 import com.labijie.infra.oauth2.resource.isTwoFactorGranted
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.FilterInvocation
@@ -14,18 +14,17 @@ import org.springframework.security.web.access.expression.WebSecurityExpressionR
 class OAuth2TwoFactorExpressionRoot(a: Authentication?, fi: FilterInvocation?)
     : WebSecurityExpressionRoot(a, fi) {
 
-    companion object {
-        const val SCOPE_PREFIX = "SCOPE_"
-    }
-
-    fun twoFactorRequired() : Boolean {
+    fun twoFactorRequired(): Boolean {
         return this.authentication.isTwoFactorGranted
     }
 
-    fun hasAttachedFieldValue(fieldName: String, value: String): Boolean {
-        return this.authentication.getAttachedField(fieldName) == value
+    fun hasTokenAttributeValue(attribute: String, value: Any): Boolean {
+        return this.authentication.getTokenAttributes(attribute) == value
     }
 
+    fun hasTokenAttribute(attribute: String): Boolean {
+        return this.authentication.getTokenAttributes(attribute) != null
+    }
 
 
 //    private fun getAuthoritySet(): Set<String?>? {

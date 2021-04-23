@@ -22,6 +22,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.ProviderManager
+import org.springframework.security.core.token.TokenService
 import org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -52,15 +53,15 @@ import java.util.*
 @AutoConfigureAfter(OAuth2CustomizationAutoConfiguration::class)
 @AutoConfigureBefore(AuthorizationServerEndpointsConfiguration::class)
 class OAuth2ServerAutoConfiguration @Autowired constructor(
-    @JvmField private val authenticationManager: AuthenticationManager,
-    @param:Autowired(required = false)
-    @JvmField private val oauth2ExceptionHandler: IOAuth2ExceptionHandler?,
-    @JvmField private val serverProperties: OAuth2ServerProperties,
-    @JvmField private val oauth2RequestFactory: OAuth2RequestFactory,
-    @JvmField private val userDetailsService: UserDetailsService,
-    @JvmField private val clientDetailsService: ClientDetailsService,
-    @Autowired
-    tokenStore: TokenStore
+        @JvmField private val authenticationManager: AuthenticationManager,
+        @param:Autowired(required = false)
+        @JvmField private val oauth2ExceptionHandler: IOAuth2ExceptionHandler?,
+        @JvmField private val serverProperties: OAuth2ServerProperties,
+        @JvmField private val oauth2RequestFactory: OAuth2RequestFactory,
+        @JvmField private val userDetailsService: UserDetailsService,
+        @JvmField private val clientDetailsService: ClientDetailsService,
+        @Autowired
+        tokenStore: TokenStore
 ) : AuthorizationServerConfigurerAdapter() {
 
     private val tokenStore = tokenStore ?: InMemoryTokenStore()
@@ -73,7 +74,7 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
 //    }
 
 
-    private fun createAuthServerTokenServices(tokenEnhancer: TokenEnhancer): AuthorizationServerTokenServices {
+    fun createAuthServerTokenServices(tokenEnhancer: TokenEnhancer): DefaultTokenServices {
         val tokenServices = DefaultTokenServices()
         tokenServices.setClientDetailsService(clientDetailsService)
         tokenServices.setTokenStore(this.tokenStore)
@@ -81,26 +82,20 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
         tokenServices.setReuseRefreshToken(serverProperties.token.reuseRefreshToken)
         tokenServices.setSupportRefreshToken(serverProperties.token.refreshTokenEnabled)
         tokenServices.setAccessTokenValiditySeconds(
-            Math.max(
-                1,
-                serverProperties.token.accessTokenExpiration.seconds.toInt()
-            )
+                1.coerceAtLeast(serverProperties.token.accessTokenExpiration.seconds.toInt())
         )
         tokenServices.setRefreshTokenValiditySeconds(
-            Math.max(
-                1,
-                serverProperties.token.refreshTokenExpiration.seconds.toInt()
-            ).toInt()
+                1.coerceAtLeast(serverProperties.token.refreshTokenExpiration.seconds.toInt())
         )
 
         val provider = TwoFactorPreAuthenticationProvider()
         provider.setPreAuthenticatedUserDetailsService(
-            UserDetailsByNameServiceWrapper(
-                userDetailsService
-            )
+                UserDetailsByNameServiceWrapper(
+                        userDetailsService
+                )
         )
         tokenServices
-            .setAuthenticationManager(ProviderManager(Arrays.asList<AuthenticationProvider>(provider)))
+                .setAuthenticationManager(ProviderManager(listOf<AuthenticationProvider>(provider)))
 
         return tokenServices
     }
@@ -130,17 +125,18 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
 
     @Bean
     fun twoFactorSignInHelper(
-        tokenStore: TokenStore,
-        tokenServices: AuthorizationServerTokenServices,
-        eventPublisher: ApplicationEventPublisher
+            tokenStore: TokenStore,
+            tokenServices: AuthorizationServerTokenServices,
+            eventPublisher: ApplicationEventPublisher
     ): TwoFactorSignInHelper {
 
         return TwoFactorSignInHelper(
-            tokenStore,
-            eventPublisher,
-            clientDetailsService,
-            oauth2RequestFactory,
-            tokenServices
+                serverProperties,
+                tokenStore,
+                eventPublisher,
+                clientDetailsService,
+                oauth2RequestFactory,
+                tokenServices
         )
     }
 
@@ -180,8 +176,8 @@ class OAuth2ServerAutoConfiguration @Autowired constructor(
         val tokenService = createAuthServerTokenServices(enhancer)
         endpoints.tokenServices(tokenService)
         endpoints.tokenEnhancer(enhancer)
-
         endpoints.tokenStore(tokenStore)
+
         if (accessTokenConverter != null) {
             endpoints.accessTokenConverter(accessTokenConverter)
         }

@@ -8,7 +8,6 @@ import org.springframework.security.oauth2.jwt.JwtClaimAccessor
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken
 import org.springframework.util.Assert
 import org.springframework.util.StringUtils
-import kotlin.math.exp
 
 
 val JwtClaimAccessor.twoFactorGranted: Boolean?
@@ -34,8 +33,12 @@ fun ExpressionUrlAuthorizationConfigurer<*>.MvcMatchersAuthorizedUrl.hasAnyScope
     return this.access(expr)
 }
 
-fun ExpressionUrlAuthorizationConfigurer<*>.AuthorizedUrl.hasAttachedFiledValue(fieldName: String, value: String): ExpressionUrlAuthorizationConfigurer<*>.ExpressionInterceptUrlRegistry {
-    return this.access("${OAuth2TwoFactorExpressionRoot::hasAttachedFieldValue.name}('$fieldName','$value')")
+fun ExpressionUrlAuthorizationConfigurer<*>.AuthorizedUrl.hasTokenAttributeValue(attribute: String, value: String): ExpressionUrlAuthorizationConfigurer<*>.ExpressionInterceptUrlRegistry {
+    return this.access("${OAuth2TwoFactorExpressionRoot::hasTokenAttributeValue.name}('$attribute','$value')")
+}
+
+fun ExpressionUrlAuthorizationConfigurer<*>.AuthorizedUrl.hasTokenAttribute(attribute: String): ExpressionUrlAuthorizationConfigurer<*>.ExpressionInterceptUrlRegistry {
+    return this.access("${OAuth2TwoFactorExpressionRoot::hasTokenAttribute.name}('$attribute')")
 }
 
 fun ExpressionUrlAuthorizationConfigurer<*>.AuthorizedUrl.twoFactorRequired(): ExpressionUrlAuthorizationConfigurer<*>.ExpressionInterceptUrlRegistry {
@@ -52,21 +55,13 @@ val Authentication.isTwoFactorGranted: Boolean
         return false
     }
 
-fun Authentication.getAttachedField(propertyName: String): String {
+fun Authentication.getTokenAttributes(attribute: String): Any? {
     val oAuth2Authentication = (this as? AbstractOAuth2TokenAuthenticationToken<*>)
 
     val userDetails = (oAuth2Authentication?.tokenAttributes as? Map<*, *>)
-    return readAttachedField(userDetails, propertyName)
+    return userDetails?.get(attribute)
 }
 
-private fun readAttachedField(details: Map<*, *>?, fieldName: String): String {
-    return if (!details.isNullOrEmpty()) {
-        val v = details.getOrDefault(fieldName, "")
-        return (v?.toString()).orEmpty()
-    } else {
-        ""
-    }
-}
 
 private fun readIsTwoFactorGranted(details: Map<*, *>?): Boolean {
     return if (!details.isNullOrEmpty()) {

@@ -32,6 +32,16 @@ class ResourceTestController {
         return "ok"
     }
 
+    @PostMapping("/field-aaa-test")
+    fun fieldAAA(): String {
+        return "ok"
+    }
+
+    @PostMapping("/field-bbb-test")
+    fun fieldBBB(): String {
+        return "ok"
+    }
+
     @GetMapping("/current-user")
     fun currentUser(): TwoFactorPrincipal {
         return OAuth2Utils.currentTwoFactorPrincipal()

@@ -6,6 +6,7 @@ import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
 import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorSecurityExpressionHandler
+import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
@@ -66,6 +67,11 @@ class ResourceServerAutoConfiguration(
     @Bean
     fun bearTokenValueResolver(): BearTokenValueResolver {
         return BearTokenValueResolver()
+    }
+
+    @Bean
+    fun bearTokenPrincipalResolver(): BearTokenPrincipalResolver {
+        return BearTokenPrincipalResolver()
     }
 
     @Bean

@@ -49,7 +49,7 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
         details[CLAIM_USER_NAME] = user.username
         details[CLAIM_USER_ID] = user.getUserId()
 
-        if (twoFactorGranted != null) {
+        if (user.isTwoFactorEnabled() && twoFactorGranted != null) {
             details[CLAIM_TWO_FACTOR] = twoFactorGranted
         }
     }

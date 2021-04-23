@@ -7,6 +7,7 @@ import org.springframework.security.oauth2.common.OAuth2AccessToken
 import org.springframework.security.oauth2.provider.OAuth2Authentication
 import org.springframework.security.oauth2.provider.token.TokenEnhancer
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken
+import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter
 import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter
 import java.util.HashMap
 
@@ -20,33 +21,25 @@ class UserInfoTokenEnhancer : TokenEnhancer {
     override fun enhance(accessToken: OAuth2AccessToken, authentication: OAuth2Authentication): OAuth2AccessToken {
         val result = DefaultOAuth2AccessToken(accessToken)
         val additionalInfo = HashMap<String, Any>()
-        val user = authentication.userAuthentication.principal as? UserDetails
 
         if(!authentication.authorities.isNullOrEmpty())
         {
             additionalInfo[Constants.CLAIM_AUTHORITIES] = AuthorityUtils.authorityListToSet(authentication.authorities)
         }
 
+
+
+        val details = authentication.userAuthentication.details as? Map<*, *>
+        details?.forEach { (key, u) ->
+            if (key != null && u != null && key != DefaultAccessTokenConverter.GRANT_TYPE){
+                additionalInfo[key.toString()] = u
+            }
+        }
+
+        val user = authentication.userAuthentication.principal as? UserDetails
         if (user != null) {
             additionalInfo[Constants.CLAIM_USER_NAME] = user.username
         }
-
-        val details = authentication.userAuthentication.details as? Map<*, *>
-        if (details != null) {
-            additionalInfo[Constants.CLAIM_TWO_FACTOR] = details.getOrDefault(
-                Constants.CLAIM_TWO_FACTOR, "")!!
-            additionalInfo[Constants.CLAIM_USER_ID] = details.getOrDefault(
-                Constants.CLAIM_USER_ID, "")!!
-
-            //附加字段不向前端展示
-//            details.filter { kv -> kv.key != null && kv.key.toString().startsWith(Constants.TOKEN_ATTACHED_FIELD_PREFIX)  }.forEach{
-//                val key = it.key.toString()!!.removePrefix(Constants.TOKEN_ATTACHED_FIELD_PREFIX)
-//                if(!key.isNotBlank() && it.value != null){
-//                    additionalInfo[key] = it.value.toString()
-//                }
-//            }
-        }
-
 
         result.additionalInformation = additionalInfo
 
