@@ -114,7 +114,7 @@ class ResourceServerAutoConfiguration(
 
     private fun createOAuth2TokenValidator(): OAuth2TokenValidator<Jwt> {
         val withClockSkew: OAuth2TokenValidator<Jwt> = DelegatingOAuth2TokenValidator(
-            JwtTimestampValidator(Duration.ofSeconds(60))
+            JwtTimestampValidator(this.resourceServerProperties.jwt.clockSkew)
         )
 
 
