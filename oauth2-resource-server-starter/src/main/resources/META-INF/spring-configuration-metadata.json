@@ -2,7 +2,7 @@
   "group":[
     {
       "name":"infra.oauth2.resource-server",
-      "type": "com.labijie.infra.oauth2.resource.config.ResourceServerAutoConfiguration",
+      "type": "com.labijie.infra.oauth2.resource.config.ResourceServerProperties",
       "description": "oauth resource server config"
     },
     {
