@@ -157,5 +157,6 @@ class ResourceServerAutoConfiguration(
                 this.applyJwtConfiguration(it)
             }
         }
+            .csrf().disable()
     }
 }
