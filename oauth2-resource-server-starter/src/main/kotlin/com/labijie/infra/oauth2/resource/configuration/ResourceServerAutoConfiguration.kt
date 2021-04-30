@@ -139,10 +139,10 @@ class ResourceServerAutoConfiguration(
     }
 
     override fun configure(http: HttpSecurity) {
-
-
         val settings = http
             .authorizeRequests { authorize ->
+                authorize.mvcMatchers(Constants.DEFAULT_JWK_SET_ENDPOINT_PATH, Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH)
+
                 resourceConfigurers.orderedStream().forEach {
                     it.configure(authorize)
                 }
@@ -157,5 +157,6 @@ class ResourceServerAutoConfiguration(
                 this.applyJwtConfiguration(it)
             }
         }
+            .csrf().disable()
     }
 }
