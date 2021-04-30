@@ -8,6 +8,7 @@ import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
 import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorSecurityExpressionHandler
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
+import com.labijie.infra.oauth2.resource.token.DefaultJwtAuthenticationConverter
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -30,6 +31,7 @@ import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import java.security.interfaces.RSAPublicKey
 import java.time.Duration
 
@@ -39,9 +41,9 @@ import java.time.Duration
 @EnableConfigurationProperties(ResourceServerProperties::class)
 @Order(99)
 class ResourceServerAutoConfiguration(
-    private val oauth2ResProperties: OAuth2ResourceServerProperties,
-    private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>,
-    private val resourceServerProperties: ResourceServerProperties
+        private val oauth2ResProperties: OAuth2ResourceServerProperties,
+        private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>,
+        private val resourceServerProperties: ResourceServerProperties
 ) : WebSecurityConfigurerAdapter(false) {
 
 
@@ -65,6 +67,12 @@ class ResourceServerAutoConfiguration(
     }
 
     @Bean
+    @ConditionalOnMissingBean(JwtAuthenticationConverter::class)
+    fun defaultJwtAuthenticationConverter(): DefaultJwtAuthenticationConverter {
+        return DefaultJwtAuthenticationConverter()
+    }
+
+    @Bean
     fun bearTokenValueResolver(): BearTokenValueResolver {
         return BearTokenValueResolver()
     }
@@ -82,23 +90,23 @@ class ResourceServerAutoConfiguration(
     }
 
     fun applyJwtConfiguration(
-        configurer: OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer
+            configurer: OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer
     ): OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer {
         //参考：https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2resourceserver-jwt-decoder-secret-key
         val decoder = if (resourceServerProperties.jwt.rsaPubKey.isNotBlank()) {
             val rsaPubKey = RsaUtils.getPublicKey(resourceServerProperties.jwt.rsaPubKey) as RSAPublicKey
             NimbusJwtDecoder.withPublicKey(rsaPubKey)
-                .build()
+                    .build()
         } else if (!oauth2ResProperties.jwt.jwkSetUri.isNullOrBlank()) {
             NimbusJwtDecoder.withJwkSetUri(oauth2ResProperties.jwt.jwkSetUri)
-                .build()
+                    .build()
         } else if (oauth2ResProperties.jwt.publicKeyLocation?.exists() == true) {
             val pubKey = RsaUtils.getPublicKey(oauth2ResProperties.jwt.readPublicKey())
             NimbusJwtDecoder.withPublicKey(pubKey)
-                .build()
+                    .build()
         } else {
             NimbusJwtDecoder.withPublicKey(RsaUtils.defaultKeyPair.public as RSAPublicKey)
-                .build()
+                    .build()
         }
 
         val withClockSkew: OAuth2TokenValidator<Jwt> = createOAuth2TokenValidator()
@@ -114,7 +122,7 @@ class ResourceServerAutoConfiguration(
 
     private fun createOAuth2TokenValidator(): OAuth2TokenValidator<Jwt> {
         val withClockSkew: OAuth2TokenValidator<Jwt> = DelegatingOAuth2TokenValidator(
-            JwtTimestampValidator(this.resourceServerProperties.jwt.clockSkew)
+                JwtTimestampValidator(this.resourceServerProperties.jwt.clockSkew)
         )
 
 
@@ -123,40 +131,40 @@ class ResourceServerAutoConfiguration(
 
     private fun createJwtClaimSetConverter(): MappedJwtClaimSetConverter {
         val collectionStringConverter = getConverter(
-            TypeDescriptor.collection(MutableCollection::class.java, STRING_TYPE_DESCRIPTOR)
+                TypeDescriptor.collection(MutableCollection::class.java, STRING_TYPE_DESCRIPTOR)
         )
 
         val converter = MappedJwtClaimSetConverter
-            .withDefaults(
-                mapOf(
-                    Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
-                    Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
-                    Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
-                    Constants.CLAIM_AUTHORITIES to collectionStringConverter
+                .withDefaults(
+                        mapOf(
+                                Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
+                                Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
+                                Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
+                                Constants.CLAIM_AUTHORITIES to collectionStringConverter
+                        )
                 )
-            )
         return converter
     }
 
     override fun configure(http: HttpSecurity) {
         val settings = http
-            .authorizeRequests { authorize ->
-                authorize.mvcMatchers(Constants.DEFAULT_JWK_SET_ENDPOINT_PATH, Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH)
+                .csrf().disable()
+                .authorizeRequests { authorize ->
+                    authorize.mvcMatchers(Constants.DEFAULT_JWK_SET_ENDPOINT_PATH, Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH)
 
-                resourceConfigurers.orderedStream().forEach {
-                    it.configure(authorize)
+                    resourceConfigurers.orderedStream().forEach {
+                        it.configure(authorize)
+                    }
+
+                    authorize
+                            .expressionHandler(OAuth2TwoFactorSecurityExpressionHandler(http))
+                            .anyRequest().authenticated()
                 }
-
-                authorize
-                    .expressionHandler(OAuth2TwoFactorSecurityExpressionHandler(http))
-                    .anyRequest().authenticated()
-            }
 
         settings.oauth2ResourceServer { obj ->
             obj.jwt().also {
                 this.applyJwtConfiguration(it)
             }
         }
-            .csrf().disable()
     }
 }

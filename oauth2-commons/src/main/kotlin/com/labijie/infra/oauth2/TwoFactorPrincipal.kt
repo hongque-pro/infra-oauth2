@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.springframework.security.core.GrantedAuthority
 
 /**
@@ -13,8 +14,10 @@ data class TwoFactorPrincipal(
         val isTwoFactorGranted: Boolean,
         val authorities: MutableCollection<GrantedAuthority>,
         val attachedFields: Map<String, String>) {
+
+    @get:JsonIgnore
     val roleNames: List<String> by lazy {
-        this.authorities.map { it.authority }
+        this.authorities.filter { it.authority.startsWith(Constants.ROLE_AUTHORITY_PREFIX) }.map { it.authority }
     }
 
 }

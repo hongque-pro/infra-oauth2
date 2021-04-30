@@ -42,6 +42,16 @@ class ResourceTestController {
         return "ok"
     }
 
+    @PostMapping("/role-aa-test")
+    fun roleAA(): String {
+        return "ok"
+    }
+
+    @PostMapping("/role-bb-test")
+    fun roleBB(): String {
+        return "ok"
+    }
+
     @GetMapping("/current-user")
     fun currentUser(): TwoFactorPrincipal {
         return OAuth2Utils.currentTwoFactorPrincipal()

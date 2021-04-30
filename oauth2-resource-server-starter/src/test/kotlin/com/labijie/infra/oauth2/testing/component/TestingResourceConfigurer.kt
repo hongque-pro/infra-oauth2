@@ -11,5 +11,7 @@ class TestingResourceConfigurer : IResourceAuthorizationConfigurer {
         registry.mvcMatchers("/test/2fac").twoFactorRequired()
                 .mvcMatchers("/test/field-aaa-test").hasTokenAttributeValue("aaa", "test")
                 .mvcMatchers("/test/field-bbb-test").hasTokenAttributeValue("bbb", "miss")
+                .mvcMatchers("/test/role-aa-test").hasRole("aa")
+                .mvcMatchers("/test/role-bb-test").hasRole("bb")
     }
 }

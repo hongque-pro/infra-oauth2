@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.resource.expression
 
+import com.labijie.infra.oauth2.Constants
 import org.springframework.context.ApplicationContext
 import org.springframework.security.access.PermissionEvaluator
 import org.springframework.security.access.expression.SecurityExpressionOperations
@@ -20,7 +21,6 @@ import org.springframework.security.web.access.expression.DefaultWebSecurityExpr
 class OAuth2TwoFactorSecurityExpressionHandler(http : HttpSecurity) : DefaultWebSecurityExpressionHandler() {
 
     private var resolver: AuthenticationTrustResolver = AuthenticationTrustResolverImpl()
-    private var rolePrefix = "ROLE_"
 
     init {
         val trustResolver: AuthenticationTrustResolver? = http.getSharedObject(AuthenticationTrustResolver::class.java)
@@ -43,7 +43,7 @@ class OAuth2TwoFactorSecurityExpressionHandler(http : HttpSecurity) : DefaultWeb
             if (permissionEvaluatorBeanNames.size == 1) {
                 val permissionEvaluator = context.getBean(permissionEvaluatorBeanNames[0],
                         PermissionEvaluator::class.java)
-                this.setPermissionEvaluator(permissionEvaluator)
+                this.permissionEvaluator = permissionEvaluator
             }
         }
     }
@@ -54,7 +54,7 @@ class OAuth2TwoFactorSecurityExpressionHandler(http : HttpSecurity) : DefaultWeb
         root.setPermissionEvaluator(permissionEvaluator)
         root.setTrustResolver(resolver)
         root.setRoleHierarchy(roleHierarchy)
-        root.setDefaultRolePrefix(rolePrefix)
+        root.setDefaultRolePrefix(Constants.ROLE_AUTHORITY_PREFIX)
 
         return root
     }
