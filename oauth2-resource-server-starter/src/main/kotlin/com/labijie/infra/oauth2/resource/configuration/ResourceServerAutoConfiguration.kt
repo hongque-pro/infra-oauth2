@@ -150,8 +150,7 @@ class ResourceServerAutoConfiguration(
         val settings = http
                 .csrf().disable()
                 .authorizeRequests { authorize ->
-                    authorize.mvcMatchers(Constants.DEFAULT_JWK_SET_ENDPOINT_PATH, Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH)
-
+                    authorize.mvcMatchers(Constants.DEFAULT_JWK_SET_ENDPOINT_PATH, Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH).permitAll()
                     resourceConfigurers.orderedStream().forEach {
                         it.configure(authorize)
                     }
