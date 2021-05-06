@@ -5,6 +5,7 @@ import com.labijie.infra.oauth2.endpoint.IntrospectEndpoint
 import com.labijie.infra.oauth2.endpoint.JwkSetEndpoint
 import com.labijie.infra.oauth2.resolver.OAuth2PrincipalResolver
 import com.labijie.infra.oauth2.resolver.OAuth2TokenValueResolver
+import com.labijie.infra.oauth2.resolver.SignInPrincipalResolver
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -122,6 +123,11 @@ class OAuth2CustomizationAutoConfiguration(
     @Bean
     fun oauth2PrincipalResolver(): OAuth2PrincipalResolver {
         return OAuth2PrincipalResolver()
+    }
+
+    @Bean
+    fun signInPrincipalResolver(): SignInPrincipalResolver {
+        return SignInPrincipalResolver()
     }
 
     @Bean
