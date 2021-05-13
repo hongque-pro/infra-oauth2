@@ -10,6 +10,7 @@ import com.labijie.infra.oauth2.isWellKnownClaim
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.common.OAuth2AccessToken
+import org.springframework.security.oauth2.provider.token.AccessTokenConverter
 import org.springframework.security.oauth2.provider.token.DefaultUserAuthenticationConverter
 
 /**
@@ -41,7 +42,11 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
         return details
     }
 
-    fun setUserDetails(details: MutableMap<String, Any>, user: ITwoFactorUserDetails, twoFactorGranted: Boolean? = null) {
+    fun setUserDetails(
+        details: MutableMap<String, Any>,
+        user: ITwoFactorUserDetails,
+        twoFactorGranted: Boolean? = null
+    ) {
 
         user.getTokenAttributes().forEach {
             details[it.key] = it.value
@@ -73,9 +78,9 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
 //                if (isWellKnownClaim(key)) {
 //                    copyAttributesTo(attributes, key, details)
 //                }
-              if (key !in ignoredClaims && !isWellKnownClaim(key)) {
-                  copyAttributesTo(attributes, key, details)
-              }
+                if (key !in ignoredClaims && !isWellKnownClaim(key)) {
+                    copyAttributesTo(attributes, key, details)
+                }
             }
 
             copyAttributesTo(attributes, CLAIM_USER_ID, details)
@@ -88,7 +93,7 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
         return authentication
     }
 
-    private val ignoredClaims =  setOf(
+    private val ignoredClaims = setOf(
         Constants.CLAIM_EXP,
         Constants.CLAIM_AUD,
         Constants.CLAIM_IAT,
@@ -102,6 +107,7 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
         OAuth2AccessToken.OAUTH2_TYPE,
         OAuth2AccessToken.REFRESH_TOKEN,
         OAuth2AccessToken.SCOPE,
+        AccessTokenConverter.ATI,
         "client_id",
         "grant_type"
     )

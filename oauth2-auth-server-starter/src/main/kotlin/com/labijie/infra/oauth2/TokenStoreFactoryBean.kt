@@ -2,16 +2,12 @@ package com.labijie.infra.oauth2
 
 import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.labijie.infra.oauth2.configuration.TokenStoreType
-import com.labijie.infra.oauth2.token.FixedDefaultAccessTokenConverter
 import com.labijie.infra.oauth2.token.TwoFactorAuthenticationConverter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.FactoryBean
-import org.springframework.beans.factory.NoSuchBeanDefinitionException
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter
 import org.springframework.security.oauth2.provider.token.TokenStore
 import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore
@@ -35,7 +31,7 @@ class TokenStoreFactoryBean(
 
         fun jwtAccessTokenConverter(oAuth2Config: OAuth2ServerProperties): JwtAccessTokenConverter {
             val converter = JwtAccessTokenConverter()
-            converter.accessTokenConverter = FixedDefaultAccessTokenConverter().apply {
+            converter.accessTokenConverter = DefaultAccessTokenConverter().apply {
                 this.setUserTokenConverter(TwoFactorAuthenticationConverter)
             }
             configAuthenticationRSA(converter, oAuth2Config)
