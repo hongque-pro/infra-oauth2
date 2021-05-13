@@ -29,6 +29,8 @@ class TestingClientDetailServiceFactory : IClientDetailsServiceFactory {
 
             val details = BaseClientDetails().apply {
                 this.clientId = clientId
+//                this.refreshTokenValiditySeconds = 3
+//                this.accessTokenValiditySeconds = 1
                 this.clientSecret = OAuth2TestingUtils.TestClientSecret //OAuth2TestingUtils.passwordEncoder.encode("abcdefg")
                 this.setAuthorizedGrantTypes(setOf(
                         Constants.GRANT_TYPE_PASSWORD,
