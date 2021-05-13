@@ -61,7 +61,6 @@ class OAuth2ServerTester : OAuth2Tester() {
     fun testRefreshToken(){
         val tokenResult = this.performTokenAction().readToMap()
         Assertions.assertTrue(tokenResult.containsKey("refresh_token"))
-        Thread.sleep(5000)
         val params: MultiValueMap<String, String> = LinkedMultiValueMap()
         params.add("grant_type", "refresh_token")
         //params.add("scope", "api")
