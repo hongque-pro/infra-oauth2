@@ -9,6 +9,7 @@ import com.labijie.infra.oauth2.copyAttributesTo
 import com.labijie.infra.oauth2.isWellKnownClaim
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.core.Authentication
+import org.springframework.security.oauth2.common.OAuth2AccessToken
 import org.springframework.security.oauth2.provider.token.DefaultUserAuthenticationConverter
 
 /**
@@ -69,9 +70,12 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
             val attributes = map as Map<String, Any>
 
             attributes.forEach { (key, _) ->
-                if (!isWellKnownClaim(key)) {
-                    copyAttributesTo(attributes, key, details)
-                }
+//                if (isWellKnownClaim(key)) {
+//                    copyAttributesTo(attributes, key, details)
+//                }
+              if (key !in ignoredClaims && !isWellKnownClaim(key)) {
+                  copyAttributesTo(attributes, key, details)
+              }
             }
 
             copyAttributesTo(attributes, CLAIM_USER_ID, details)
@@ -84,5 +88,22 @@ object TwoFactorAuthenticationConverter : DefaultUserAuthenticationConverter() {
         return authentication
     }
 
+    private val ignoredClaims =  setOf(
+        Constants.CLAIM_EXP,
+        Constants.CLAIM_AUD,
+        Constants.CLAIM_IAT,
+        Constants.CLAIM_ISS,
+        Constants.CLAIM_JTI,
+        Constants.CLAIM_NBF,
+        Constants.CLAIM_SUB,
+        OAuth2AccessToken.ACCESS_TOKEN,
+        OAuth2AccessToken.BEARER_TYPE,
+        OAuth2AccessToken.EXPIRES_IN,
+        OAuth2AccessToken.OAUTH2_TYPE,
+        OAuth2AccessToken.REFRESH_TOKEN,
+        OAuth2AccessToken.SCOPE,
+        "client_id",
+        "grant_type"
+    )
 
 }

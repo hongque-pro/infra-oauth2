@@ -78,6 +78,15 @@ class OAuth2ServerTester : OAuth2Tester() {
         val map = result.readToMap()
         val refreshedToken = map["access_token"]?.toString()
         Assertions.assertFalse(refreshedToken.isNullOrBlank())
+
+      val resultCheck = mockMvc.perform(post("/oauth/check_token")
+        .param("token", map["access_token"]!!.toString())
+        .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk)
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+      val mapCheck = resultCheck.readToMap()
+      Assertions.assertEquals(mapCheck["active"]?.toString(), "true")
     }
 
     @Test

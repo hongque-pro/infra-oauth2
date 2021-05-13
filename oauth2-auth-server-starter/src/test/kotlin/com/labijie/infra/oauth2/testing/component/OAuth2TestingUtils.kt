@@ -23,7 +23,7 @@ object OAuth2TestingUtils {
                 val map = JacksonHelper.deserializeMap(resultString.toByteArray(Charsets.UTF_8), String::class, Any::class)
                 val pretty = JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map)
                 if(logResult) {
-                        logger.debug("Http Result: ${System.lineSeparator()}$pretty")
+                        logger.info("Http Result: ${System.lineSeparator()}$pretty")
                 }
                 return map
         }

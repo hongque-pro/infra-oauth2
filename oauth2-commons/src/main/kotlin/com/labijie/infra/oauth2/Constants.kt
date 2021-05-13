@@ -36,7 +36,6 @@ object Constants {
     const val ROLE_AUTHORITY_PREFIX = "ROLE_"
 }
 
-
 fun isWellKnownClaim(claimName: String): Boolean {
     return when (claimName) {
         Constants.CLAIM_TWO_FACTOR,
