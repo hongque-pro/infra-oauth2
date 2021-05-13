@@ -78,14 +78,7 @@ class OAuth2ServerTester : OAuth2Tester() {
         val refreshedToken = map["access_token"]?.toString()
         Assertions.assertFalse(refreshedToken.isNullOrBlank())
 
-      val resultCheck = mockMvc.perform(post("/oauth/check_token")
-        .param("token", map["access_token"]!!.toString())
-        .accept(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk)
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-
-      val mapCheck = resultCheck.readToMap()
-      Assertions.assertEquals(mapCheck["active"]?.toString(), "true")
+        doCheckToken(map["access_token"]!!.toString())
     }
 
     @Test
@@ -95,16 +88,23 @@ class OAuth2ServerTester : OAuth2Tester() {
 
         val tokenValue = tokenResult["access_token"]?.toString()
 
-        val result = mockMvc.perform(post("/oauth/check_token")
+        val map = doCheckToken(tokenValue)
+
+        logger.debug(JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
+    }
+
+    private fun doCheckToken(tokenValue: String?): Map<String, Any> {
+        val result = mockMvc.perform(
+            post("/oauth/check_token")
                 .param("token", tokenValue)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk)
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 
         val map = result.readToMap()
         Assertions.assertEquals(map["active"]?.toString(), "true")
-
-        logger.debug(JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
+        return map
     }
 
     @Test
