@@ -2,6 +2,7 @@ package com.labijie.infra.oauth2
 
 import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.labijie.infra.oauth2.configuration.TokenStoreType
+import com.labijie.infra.oauth2.token.FixedDefaultAccessTokenConverter
 import com.labijie.infra.oauth2.token.TwoFactorAuthenticationConverter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.FactoryBean
@@ -34,7 +35,7 @@ class TokenStoreFactoryBean(
 
         fun jwtAccessTokenConverter(oAuth2Config: OAuth2ServerProperties): JwtAccessTokenConverter {
             val converter = JwtAccessTokenConverter()
-            converter.accessTokenConverter = DefaultAccessTokenConverter().apply {
+            converter.accessTokenConverter = FixedDefaultAccessTokenConverter().apply {
                 this.setUserTokenConverter(TwoFactorAuthenticationConverter)
             }
             configAuthenticationRSA(converter, oAuth2Config)
