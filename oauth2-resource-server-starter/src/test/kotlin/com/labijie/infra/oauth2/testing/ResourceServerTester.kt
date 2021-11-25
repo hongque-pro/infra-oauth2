@@ -164,7 +164,7 @@ class ResourceServerTester : OAuth2Tester() {
         }.readToMap()
 
         Assertions.assertNotNull(p)
-        Assertions.assertEquals(1, (p[TwoFactorPrincipal::authorities.name] as List<*>).size)
+        Assertions.assertEquals(OAuth2TestingUtils.TestUser.authorities.size, (p[TwoFactorPrincipal::authorities.name] as List<*>).size)
 
         val first = (p[TwoFactorPrincipal::authorities.name] as List<*>).first() as Map<*, *>
         Assertions.assertEquals(OAuth2TestingUtils.TestUser.authorities.first().authority, first["authority"])
