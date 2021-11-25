@@ -1,0 +1,5 @@
+infra:
+  oauth2:
+    client-repository: memory
+    token:
+      store: Jwt

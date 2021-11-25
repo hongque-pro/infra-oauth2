@@ -1,7 +1,7 @@
 dependencies {
   api project(":oauth2-commons")
   api "org.springframework.boot:spring-boot-starter-security"
-  api "org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:$spring_security_boot_version"
+  api "org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:$spring_boot_version"
 
   compileOnly group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis'
 

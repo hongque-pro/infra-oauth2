@@ -1,0 +1,13 @@
+dependencies {
+    api project(":oauth2-commons")
+    api "org.springframework.boot:spring-boot-starter-security"
+    api "org.springframework.security:spring-security-oauth2-authorization-server:$spring_authorization_server_version"
+
+    implementation  "org.springframework.boot:spring-boot-starter-jdbc"
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    compileOnly "org.springframework.boot:spring-boot-starter-data-redis"
+
+    testImplementation "org.springframework.boot:spring-boot-starter-web"
+    testImplementation ("org.springframework.boot:spring-boot-starter-test:$spring_boot_version")
+}
