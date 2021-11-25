@@ -1,228 +1,259 @@
-//package com.labijie.infra.oauth2
-//
-//import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
-//import com.labijie.infra.oauth2.events.UserSignedInEvent
-//import com.labijie.infra.oauth2.token.TwoFactorAuthenticationConverter
-//import org.springframework.context.ApplicationEventPublisher
-//import org.springframework.security.authentication.BadCredentialsException
-//import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-//import org.springframework.security.core.Authentication
-//import org.springframework.security.core.GrantedAuthority
-//import org.springframework.security.core.authority.SimpleGrantedAuthority
-//import org.springframework.security.core.context.SecurityContextHolder
-//import org.springframework.security.oauth2.common.OAuth2AccessToken
-//import org.springframework.security.oauth2.core.OAuth2AccessToken
-//import org.springframework.security.oauth2.provider.AuthorizationRequest
-//import org.springframework.security.oauth2.provider.ClientDetailsService
-//import org.springframework.security.oauth2.provider.OAuth2Authentication
-//import org.springframework.security.oauth2.provider.OAuth2RequestFactory
-//import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices
-//import org.springframework.security.oauth2.provider.token.DefaultTokenServices
-//import org.springframework.security.oauth2.provider.token.TokenStore
-//
-///**
-// * Created with IntelliJ IDEA.
-// * @author Anders Xiao
-// * @date 2019-02-21
-// */
-//class TwoFactorSignInHelper(
-//        private val serverProperties: OAuth2ServerProperties,
-//        private val tokenStore: TokenStore,
-//        private val eventPublisher: ApplicationEventPublisher,
-//        private val clientDetailsService: ClientDetailsService,
-//        private val oauth2RequestFactory: OAuth2RequestFactory,
-//        private val tokenServices: AuthorizationServerTokenServices
-//) {
-//
-//    init {
-//        (tokenServices as? DefaultTokenServices)?.apply {
-//            this.setAccessTokenValiditySeconds(
-//                    1.coerceAtLeast(serverProperties.token.accessTokenExpiration.seconds.toInt())
-//            )
-//            this.setRefreshTokenValiditySeconds(
-//                    1.coerceAtLeast(serverProperties.token.refreshTokenExpiration.seconds.toInt())
-//            )
+package com.labijie.infra.oauth2
+
+import com.labijie.infra.oauth2.authentication.JwtUtils
+import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
+import com.labijie.infra.oauth2.events.UserSignedInEvent
+import com.labijie.infra.utils.ifNullOrBlank
+import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.security.authentication.AbstractAuthenticationToken
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.security.oauth2.core.*
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
+import org.springframework.security.oauth2.jwt.*
+import org.springframework.security.oauth2.server.authorization.JwtEncodingContext
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
+import java.security.Principal
+
+/**
+ * Created with IntelliJ IDEA.
+ * @author Anders Xiao
+ * @date 2019-02-21
+ */
+class TwoFactorSignInHelper(
+    private val clientRepository: RegisteredClientRepository,
+    private val serverProperties: OAuth2ServerProperties,
+    private val eventPublisher: ApplicationEventPublisher,
+    private val jwtEncoder: JwtEncoder,
+    private val jwtDecoder: JwtDecoder,
+    private val jwtCustomizer: OAuth2TokenCustomizer<JwtEncodingContext>,
+    private val identityService: IIdentityService,
+): ApplicationContextAware {
+
+    companion object {
+        private val LOGGER = LoggerFactory.getLogger(TwoFactorSignInHelper::class.java)
+    }
+
+    private lateinit var context: ApplicationContext
+
+    private lateinit var authenticationManager: AuthenticationManager
+    private lateinit var authorizationService: OAuth2AuthorizationService
+
+    fun setup(authenticationManager: AuthenticationManager, authorizationService: OAuth2AuthorizationService){
+        this.authenticationManager = authenticationManager
+        this.authorizationService = authorizationService
+    }
+
+
+    fun signIn(
+        clientId: String,
+        userName: String,
+        twoFactorGranted: Boolean = false,
+        scopes: Set<String> = setOf()
+    ): OAuth2AccessTokenAuthenticationToken {
+        if(userName.isBlank()){
+            throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
+        }
+
+        val user = identityService.getUserByName(userName)
+
+        val client = clientRepository.findByClientId(clientId)
+            ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT)
+
+        return signIn(
+            client,
+            user.username,
+            twoFactorGranted,
+            scopes,
+            null
+        )
+    }
+
+
+    fun signIn(
+        clientId: String,
+        user: ITwoFactorUserDetails,
+        twoFactorGranted: Boolean = false,
+        scopes: Set<String> = setOf()
+    ): OAuth2AccessTokenAuthenticationToken {
+        if (!user.isTwoFactorEnabled() && twoFactorGranted) {
+            throw IllegalArgumentException("SignIn user isTwoFactorEnabled = false, but twoFactorGranted be set to true.")
+        }
+
+        val client = clientRepository.findByClientId(clientId)
+            ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT)
+
+        return signIn(
+            client,
+            user.username,
+            twoFactorGranted,
+            scopes,
+            null
+        )
+    }
+
+
+    fun signIn(
+        registeredClient: RegisteredClient,
+        username: String,
+        twoFactorGranted: Boolean = false,
+        scopes: Set<String> = setOf(),
+        password: String? = null
+    ): OAuth2AccessTokenAuthenticationToken {
+        return try {
+            val userAuthentication = if(password != null){
+                val usernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(username, password)
+                if (LOGGER.isDebugEnabled) {
+                    LOGGER.debug("got usernamePasswordAuthenticationToken=$usernamePasswordAuthenticationToken")
+                }
+                val r =  authenticationManager.authenticate(usernamePasswordAuthenticationToken)
+                val principal = (r.principal as? ITwoFactorUserDetails)?.withoutPassword()
+                if(principal != null){
+                    //尽量移除密码信息
+                    UsernamePasswordAuthenticationToken(principal, null)
+                }else{
+                    r
+                }
+            }else{
+                val user = identityService.getUserByName(username).withoutPassword()
+                UsernamePasswordAuthenticationToken(user, null)
+            }
+
+
+            var authorizedScopes = registeredClient.scopes ?: setOf() // Default to configured scopes
+            if (scopes.isNotEmpty() && registeredClient.scopes.isNotEmpty()) { //没有配置 scope 认为忽略
+                val unauthorizedScopes: Set<String> = scopes
+                    .filter { requestedScope -> !registeredClient.scopes.contains(requestedScope) }
+                    .toSet()
+                if (unauthorizedScopes.isNotEmpty()) {
+                    throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_SCOPE)
+                }
+                authorizedScopes = scopes
+            }
+            val issuer = serverProperties.issuer
+
+            val headersBuilder: JoseHeader.Builder = JwtUtils.headers()
+            val claimsBuilder: JwtClaimsSet.Builder = JwtUtils.accessTokenClaims(
+                registeredClient, issuer, registeredClient.clientId, authorizedScopes
+            )
+            val context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
+                .registeredClient(registeredClient)
+                .principal(userAuthentication)
+                .authorizedScopes(authorizedScopes)
+                .tokenType(OAuth2TokenType.ACCESS_TOKEN)
+                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
+                .put(Constants.CLAIM_TWO_FACTOR, twoFactorGranted)
+                //.authorizationGrant(resourceOwnerPasswordAuthentication)
+                .build()
+            jwtCustomizer.customize(context)
+
+
+            val headers = context.headers.build()
+            val claims = context.claims.build()
+            val jwtAccessToken = jwtEncoder.encode(headers, claims)
+
+            // Use the scopes after customizing the token
+            authorizedScopes = claims.getClaim(OAuth2ParameterNames.SCOPE) ?: setOf()
+            val accessToken = OAuth2AccessToken(
+                OAuth2AccessToken.TokenType.BEARER,
+                jwtAccessToken.tokenValue,
+                jwtAccessToken.issuedAt,
+                jwtAccessToken.expiresAt,
+                authorizedScopes
+            )
+            var refreshToken: OAuth2RefreshToken? = null
+            if (registeredClient.authorizationGrantTypes.contains(AuthorizationGrantType.REFRESH_TOKEN)) {
+                refreshToken =
+                    OAuth2ServerUtils.generateRefreshToken(registeredClient.tokenSettings.refreshTokenTimeToLive)
+            }
+            val authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
+                .principalName(registeredClient.clientId)
+                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
+                .token<OAuth2Token>(
+                    accessToken
+                ) { metadata: MutableMap<String?, Any?> ->
+                    metadata[OAuth2Authorization.Token.CLAIMS_METADATA_NAME] = jwtAccessToken.claims
+                }
+                .attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes)
+                .attribute(Principal::class.java.name, userAuthentication)
+            if (refreshToken != null) {
+                authorizationBuilder.refreshToken(refreshToken)
+            }
+            val authorization = authorizationBuilder.build()
+            authorizationService.save(authorization)
+            if (LOGGER.isDebugEnabled) {
+                LOGGER.debug("OAuth2Authorization saved successfully")
+            }
+            val tokenAdditionalParameters: MutableMap<String, Any> = HashMap()
+            claims.claims.forEach { (key: String, value: Any) ->
+                if (key != OAuth2ParameterNames.SCOPE &&
+                    key != JwtClaimNames.IAT &&
+                    key != JwtClaimNames.EXP &&
+                    key != JwtClaimNames.NBF
+                ) {
+                    tokenAdditionalParameters[key] = value
+                }
+            }
+            if (LOGGER.isDebugEnabled) {
+                LOGGER.debug("returning OAuth2AccessTokenAuthenticationToken")
+            }
+            val token = OAuth2AccessTokenAuthenticationToken(
+                registeredClient,
+                userAuthentication,
+                accessToken,
+                refreshToken,
+                tokenAdditionalParameters
+            )
+            token.isAuthenticated = true
+
+            eventPublisher.publishEvent(UserSignedInEvent(this, token))
+            token
+        } catch (ex: Exception) {
+            LOGGER.error("problem in authenticate", ex)
+            throw OAuth2AuthenticationException(OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR), ex)
+        }
+    }
+
+    fun signInTwoFactor(): OAuth2AccessTokenAuthenticationToken {
+        val au = SecurityContextHolder.getContext().authentication
+        if(au == null || !au.isAuthenticated){
+            throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
+        }
+        val value = OAuth2Utils.getTokenValue(au)
+        val token = jwtDecoder.decode(value)
+        val client = token.claims[JwtClaimNames.SUB]?.toString() ?: ""
+        val scopeNames = (token.claims[OAuth2ParameterNames.SCOPE]?.toString() ?: "").split(",").filter { it.isNotBlank() }.toSet()
+        val username = (token.claims[Constants.CLAIM_USER_NAME]?.toString() ?: "")
+        return signIn(client, username, true, scopeNames)
+    }
+
+//    fun signInTwoFactorAsync(): Mono<OAuth2AccessToken> {
+//        return ReactiveSecurityContextHolder.getContext().map {
+//            val auth = SecurityContextHolder.getContext().authentication as? OAuth2Authentication
+//            val token = signInTwoFactorCore(auth)
+//            token
 //        }
-//
 //    }
-//
-//    fun signIn(
-//            clientId: String,
-//            user: ITwoFactorUserDetails,
-//            twoFactorGranted: Boolean = false,
-//            scopes: Set<String> = setOf()
-//    ): OAuth2AccessToken {
-//        if (!user.isTwoFactorEnabled() && twoFactorGranted) {
-//            throw IllegalArgumentException("SignIn user isTwoFactorEnabled = false, but twoFactorGranted be set to true.");
-//        }
-//        return signIn(
-//                clientId,
-//                user.getUserId(),
-//                user.username,
-//                twoFactorGranted,
-//                user.isTwoFactorEnabled(),
-//                user.authorities,
-//                scopes,
-//                user.getTokenAttributes()
-//        )
-//    }
-//
-//    fun signIn(
-//            clientId: String,
-//            userId: String,
-//            userName: String,
-//            twoFactorGranted: Boolean = false,
-//            twoFactorEnabled: Boolean = false,
-//            authorities: Iterable<GrantedAuthority> = setOf(),
-//            scope: Set<String> = setOf(),
-//            attachedFields: Map<String, String> = mapOf()
-//    ): OAuth2AccessToken {
-//        return signIn(
-//                clientId,
-//                userId,
-//                userName,
-//                authorities.map { it.authority },
-//                if (twoFactorEnabled) twoFactorGranted else null,
-//                scope,
-//                attachedFields
-//        )
-//    }
-//
-//    fun signIn(
-//            clientId: String,
-//            userId: String,
-//            userName: String,
-//            authorities: Iterable<String>,
-//            twoFactorGranted: Boolean? = null,
-//            scope: Set<String> = setOf(),
-//            attachedFields: Map<String, String> = mapOf()
-//    ): OAuth2AccessToken {
-//
-//        val authorityObjects = ArrayList(authorities.map { SimpleGrantedAuthority(it) })
-//        val client = clientDetailsService.loadClientByClientId(clientId)
-//        val user = SimpleTwoFactorUserDetails(
-//                userId, userName,
-//                twoFactorEnabled = twoFactorGranted != null,
-//                authorities = authorityObjects,
-//                attachedFields = attachedFields
-//        )
-//
-//        val request = AuthorizationRequest(clientId, scope).apply {
-//            this.authorities = authorityObjects
-//        }
-//
-//        val tokenRequest = oauth2RequestFactory.createTokenRequest(request, Constants.GRANT_TYPE_PASSWORD)
-//        val oauth2Request = oauth2RequestFactory.createOAuth2Request(client, tokenRequest)
-//
-//        val userAuthentication = UsernamePasswordAuthenticationToken(user, "", authorityObjects)
-//                .apply {
-//                    val map = mutableMapOf<String, Any>()
-//                    TwoFactorAuthenticationConverter.setUserDetails(map, user, twoFactorGranted)
-//
-//                    this.details = map
-//                }
-//
-//        val authentication = OAuth2Authentication(oauth2Request, userAuthentication).apply {
-//            this.isAuthenticated = true
-//        }
-//
-//        val token = tokenServices.createAccessToken(authentication)
-//        this.eventPublisher.publishEvent(UserSignedInEvent(this, authentication))
-//        return token
-//    }
-//
-//    fun signInTwoFactor(): OAuth2AccessToken {
-//        return signInTwoFactorCore(SecurityContextHolder.getContext().authentication)
-//    }
-//
-////    fun signInTwoFactorAsync(): Mono<OAuth2AccessToken> {
-////        return ReactiveSecurityContextHolder.getContext().map {
-////            val auth = SecurityContextHolder.getContext().authentication as? OAuth2Authentication
-////            val token = signInTwoFactorCore(auth)
-////            token
-////        }
-////    }
-//
-//
-//    private fun signInTwoFactorCore(auth: Authentication?): OAuth2AccessToken {
-//        if (auth == null || !auth.isAuthenticated) {
-//            throw BadCredentialsException("Current authentication is not authenticated.")
-//        }
-//
-//        val oauth2Auth = if (auth is OAuth2Authentication) {
-//            auth
-//        } else {
-//            val token = OAuth2Utils.getTokenValue(auth)
-//
-//            if (token.isNullOrBlank()) {
-//                throw BadCredentialsException("bad oauth2 authentication, token value not existed.")
-//            }
-//
-//            tokenStore.readAuthentication(token)
-//                    ?: throw BadCredentialsException("Current authentication is not authenticated.")
-//        }
-//
-//        val details = oauth2Auth.userAuthentication?.details as? Map<*, *>
-//        var userId = (details?.getOrDefault(Constants.CLAIM_USER_ID, "")?.toString()).orEmpty()
-//
-//        if (userId.isBlank()) {
-//            userId = OAuth2Utils.getTwoFactorPrincipal(auth).userId
-//        }
-//
-//        val userName = oauth2Auth.userAuthentication.name
-//        val clientId = oauth2Auth.oAuth2Request.clientId
-//        val scope = oauth2Auth.oAuth2Request.scope
-//        this.signOut()
-//        return signIn(clientId, userId, userName, true, true, oauth2Auth.authorities, scope, details?.getAccessTokenAttachedFields() ?: mapOf())
-//    }
-//
-//    private fun OAuth2AccessToken.getAttachedFields(): Map<String, String> {
-//        return this.additionalInformation.filter {
-//            !isWellKnownClaim(it.key)
-//        }.map {
-//            it.key to it.value.toString()
-//        }.toMap()
-//    }
-//
-//    private val knownFields = mutableSetOf<String>(
-//            Constants.CLAIM_TWO_FACTOR,
-//            Constants.CLAIM_USER_ID,
-//            Constants.CLAIM_AUTHORITIES,
-//            Constants.CLAIM_USER_NAME,
-//            Constants.CLAIM_EXP,
-//            Constants.CLAIM_AUD,
-//            Constants.CLAIM_IAT,
-//            Constants.CLAIM_ISS,
-//            Constants.CLAIM_JTI,
-//            Constants.CLAIM_NBF,
-//            Constants.CLAIM_SUB,
-//            OAuth2AccessToken.ACCESS_TOKEN,
-//            OAuth2AccessToken.BEARER_TYPE,
-//            OAuth2AccessToken.EXPIRES_IN,
-//            OAuth2AccessToken.OAUTH2_TYPE,
-//            OAuth2AccessToken.REFRESH_TOKEN,
-//            OAuth2AccessToken.SCOPE,
-//            "client_id",
-//            "grant_type"
-//    )
-//
-//    private fun Map<*, *>.getAccessTokenAttachedFields(): Map<String, String> {
-//        return this.filter {
-//            it.key.toString() !in knownFields
-//        }.map {
-//            it.key.toString() to it.value.toString()
-//        }.toMap()
-//    }
-//
-//
-//
-//    fun signOut() {
-//        val auth = SecurityContextHolder.getContext().authentication
-//        if (auth != null) {
-//            val tokenValue = OAuth2Utils.getTokenValue(auth)
-//            if (tokenValue != null) {
-//                (tokenServices as? DefaultTokenServices)?.revokeToken(tokenValue)
-//            }
-//        }
-//    }
-//}
+
+    fun signOut() {
+        val auth = SecurityContextHolder.getContext().authentication as? OAuth2Authorization
+        if (auth != null) {
+            authorizationService.remove(auth)
+        }
+    }
+
+    override fun setApplicationContext(applicationContext: ApplicationContext) {
+        context = applicationContext
+    }
+}

@@ -10,15 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService
  */
 class DefaultUserService(private val identityService: IIdentityService) : UserDetailsService {
 
-    val customPasswordChecks
-        get() = identityService.customPasswordChecks
-
-
     override fun loadUserByUsername(username: String): UserDetails {
         return identityService.getUserByName(username)
-    }
-
-    fun additionalAuthenticationChecks(context: AuthenticationCheckingContext): SignInResult {
-        return identityService.authenticationChecks(context)
     }
 }

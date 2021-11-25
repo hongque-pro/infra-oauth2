@@ -1,9 +1,6 @@
 package com.labijie.infra.oauth2.filter
 
-import org.springframework.security.core.context.SecurityContext
-import org.springframework.security.core.context.SecurityContextImpl
-import org.springframework.security.oauth2.provider.ClientDetails
-import org.springframework.util.Assert
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,17 +8,17 @@ import org.springframework.util.Assert
  * @date 2019-07-11
  */
 object ClientDetailsHolder {
-    private val contextHolder = ThreadLocal<ClientDetails>()
+    private val contextHolder = ThreadLocal<RegisteredClient>()
 
     fun clearContext() {
         contextHolder.remove()
     }
 
-    fun getClient(): ClientDetails? {
+    fun getClient(): RegisteredClient? {
         return contextHolder.get()
     }
 
-    fun setContext(context: ClientDetails) {
+    fun setContext(context: RegisteredClient) {
         contextHolder.set(context)
     }
 }

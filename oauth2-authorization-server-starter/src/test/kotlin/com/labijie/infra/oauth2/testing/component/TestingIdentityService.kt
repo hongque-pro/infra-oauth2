@@ -46,8 +46,5 @@ class TestingIdentityService: IIdentityService {
         return SimpleTwoFactorUserDetails.fromUserDetails(obj)
     }
 
-    override fun authenticationChecks(authenticationCheckingContext: AuthenticationCheckingContext): SignInResult {
-        return SignInResult(type = SignInResultType.TwoFactorRequired, user = authenticationCheckingContext.userDetails)
-    }
 
 }

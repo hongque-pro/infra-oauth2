@@ -15,3 +15,7 @@ interface ITwoFactorUserDetails : UserDetails {
         return mapOf()
     }
 }
+
+fun ITwoFactorUserDetails.withoutPassword(): ITwoFactorUserDetails {
+    return SimpleTwoFactorUserDetails.fromUserDetails(this, true)
+}

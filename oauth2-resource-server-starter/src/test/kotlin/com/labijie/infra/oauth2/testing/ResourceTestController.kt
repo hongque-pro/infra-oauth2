@@ -1,15 +1,16 @@
 package com.labijie.infra.oauth2.testing
 
+import com.labijie.infra.oauth2.OAuth2ServerUtils.toResponse
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.oauth2.common.OAuth2AccessToken
+import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.nio.file.attribute.UserPrincipal
 
 @RestController
 @RequestMapping("/test")
@@ -18,8 +19,8 @@ class ResourceTestController {
     private lateinit var signInHelper: TwoFactorSignInHelper
     
     @PostMapping("/sign-2f")
-    fun twoFacSignIn(): OAuth2AccessToken {
-        return signInHelper.signInTwoFactor()
+    fun twoFacSignIn(): Map<String, Any> {
+        return signInHelper.signInTwoFactor().toResponse()
     }
 
     @GetMapping("/2fac")

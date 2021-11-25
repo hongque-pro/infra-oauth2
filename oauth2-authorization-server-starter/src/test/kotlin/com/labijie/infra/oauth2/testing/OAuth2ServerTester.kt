@@ -31,10 +31,7 @@ import kotlin.test.Test
 
 
 @ContextConfiguration(classes = [
-    OAuth2TestServerAutoConfiguration::class,
-    OAuth2DependenciesAutoConfiguration::class,
-    OAuth2ServerAutoConfiguration::class,
-    OAuth2SecurityAutoConfiguration::class])
+    OAuth2TestServerAutoConfiguration::class])
 @WebMvcTest
 class OAuth2ServerTester : OAuth2Tester() {
     @Autowired

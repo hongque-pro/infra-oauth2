@@ -2,6 +2,7 @@ package com.labijie.infra.oauth2.testing.component
 
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.ITwoFactorUserDetails
+import com.labijie.infra.oauth2.configuration.DefaultClient
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readAs
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToObject
@@ -17,11 +18,12 @@ import kotlin.reflect.KClass
 
 object OAuth2TestingUtils {
     val passwordEncoder = BCryptPasswordEncoder()
+    private val defaultClient = DefaultClient()
 
     const val TestUserNme = "testUser"
     const val TestUserPassword = "pass0rd"
-    const val TestClientId = "testClient"
-    const val TestClientSecret = "good@play"
+    val TestClientId = defaultClient.clientId
+    val TestClientSecret = defaultClient.secret
     const val ResourceId = "test-resources"
     const val Scope = "test-scope"
 

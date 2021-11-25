@@ -17,6 +17,7 @@ import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2Res
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
@@ -32,6 +33,8 @@ import org.springframework.security.oauth2.jwt.JwtTimestampValidator
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.web.DefaultSecurityFilterChain
+import org.springframework.security.web.SecurityFilterChain
 import java.security.interfaces.RSAPublicKey
 import java.time.Duration
 
@@ -39,12 +42,11 @@ import java.time.Duration
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @EnableConfigurationProperties(ResourceServerProperties::class)
-@Order(99)
 class ResourceServerAutoConfiguration(
         private val oauth2ResProperties: OAuth2ResourceServerProperties,
         private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>,
         private val resourceServerProperties: ResourceServerProperties
-) : WebSecurityConfigurerAdapter(false) {
+) {
 
 
     companion object {
@@ -146,7 +148,9 @@ class ResourceServerAutoConfiguration(
         return converter
     }
 
-    override fun configure(http: HttpSecurity) {
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE + 99)
+    fun resourceChain(http: HttpSecurity): SecurityFilterChain {
         val settings = http
                 .csrf().disable()
                 .authorizeRequests { authorize ->
@@ -165,5 +169,6 @@ class ResourceServerAutoConfiguration(
                 this.applyJwtConfiguration(it)
             }
         }
+        return settings.build()
     }
 }

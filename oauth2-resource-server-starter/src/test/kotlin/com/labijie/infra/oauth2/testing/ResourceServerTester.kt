@@ -1,27 +1,20 @@
 package com.labijie.infra.oauth2.testing
 
-import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.Constants
-import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
-import com.labijie.infra.oauth2.configuration.OAuth2CustomizationAutoConfiguration
-import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
 import com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readString
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
-import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToObject
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readTokenValue
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.withBearerToken
 import com.labijie.infra.oauth2.testing.configuration.ResourceServerTestingConfiguration
-import com.labijie.infra.utils.logger
 import org.junit.jupiter.api.Assertions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
-import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.oauth2.common.OAuth2AccessToken
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
@@ -33,9 +26,6 @@ import kotlin.test.Test
 
 @ContextConfiguration(
         classes = [
-            OAuth2CustomizationAutoConfiguration::class,
-            OAuth2ServerAutoConfiguration::class,
-            ResourceServerAutoConfiguration::class,
             ResourceServerTestingConfiguration::class,
         ]
 )
@@ -112,9 +102,9 @@ class ResourceServerTester : OAuth2Tester() {
 
         val diffrentKeys = arrayOf(
                 Constants.CLAIM_JTI,
-                OAuth2AccessToken.EXPIRES_IN,
-                OAuth2AccessToken.REFRESH_TOKEN,
-                OAuth2AccessToken.ACCESS_TOKEN,
+                OAuth2ParameterNames.EXPIRES_IN,
+                OAuth2ParameterNames.REFRESH_TOKEN,
+                OAuth2ParameterNames.ACCESS_TOKEN,
                 Constants.CLAIM_TWO_FACTOR)
 
         tokenMap.forEach { (k, v) ->

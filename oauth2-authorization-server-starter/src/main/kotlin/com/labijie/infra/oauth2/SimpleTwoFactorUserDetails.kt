@@ -30,13 +30,13 @@ open class SimpleTwoFactorUserDetails(
         @JvmStatic
         private val serialVersionUID:Long = 7804082565629023975L
 
-        fun fromUserDetails(userDetails: ITwoFactorUserDetails): SimpleTwoFactorUserDetails {
+        fun fromUserDetails(userDetails: ITwoFactorUserDetails, removePassword: Boolean = false): SimpleTwoFactorUserDetails {
             return SimpleTwoFactorUserDetails(
                     userDetails.getUserId(),
                     userDetails.username,
                     userDetails.isCredentialsNonExpired,
                     userDetails.isEnabled,
-                    userDetails.password,
+                    if(removePassword) "" else userDetails.password,
                     userDetails.isAccountNonExpired,
                     userDetails.isAccountNonLocked,
                     userDetails.isTwoFactorEnabled(),

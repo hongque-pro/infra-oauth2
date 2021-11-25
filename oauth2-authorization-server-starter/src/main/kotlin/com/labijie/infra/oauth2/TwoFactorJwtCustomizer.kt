@@ -12,7 +12,8 @@ class TwoFactorJwtCustomizer : IJwtCustomizer {
                context.claims.claim(t, u)
            }
            if(details.isTwoFactorEnabled()){
-               context.claims.claim(Constants.CLAIM_TWO_FACTOR, false)
+               val granted = context.get<Boolean>(Constants.CLAIM_TWO_FACTOR)
+               context.claims.claim(Constants.CLAIM_TWO_FACTOR, granted)
            }
             context.claims.claim(Constants.CLAIM_USER_ID, details.getUserId())
             context.claims.claim(Constants.CLAIM_USER_NAME, details.username)

@@ -1,10 +1,8 @@
 package com.labijie.infra.oauth2.configuration
 
+import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.Constants.DEFAULT_JWK_SET_ENDPOINT_PATH
 import com.labijie.infra.oauth2.Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH
-import com.labijie.infra.oauth2.IJwtCustomizer
-import com.labijie.infra.oauth2.NoopPasswordEncoder
-import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
 import com.labijie.infra.oauth2.mvc.CheckTokenController
@@ -13,8 +11,10 @@ import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.BeanInitializationException
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.ApplicationEventPublisherAware
 import org.springframework.context.annotation.Bean
@@ -32,10 +32,12 @@ import org.springframework.security.config.annotation.web.configurers.oauth2.ser
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2TokenEndpointConfigurer
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
+import org.springframework.security.oauth2.jwt.NimbusJwsEncoder
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeAuthenticationConverter
@@ -51,9 +53,10 @@ import java.util.*
 
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(OAuth2DependenciesAutoConfiguration::class)
-class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<IJwtCustomizer>) : ApplicationEventPublisherAware {
+class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<IJwtCustomizer>) :
+    ApplicationEventPublisherAware {
 
-    companion object{
+    companion object {
         val LOGGER by lazy {
             LoggerFactory.getLogger(OAuth2ServerAutoConfiguration::class.java)
         }
@@ -61,13 +64,15 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
 
 
     private lateinit var eventPublisher: ApplicationEventPublisher
+    private var signInHelper: TwoFactorSignInHelper? = null
+
     private fun getRsaKey(properties: OAuth2ServerProperties): RSAKey {
         val kp = if (properties.token.jwt.rsa.privateKey.isBlank() || properties.token.jwt.rsa.publicKey.isBlank()) {
             LOGGER.warn("Jwt token store rsa key pair not found, default key will be used.")
             properties.token.jwt.rsa.privateKey = Base64Utils.encodeToString(RsaUtils.defaultKeyPair.private.encoded)
             properties.token.jwt.rsa.publicKey = Base64Utils.encodeToString(RsaUtils.defaultKeyPair.public.encoded)
             RsaUtils.defaultKeyPair
-        }else{
+        } else {
             val privateKey = RsaUtils.getPrivateKey(properties.token.jwt.rsa.privateKey)
             val publicKey = RsaUtils.getPublicKey(properties.token.jwt.rsa.publicKey)
             KeyPair(publicKey, privateKey)
@@ -89,8 +94,38 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
     }
 
     @Bean
+    @ConditionalOnMissingBean(JwtDecoder::class)
     fun jwtDecoder(jwkSource: JWKSource<SecurityContext?>?): JwtDecoder {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(JwtEncoder::class)
+    fun jwtEncode(jwkSource: JWKSource<SecurityContext?>?): JwtEncoder {
+        return NimbusJwsEncoder(jwkSource)
+    }
+
+    @Bean
+    fun twoFactorSignInHelper(
+        clientRepository: RegisteredClientRepository,
+        serverProperties: OAuth2ServerProperties,
+        eventPublisher: ApplicationEventPublisher,
+        identityService: IIdentityService,
+        jwtEncoder: JwtEncoder,
+        JwtDecoder: JwtDecoder,
+    ): TwoFactorSignInHelper {
+        if(signInHelper == null) {
+            signInHelper = TwoFactorSignInHelper(
+                clientRepository,
+                serverProperties,
+                eventPublisher,
+                jwtEncoder,
+                JwtDecoder,
+                customizer,
+                identityService
+            )
+        }
+        return signInHelper!!
     }
 
     private val customizer: OAuth2TokenCustomizer<JwtEncodingContext> by lazy {
@@ -104,23 +139,18 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
 
     private fun HttpSecurity.addCustomOAuth2ResourceOwnerPasswordAuthenticationProvider() {
         val http = this
-        val eventPub = if(::eventPublisher.isInitialized) eventPublisher else null
+        val eventPub = if (::eventPublisher.isInitialized) eventPublisher else null
 
         val authenticationManager = http.getSharedObject(AuthenticationManager::class.java)
-        authenticationManager
-
         val providerSettings = http.getSharedObject(ProviderSettings::class.java)
         val authorizationService = http.getSharedObject(OAuth2AuthorizationService::class.java)
-        val jwtEncoder = http.getSharedObject(JwtEncoder::class.java)
+
+
+        signInHelper?.setup(authenticationManager, authorizationService)
+
+        val helper = http.getSharedObject(TwoFactorSignInHelper::class.java)
         val resourceOwnerPasswordAuthenticationProvider =
-            ResourceOwnerPasswordAuthenticationProvider(
-                authenticationManager,
-                authorizationService,
-                jwtEncoder,
-                customizer,
-                providerSettings,
-                eventPub
-            )
+            ResourceOwnerPasswordAuthenticationProvider(helper)
 
         // This will add new authentication provider in the list of existing authentication providers.
         http.authenticationProvider(resourceOwnerPasswordAuthenticationProvider)
@@ -129,10 +159,16 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    fun authorizationServerSecurityFilterChain(serverProperties: OAuth2ServerProperties, http: HttpSecurity): SecurityFilterChain? {
+    fun authorizationServerSecurityFilterChain(
+        serverProperties: OAuth2ServerProperties,
+        http: HttpSecurity
+    ): SecurityFilterChain? {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer<HttpSecurity>()
 
-        authorizationServerConfigurer.withObjectPostProcessor(object: ObjectPostProcessor<OAuth2ClientAuthenticationProvider> {
+        val sh = signInHelper ?: throw BeanInitializationException("Unable to get TwoFactorSignInHelper bean")
+        http.setSharedObject(TwoFactorSignInHelper::class.java, sh)
+        authorizationServerConfigurer.withObjectPostProcessor(object :
+            ObjectPostProcessor<OAuth2ClientAuthenticationProvider> {
             override fun <O : OAuth2ClientAuthenticationProvider> postProcess(provider: O): O {
                 provider.setPasswordEncoder(NoopPasswordEncoder.INSTANCE)
                 return provider
@@ -166,7 +202,6 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
                 )
             )
         })
-
 
 
         val settings = ProviderSettings.builder()

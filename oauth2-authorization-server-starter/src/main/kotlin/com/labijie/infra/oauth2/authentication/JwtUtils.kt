@@ -19,7 +19,9 @@ object JwtUtils {
 
     fun accessTokenClaims(
         registeredClient: RegisteredClient,
-        issuer: String?, subject: String?, authorizedScopes: Set<String>?
+        issuer: String?,
+        subject: String?,
+        authorizedScopes: Set<String>?
     ): JwtClaimsSet.Builder {
         val issuedAt = Instant.now()
         val expiresAt = issuedAt.plus(registeredClient.tokenSettings.accessTokenTimeToLive)
