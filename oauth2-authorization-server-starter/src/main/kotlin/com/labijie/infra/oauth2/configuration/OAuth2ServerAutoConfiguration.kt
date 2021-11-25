@@ -107,10 +107,11 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
         val eventPub = if(::eventPublisher.isInitialized) eventPublisher else null
 
         val authenticationManager = http.getSharedObject(AuthenticationManager::class.java)
+        authenticationManager
+
         val providerSettings = http.getSharedObject(ProviderSettings::class.java)
         val authorizationService = http.getSharedObject(OAuth2AuthorizationService::class.java)
         val jwtEncoder = http.getSharedObject(JwtEncoder::class.java)
-        val jwtDecoder = http.getSharedObject(JwtDecoder::class.java)
         val resourceOwnerPasswordAuthenticationProvider =
             ResourceOwnerPasswordAuthenticationProvider(
                 authenticationManager,
