@@ -16,7 +16,9 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.oauth2.core.*
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
-import org.springframework.security.oauth2.jwt.*
+import org.springframework.security.oauth2.jwt.JoseHeader
+import org.springframework.security.oauth2.jwt.JwtClaimNames
+import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.server.authorization.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
@@ -35,8 +37,7 @@ class TwoFactorSignInHelper(
     private val clientRepository: RegisteredClientRepository,
     private val serverProperties: OAuth2ServerProperties,
     private val eventPublisher: ApplicationEventPublisher,
-    private val jwtEncoder: JwtEncoder,
-    private val jwtDecoder: JwtDecoder,
+    private val jwtCodec: IOAuth2ServerJwtCodec,
     private val jwtCustomizer: OAuth2TokenCustomizer<JwtEncodingContext>,
     private val identityService: IIdentityService,
 ): ApplicationContextAware {
@@ -161,7 +162,7 @@ class TwoFactorSignInHelper(
 
             val headers = context.headers.build()
             val claims = context.claims.build()
-            val jwtAccessToken = jwtEncoder.encode(headers, claims)
+            val jwtAccessToken = jwtCodec.encode(headers, claims)
 
             // Use the scopes after customizing the token
             authorizedScopes = claims.getClaim(OAuth2ParameterNames.SCOPE) ?: HashSet()
@@ -242,8 +243,8 @@ class TwoFactorSignInHelper(
         if(au == null || !au.isAuthenticated){
             throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
         }
-        val value = OAuth2Utils.getTokenValue(au)
-        val token = jwtDecoder.decode(value)
+        val value = OAuth2Utils.getTokenValue(au)?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
+        val token = jwtCodec.decode(value)
         val client = token.claims[JwtClaimNames.SUB]?.toString() ?: ""
         val scopeNames = (token.claims[OAuth2ParameterNames.SCOPE]?.toString() ?: "").split(",").filter { it.isNotBlank() }.toSet()
         val username = (token.claims[Constants.CLAIM_USER_NAME]?.toString() ?: "")

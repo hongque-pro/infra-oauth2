@@ -10,7 +10,6 @@ import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import com.labijie.infra.oauth2.resource.token.DefaultJwtAuthenticationConverter
 import org.springframework.beans.factory.ObjectProvider
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties
@@ -23,7 +22,6 @@ import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2TokenValidator
@@ -33,10 +31,8 @@ import org.springframework.security.oauth2.jwt.JwtTimestampValidator
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.web.DefaultSecurityFilterChain
 import org.springframework.security.web.SecurityFilterChain
 import java.security.interfaces.RSAPublicKey
-import java.time.Duration
 
 
 @Configuration(proxyBeanMethods = false)
@@ -133,19 +129,18 @@ class ResourceServerAutoConfiguration(
 
     private fun createJwtClaimSetConverter(): MappedJwtClaimSetConverter {
         val collectionStringConverter = getConverter(
-                TypeDescriptor.collection(MutableCollection::class.java, STRING_TYPE_DESCRIPTOR)
+            TypeDescriptor.collection(MutableCollection::class.java, STRING_TYPE_DESCRIPTOR)
         )
 
-        val converter = MappedJwtClaimSetConverter
-                .withDefaults(
-                        mapOf(
-                                Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
-                                Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
-                                Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
-                                Constants.CLAIM_AUTHORITIES to collectionStringConverter
-                        )
+        return MappedJwtClaimSetConverter
+            .withDefaults(
+                mapOf(
+                    Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
+                    Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
+                    Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
+                    Constants.CLAIM_AUTHORITIES to collectionStringConverter
                 )
-        return converter
+            )
     }
 
     @Bean

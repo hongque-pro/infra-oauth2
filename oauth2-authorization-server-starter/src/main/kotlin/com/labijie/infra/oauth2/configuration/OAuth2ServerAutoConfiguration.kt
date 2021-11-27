@@ -7,7 +7,6 @@ import com.labijie.infra.oauth2.Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
 import com.labijie.infra.oauth2.mvc.CheckTokenController
-import com.labijie.infra.oauth2.OAuth2AuthorizationConverter
 import com.labijie.infra.oauth2.service.CachingOAuth2AuthorizationService
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanInitializationException
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.ApplicationContext
@@ -34,7 +32,6 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.ObjectPostProcessor
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationEndpointConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer
@@ -102,17 +99,18 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
         return JWKSource<SecurityContext> { jwkSelector, _ -> jwkSelector.select(jwkSet) }
     }
 
+    //包装一下 , 避免和资源服务器的 bean 冲突
+    @ConditionalOnMissingBean(IOAuth2ServerJwtCodec::class)
     @Bean
-    @ConditionalOnMissingBean(JwtDecoder::class)
-    fun jwtDecoder(jwkSource: JWKSource<SecurityContext?>?): JwtDecoder {
-        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)
+    fun oauth2ServerJwtCodec(jwkSource: JWKSource<SecurityContext>): IOAuth2ServerJwtCodec {
+        return OAuth2ServerJwtCodec(jwkSource)
     }
 
-    @Bean
-    @ConditionalOnMissingBean(JwtEncoder::class)
-    fun jwtEncode(jwkSource: JWKSource<SecurityContext?>?): JwtEncoder {
-        return NimbusJwsEncoder(jwkSource)
-    }
+//    @Bean
+//    @ConditionalOnMissingBean(JwtEncoder::class)
+//    fun jwtEncode(jwkSource: JWKSource<SecurityContext?>?): JwtEncoder {
+//        return NimbusJwsEncoder(jwkSource)
+//    }
 
     @Bean
     fun twoFactorSignInHelper(
@@ -120,15 +118,13 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
         serverProperties: OAuth2ServerProperties,
         eventPublisher: ApplicationEventPublisher,
         identityService: IIdentityService,
-        jwtEncoder: JwtEncoder,
-        JwtDecoder: JwtDecoder,
+        JwtDecoder: IOAuth2ServerJwtCodec
     ): TwoFactorSignInHelper {
         if (signInHelper == null) {
             signInHelper = TwoFactorSignInHelper(
                 clientRepository,
                 serverProperties,
                 eventPublisher,
-                jwtEncoder,
                 JwtDecoder,
                 customizer,
                 identityService
@@ -300,8 +296,8 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
 
     @Bean
     @ConditionalOnWebApplication(type=ConditionalOnWebApplication.Type.SERVLET)
-    fun checkTokenController(jwtTokenDecoder: JwtDecoder): CheckTokenController {
-        return CheckTokenController(jwtTokenDecoder)
+    fun checkTokenController(jwtCodec: IOAuth2ServerJwtCodec): CheckTokenController {
+        return CheckTokenController(jwtCodec)
     }
 
     override fun setApplicationContext(applicationContext: ApplicationContext) {
