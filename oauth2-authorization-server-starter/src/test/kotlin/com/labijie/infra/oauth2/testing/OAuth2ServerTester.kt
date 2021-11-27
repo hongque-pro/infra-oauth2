@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.testing
 
+import com.labijie.caching.configuration.CachingAutoConfiguration
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.Constants.DEFAULT_JWK_SET_ENDPOINT_PATH
 import com.labijie.infra.oauth2.Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH
@@ -31,6 +32,7 @@ import kotlin.test.Test
 
 
 @ContextConfiguration(classes = [
+    CachingAutoConfiguration::class,
     OAuth2TestServerAutoConfiguration::class])
 @WebMvcTest
 class OAuth2ServerTester : OAuth2Tester() {

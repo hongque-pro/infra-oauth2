@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import java.security.Principal
+import java.util.HashSet
 
 /**
  * Created with IntelliJ IDEA.
@@ -60,7 +61,7 @@ class TwoFactorSignInHelper(
         clientId: String,
         userName: String,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String> = setOf()
+        scopes: Set<String> = hashSetOf()
     ): OAuth2AccessTokenAuthenticationToken {
         if(userName.isBlank()){
             throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
@@ -85,7 +86,7 @@ class TwoFactorSignInHelper(
         clientId: String,
         user: ITwoFactorUserDetails,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String> = setOf()
+        scopes: Set<String> = hashSetOf()
     ): OAuth2AccessTokenAuthenticationToken {
         if (!user.isTwoFactorEnabled() && twoFactorGranted) {
             throw IllegalArgumentException("SignIn user isTwoFactorEnabled = false, but twoFactorGranted be set to true.")
@@ -108,7 +109,7 @@ class TwoFactorSignInHelper(
         registeredClient: RegisteredClient,
         username: String,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String> = setOf(),
+        scopes: Set<String> = hashSetOf(),
         password: String? = null
     ): OAuth2AccessTokenAuthenticationToken {
         return try {
@@ -131,7 +132,7 @@ class TwoFactorSignInHelper(
             }
 
 
-            var authorizedScopes = registeredClient.scopes ?: setOf() // Default to configured scopes
+            var authorizedScopes = registeredClient.scopes ?: HashSet() // Default to configured scopes
             if (scopes.isNotEmpty() && registeredClient.scopes.isNotEmpty()) { //没有配置 scope 认为忽略
                 val unauthorizedScopes: Set<String> = scopes
                     .filter { requestedScope -> !registeredClient.scopes.contains(requestedScope) }
@@ -164,7 +165,7 @@ class TwoFactorSignInHelper(
             val jwtAccessToken = jwtEncoder.encode(headers, claims)
 
             // Use the scopes after customizing the token
-            authorizedScopes = claims.getClaim(OAuth2ParameterNames.SCOPE) ?: setOf()
+            authorizedScopes = claims.getClaim(OAuth2ParameterNames.SCOPE) ?: HashSet()
             val accessToken = OAuth2AccessToken(
                 OAuth2AccessToken.TokenType.BEARER,
                 jwtAccessToken.tokenValue,

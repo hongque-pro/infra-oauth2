@@ -4,6 +4,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import java.util.*
+import kotlin.collections.HashSet
 
 
 class ResourceOwnerPasswordAuthenticationToken(
@@ -19,7 +20,7 @@ class ResourceOwnerPasswordAuthenticationToken(
      *
      * @return the requested scope(s), or an empty `Set` if not available
      */
-    val scopes: Set<String> = scopes ?: setOf()
+    val scopes: Set<String> = scopes ?: HashSet()
 
     /**
      * Returns the additional parameters.

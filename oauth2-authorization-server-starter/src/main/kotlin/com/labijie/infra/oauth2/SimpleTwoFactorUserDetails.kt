@@ -9,7 +9,7 @@ import java.io.Serializable
  * @author Anders Xiao
  * @date 2019-02-21
  */
-open class SimpleTwoFactorUserDetails(
+class SimpleTwoFactorUserDetails(
         @JvmField private val userid:String = "",
         @JvmField private val username:String = "",
         @JvmField private val credentialsNonExpired:Boolean = false,

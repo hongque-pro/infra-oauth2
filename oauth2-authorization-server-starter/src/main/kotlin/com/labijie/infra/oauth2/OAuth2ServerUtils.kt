@@ -1,16 +1,34 @@
 package com.labijie.infra.oauth2
 
+import com.sun.org.apache.bcel.internal.generic.RETURN
 import org.springframework.security.oauth2.core.AbstractOAuth2Token
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
 import org.springframework.util.StringUtils
+import java.security.MessageDigest
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 object OAuth2ServerUtils {
+
+    fun Long?.toInstant(unit: TimeUnit = TimeUnit.SECONDS): Instant? {
+        if (this == null){
+            return null
+        }
+        val seconds = unit.toSeconds(this)
+        return Instant.ofEpochSecond(seconds)
+    }
+
+    fun ByteArray.toHexString() = joinToString("") { "%02x".format(it) }
+
+    fun String.md5Hex(): String{
+        val md = MessageDigest.getInstance("md5");
+        return md.digest(this.toByteArray(Charsets.UTF_8)).toHexString()
+    }
 
     fun generateRefreshToken(tokenTimeToLive: Duration): OAuth2RefreshToken? {
         val issuedAt = Instant.now()

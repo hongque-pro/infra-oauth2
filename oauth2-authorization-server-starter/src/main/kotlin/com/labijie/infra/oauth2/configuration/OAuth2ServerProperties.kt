@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean
 data class OAuth2ServerProperties(
         var issuer:String = "https://labijie.com",
         val token: TokenSettings = TokenSettings(),
+        val authorizationService: String = "caching",
         var clientRepository: String = "jdbc",
         val defaultClient: DefaultClient = DefaultClient(),
         var scopeValidationEnabled: Boolean = false

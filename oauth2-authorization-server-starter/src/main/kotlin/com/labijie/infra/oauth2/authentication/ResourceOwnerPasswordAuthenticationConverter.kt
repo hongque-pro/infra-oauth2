@@ -35,7 +35,7 @@ class ResourceOwnerPasswordAuthenticationConverter : AuthenticationConverter {
 
         var requestedScopes: Set<String>? = null
         if (StringUtils.hasText(scope)) {
-            requestedScopes = StringUtils.delimitedListToStringArray(scope, " ").toSet()
+            requestedScopes = StringUtils.delimitedListToStringArray(scope, " ").toHashSet()
         }
 
         // username (REQUIRED)

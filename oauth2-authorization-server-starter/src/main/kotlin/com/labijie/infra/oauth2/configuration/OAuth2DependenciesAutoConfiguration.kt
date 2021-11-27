@@ -1,9 +1,12 @@
 package com.labijie.infra.oauth2.configuration
 
+import com.labijie.caching.redis.RedisCacheManager
 import com.labijie.infra.oauth2.NoopPasswordEncoder
+import com.labijie.infra.oauth2.OAuth2AuthorizationSerializer
 import com.labijie.infra.oauth2.TwoFactorJwtCustomizer
 import com.labijie.infra.oauth2.resolver.PasswordPrincipalResolver
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -91,5 +94,11 @@ class OAuth2DependenciesAutoConfiguration {
     @Bean
     fun passwordPrincipalResolver(): PasswordPrincipalResolver{
         return PasswordPrincipalResolver()
+    }
+
+    @Bean
+    fun oauth2AuthorizationSerializer(clientRepository: RegisteredClientRepository): OAuth2AuthorizationSerializer {
+        RedisCacheManager
+        return OAuth2AuthorizationSerializer(clientRepository)
     }
 }
