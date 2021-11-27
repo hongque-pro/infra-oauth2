@@ -2,7 +2,7 @@ buildscript {
     ext {
         kotlin_version = '1.4.10'
 
-        infra_caching_version='1.2.2'
+        infra_caching_version='1.2.3'
         infra_commons_version='2.1.0'
 
         spring_boot_version = '2.4.5'

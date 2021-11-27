@@ -1,9 +1,14 @@
 package com.labijie.infra.oauth2
 
+import com.labijie.infra.oauth2.OAuth2ServerUtils.md5Hex
 import com.sun.org.apache.bcel.internal.generic.RETURN
 import org.springframework.security.oauth2.core.AbstractOAuth2Token
+import org.springframework.security.oauth2.core.OAuth2AccessToken
+import org.springframework.security.oauth2.core.OAuth2AuthorizationCode
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
+import org.springframework.security.oauth2.core.oidc.OidcIdToken
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
 import org.springframework.util.StringUtils
 import java.security.MessageDigest
@@ -63,5 +68,25 @@ object OAuth2ServerUtils {
         return if (token.expiresAt != null) {
             ChronoUnit.SECONDS.between(Instant.now(), token.expiresAt)
         } else -1
+    }
+
+    fun OAuth2Authorization.tokenId(): String {
+        val authorization = this
+        val accessToken = authorization.getToken(OAuth2AccessToken::class.java)?.token?.tokenValue
+        if(!accessToken.isNullOrBlank()){
+            return accessToken.md5Hex()
+        }
+
+        val authorizationCode = authorization.getToken(OAuth2AuthorizationCode::class.java)?.token?.tokenValue
+        if(!authorizationCode.isNullOrBlank()){
+            return authorizationCode.md5Hex()
+        }
+
+        val oidcIdToken = authorization.getToken(OidcIdToken::class.java)?.token?.tokenValue
+        if(!oidcIdToken.isNullOrBlank()){
+            return oidcIdToken.md5Hex()
+        }
+
+        return authorization.id
     }
 }

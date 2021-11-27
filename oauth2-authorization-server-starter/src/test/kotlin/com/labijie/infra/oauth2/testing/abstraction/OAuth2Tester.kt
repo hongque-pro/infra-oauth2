@@ -57,6 +57,7 @@ abstract class OAuth2Tester {
                 Assertions.assertEquals(1, EventTestSubscription.fireCount.get())
             }
         }
+        result.readToMap(true)
         return result
     }
 }

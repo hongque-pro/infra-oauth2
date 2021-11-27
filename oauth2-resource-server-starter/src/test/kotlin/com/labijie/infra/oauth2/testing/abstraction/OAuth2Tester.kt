@@ -1,13 +1,11 @@
 package com.labijie.infra.oauth2.testing.abstraction
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
 import com.labijie.infra.oauth2.testing.configuration.EventTestSubscription
 import com.labijie.infra.utils.logger
 import org.junit.jupiter.api.Assertions
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

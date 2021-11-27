@@ -7,7 +7,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation  "org.springframework.boot:spring-boot-starter-jdbc"
 
-    compileOnly "com.labijie:caching-kotlin:$infra_caching_version"
+    implementation "com.labijie:caching-kotlin:$infra_caching_version"
     compileOnly "com.labijie:caching-kotlin-redis-starter:$infra_caching_version"
 
     testImplementation "com.labijie:caching-kotlin-core-starter:$infra_caching_version"

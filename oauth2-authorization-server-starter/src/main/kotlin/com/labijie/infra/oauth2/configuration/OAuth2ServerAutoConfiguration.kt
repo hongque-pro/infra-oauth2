@@ -7,17 +7,20 @@ import com.labijie.infra.oauth2.Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
 import com.labijie.infra.oauth2.mvc.CheckTokenController
+import com.labijie.infra.oauth2.OAuth2AuthorizationConverter
 import com.labijie.infra.oauth2.service.CachingOAuth2AuthorizationService
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanInitializationException
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationEventPublisher
@@ -26,6 +29,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.ObjectPostProcessor
@@ -38,9 +42,7 @@ import org.springframework.security.config.annotation.web.configurers.oauth2.ser
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.NimbusJwsEncoder
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer
+import org.springframework.security.oauth2.server.authorization.*
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.config.ProviderSettings
@@ -50,6 +52,7 @@ import org.springframework.security.oauth2.server.authorization.web.authenticati
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2RefreshTokenAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.util.Base64Utils
+import java.lang.StringBuilder
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
@@ -62,7 +65,7 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
     ApplicationEventPublisherAware, ApplicationContextAware {
 
     companion object {
-        val LOGGER by lazy {
+        private val LOGGER: Logger by lazy {
             LoggerFactory.getLogger(OAuth2ServerAutoConfiguration::class.java)
         }
     }
@@ -70,7 +73,7 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
 
     private lateinit var eventPublisher: ApplicationEventPublisher
     private var signInHelper: TwoFactorSignInHelper? = null
-    private lateinit var  springContext: ApplicationContext
+    private lateinit var springContext: ApplicationContext
 
     private fun getRsaKey(properties: OAuth2ServerProperties): RSAKey {
         val kp = if (properties.token.jwt.rsa.privateKey.isBlank() || properties.token.jwt.rsa.publicKey.isBlank()) {
@@ -96,7 +99,7 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
     fun jwkSource(properties: OAuth2ServerProperties): JWKSource<SecurityContext> {
         val rsaKey = getRsaKey(properties)
         val jwkSet = JWKSet(rsaKey)
-        return JWKSource<SecurityContext> { jwkSelector, securityContext -> jwkSelector.select(jwkSet) }
+        return JWKSource<SecurityContext> { jwkSelector, _ -> jwkSelector.select(jwkSet) }
     }
 
     @Bean
@@ -120,7 +123,7 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
         jwtEncoder: JwtEncoder,
         JwtDecoder: JwtDecoder,
     ): TwoFactorSignInHelper {
-        if(signInHelper == null) {
+        if (signInHelper == null) {
             signInHelper = TwoFactorSignInHelper(
                 clientRepository,
                 serverProperties,
@@ -133,7 +136,6 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
         }
         return signInHelper!!
     }
-
 
 
     private val customizer: OAuth2TokenCustomizer<JwtEncodingContext> by lazy {
@@ -165,13 +167,44 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
         http.authenticationProvider(resourceOwnerPasswordAuthenticationProvider)
     }
 
-    @Bean
-    @ConditionalOnBean(ICacheManager::class)
-    @ConditionalOnMissingBean(JwtEncoder::class)
-    fun cachingOAuth2AuthorizationService(cache: ICacheManager, serializer: OAuth2AuthorizationSerializer): CachingOAuth2AuthorizationService {
-        return CachingOAuth2AuthorizationService(serializer, cache)
-    }
 
+    private fun getAuthService(serviceName: String): OAuth2AuthorizationService {
+        val svc = when (serviceName) {
+            "caching" -> {
+                val cache = springContext.getBeanProvider(ICacheManager::class.java).firstOrNull()
+                if (cache != null) {
+                    CachingOAuth2AuthorizationService(cache)
+                } else {
+                    val msg = StringBuilder()
+                        .appendLine("OAuth2 authorization service configured as 'caching', but ICacheManager bean missed, add one of follow packages to fix it:")
+                        .appendLine("com.labijie:caching-kotlin-redis-starter")
+                        .appendLine("com.labijie:caching-kotlin-redis-starter")
+                        .appendLine("Now, InMemoryOAuth2AuthorizationService will be used !")
+                        .toString()
+                    LOGGER.warn(msg)
+                    null
+                }
+            }
+            "jdbc" -> {
+                val jdbcTemplate = springContext.getBeanProvider(JdbcTemplate::class.java).firstOrNull()
+                if (jdbcTemplate != null) {
+                    val clientRepo = springContext.getBean(RegisteredClientRepository::class.java)
+                    JdbcOAuth2AuthorizationService(jdbcTemplate, clientRepo)
+                } else {
+                    val msg = StringBuilder()
+                        .appendLine("OAuth2 authorization service configured as 'jdbc', but JdbcTemplate bean missed, add follow package to fix it:")
+                        .appendLine("org.springframework.boot:spring-boot-starter-jdbc")
+                        .appendLine("Now, InMemoryOAuth2AuthorizationService will be used !")
+                        .toString()
+                    LOGGER.warn(msg)
+                    null
+                }
+            }
+            else -> InMemoryOAuth2AuthorizationService()
+        }
+        return svc ?: InMemoryOAuth2AuthorizationService()
+
+    }
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -230,22 +263,10 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
             .issuer(serverProperties.issuer)
             .build()
 
-//        @Bean
-//        @ConditionalOnBean(ICacheManager::class)
-//        @ConditionalOnMissingBean(JwtEncoder::class)
-//        fun cachingOAuth2AuthorizationService(cache: ICacheManager, serializer: OAuth2AuthorizationSerializer): CachingOAuth2AuthorizationService {
-//            return CachingOAuth2AuthorizationService(serializer, cache)
-//        }
-
 
         authorizationServerConfigurer.providerSettings(settings)
 
-        val cache = springContext.getBeanProvider(ICacheManager::class.java).firstOrNull()
-        if(cache != null){
-            val serializer = springContext.getBean(OAuth2AuthorizationSerializer::class.java)
-            val service = CachingOAuth2AuthorizationService(serializer, cache)
-            authorizationServerConfigurer.authorizationService(service)
-        }
+        authorizationServerConfigurer.authorizationService(getAuthService(serverProperties.authorizationService))
 
         authorizationServerConfigurer.authorizationEndpoint { authorizationEndpoint: OAuth2AuthorizationEndpointConfigurer ->
             authorizationEndpoint.consentPage(
@@ -278,6 +299,7 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
     }
 
     @Bean
+    @ConditionalOnWebApplication(type=ConditionalOnWebApplication.Type.SERVLET)
     fun checkTokenController(jwtTokenDecoder: JwtDecoder): CheckTokenController {
         return CheckTokenController(jwtTokenDecoder)
     }

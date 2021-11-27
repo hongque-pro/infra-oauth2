@@ -1,5 +1,6 @@
-package com.labijie.infra.oauth2
+package com.labijie.infra.oauth2.service
 
+import com.labijie.infra.oauth2.IIdentityService
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 

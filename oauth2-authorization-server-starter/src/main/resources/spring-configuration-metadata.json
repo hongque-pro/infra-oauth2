@@ -40,6 +40,12 @@
       "defaultValue": "jdbc"
     },
     {
+      "name":"infra.oauth2.authorization-service",
+      "type": "java.lang.String",
+      "sourceType": "authorization info repository and operation support",
+      "defaultValue": "caching"
+    },
+    {
       "name":"infra.oauth2.scope-validation-enabled",
       "type": "java.lang.Boolean",
       "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
@@ -114,6 +120,23 @@
     {
       "name": "infra.oauth2.client-repository",
       "values": [
+        {
+          "value": "jdbc",
+          "description": "jdbc oauth2 client repository"
+        },
+        {
+          "value": "memory",
+          "description": "in memory oauth2 client repository"
+        }
+      ]
+    },
+    {
+      "name": "infra.oauth2.authorization-service",
+      "values": [
+        {
+          "value": "caching",
+          "description": "jdbc oauth2 client repository"
+        },
         {
           "value": "jdbc",
           "description": "jdbc oauth2 client repository"

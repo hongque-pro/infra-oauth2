@@ -5,8 +5,9 @@ import com.labijie.caching.get
 import com.labijie.infra.oauth2.AuthorizationPlainObject
 import com.labijie.infra.oauth2.AuthorizationPlainObject.Companion.expiresDurationMills
 import com.labijie.infra.oauth2.AuthorizationPlainObject.Companion.tokenId
-import com.labijie.infra.oauth2.OAuth2AuthorizationSerializer
+import com.labijie.infra.oauth2.OAuth2AuthorizationConverter
 import com.labijie.infra.oauth2.OAuth2ServerUtils.md5Hex
+import com.labijie.infra.oauth2.OAuth2ServerUtils.tokenId
 import com.labijie.infra.oauth2.TokenPlainObject
 import org.springframework.security.oauth2.core.OAuth2TokenType
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
@@ -15,7 +16,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import java.time.Duration
 
 class CachingOAuth2AuthorizationService(
-    private val serializer: OAuth2AuthorizationSerializer,
     private val cache: ICacheManager) : OAuth2AuthorizationService {
 
     companion object{
@@ -25,7 +25,7 @@ class CachingOAuth2AuthorizationService(
     }
 
     override fun save(authorization: OAuth2Authorization) {
-        val plainObject = serializer.serialize(authorization)
+        val plainObject = OAuth2AuthorizationConverter.Instance.convertToPlain(authorization)
         val mills = plainObject.expiresDurationMills()
         if(mills != null && mills < 0){
             this.remove(authorization)
@@ -55,7 +55,7 @@ class CachingOAuth2AuthorizationService(
     }
 
     override fun remove(authorization: OAuth2Authorization) {
-        val tid = serializer.readTokenId(authorization)
+        val tid = authorization.tokenId()
         val auth = cache.get(tid, AuthorizationPlainObject::class)
         if(auth != null){
             cache.remove(tid)
@@ -99,7 +99,7 @@ class CachingOAuth2AuthorizationService(
             null
         }
 
-        return if(obj != null) serializer.deserialize(obj) else null
+        return if(obj != null) OAuth2AuthorizationConverter.Instance.convertFromPlain(obj) else null
     }
 
 }

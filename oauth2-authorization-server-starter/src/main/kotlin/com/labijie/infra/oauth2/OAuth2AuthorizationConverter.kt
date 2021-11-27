@@ -2,10 +2,8 @@ package com.labijie.infra.oauth2
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.labijie.infra.json.JacksonHelper
-import com.labijie.infra.oauth2.OAuth2ServerUtils.md5Hex
 import com.labijie.infra.oauth2.OAuth2ServerUtils.toInstant
-import com.labijie.infra.oauth2.jackson.OAuth2JacksonModule
-import org.springframework.dao.DataRetrievalFailureException
+import com.labijie.infra.oauth2.serialization.jackson.OAuth2JacksonModule
 import org.springframework.security.jackson2.SecurityJackson2Modules
 import org.springframework.security.oauth2.core.*
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
@@ -13,13 +11,11 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module
-import java.time.Instant
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 
-class OAuth2AuthorizationSerializer(private val clientRepository: RegisteredClientRepository) {
+class OAuth2AuthorizationConverter private constructor() {
 
     companion object {
         private val objectMapper = JacksonHelper.defaultObjectMapper.copy().apply {
@@ -28,6 +24,10 @@ class OAuth2AuthorizationSerializer(private val clientRepository: RegisteredClie
             this.registerModules(securityModules)
             this.registerModule(OAuth2AuthorizationServerJackson2Module())
             this.registerModule(OAuth2JacksonModule())
+        }
+
+        val Instance: OAuth2AuthorizationConverter by lazy {
+            OAuth2AuthorizationConverter()
         }
     }
 
@@ -70,26 +70,9 @@ class OAuth2AuthorizationSerializer(private val clientRepository: RegisteredClie
         return null
     }
 
-    fun readTokenId(authorization: OAuth2Authorization): String {
-        val accessToken = authorization.getToken(OAuth2AccessToken::class.java)?.token?.tokenValue
-        if(!accessToken.isNullOrBlank()){
-            return accessToken.md5Hex()
-        }
 
-        val authorizationCode = authorization.getToken(OAuth2AuthorizationCode::class.java)?.token?.tokenValue
-        if(!authorizationCode.isNullOrBlank()){
-            return authorizationCode.md5Hex()
-        }
 
-        val oidcIdToken = authorization.getToken(OidcIdToken::class.java)?.token?.tokenValue
-        if(!oidcIdToken.isNullOrBlank()){
-            return oidcIdToken.md5Hex()
-        }
-
-        return authorization.id
-    }
-
-    fun serialize(authorization: OAuth2Authorization): AuthorizationPlainObject {
+    fun convertToPlain(authorization: OAuth2Authorization): AuthorizationPlainObject {
         val plainObject = AuthorizationPlainObject()
 
         plainObject.id = authorization.id
@@ -126,13 +109,20 @@ class OAuth2AuthorizationSerializer(private val clientRepository: RegisteredClie
         return plainObject
     }
 
-    fun deserialize(plainObject: AuthorizationPlainObject): OAuth2Authorization {
-        val registeredClient: RegisteredClient = clientRepository.findById(plainObject.clientId)
-            ?: throw DataRetrievalFailureException(
-                "The RegisteredClient with id '${plainObject.clientId.ifEmpty { "<empty>" }}' was not found in the RegisteredClientRepository."
-            )
+    fun convertFromPlain(plainObject: AuthorizationPlainObject): OAuth2Authorization {
+//        val registeredClient: RegisteredClient = clientRepository.findById(plainObject.clientId)
+//            ?: throw DataRetrievalFailureException(
+//                "The RegisteredClient with id '${plainObject.clientId.ifEmpty { "<empty>" }}' was not found in the RegisteredClientRepository."
+//            )
 
-        val builder = OAuth2Authorization.withRegisteredClient(registeredClient)
+        val client = RegisteredClient.withId(plainObject.clientId)
+            .clientId(plainObject.clientId)
+            .authorizationGrantType(AuthorizationGrantType.JWT_BEARER)
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .redirectUri("https://localhost")
+            .build()
+        val builder = OAuth2Authorization.withRegisteredClient(client)
         val attributes = readMap(plainObject.attributes)
 
         builder.id(plainObject.id)

@@ -1,2 +1,3 @@
 infra:
   oauth2:
+    client-repository: memory

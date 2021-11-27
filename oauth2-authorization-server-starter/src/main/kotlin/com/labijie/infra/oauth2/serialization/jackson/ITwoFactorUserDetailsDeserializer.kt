@@ -1,4 +1,4 @@
-package com.labijie.infra.oauth2.jackson
+package com.labijie.infra.oauth2.serialization.jackson
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext

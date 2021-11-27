@@ -5,9 +5,9 @@ import org.springframework.security.oauth2.jwt.*
 import java.time.Duration
 import java.time.Instant
 
-object RefreshTokenSerializer{
+object RefreshTokenCodec{
 
-    fun serialize(encoder: JwtEncoder, claims: JwtClaimsSet, tokenTimeToLive: Duration): OAuth2RefreshToken {
+    fun encode(encoder: JwtEncoder, claims: JwtClaimsSet, tokenTimeToLive: Duration): OAuth2RefreshToken {
         val issuedAt = Instant.now()
         val expiresAt = issuedAt.plus(tokenTimeToLive)
         val header = JoseHeader.builder().build()
@@ -15,7 +15,7 @@ object RefreshTokenSerializer{
         return OAuth2RefreshToken(value, expiresAt)
     }
 
-    fun deserialize(decoder: JwtDecoder, tokenValue: String): OAuth2RefreshToken? {
+    fun decode(decoder: JwtDecoder, tokenValue: String): OAuth2RefreshToken? {
         val jwt = decoder.decode(tokenValue)
         val nowSeconds = Instant.now().epochSecond
 

@@ -1,8 +1,7 @@
-package com.labijie.infra.oauth2.jackson
+package com.labijie.infra.oauth2.serialization.jackson
 
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.labijie.infra.oauth2.ITwoFactorUserDetails
-import com.labijie.infra.oauth2.SimpleTwoFactorUserDetails
 
 open class OAuth2JacksonModule : SimpleModule("infra-oauth2") {
     init {

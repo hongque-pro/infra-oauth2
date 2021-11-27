@@ -10,6 +10,5 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
  * @date 2019-02-21
  */
 interface IIdentityService {
-    @Throws(UsernameNotFoundException::class, InternalAuthenticationServiceException::class)
     fun getUserByName(userName: String): ITwoFactorUserDetails
 }

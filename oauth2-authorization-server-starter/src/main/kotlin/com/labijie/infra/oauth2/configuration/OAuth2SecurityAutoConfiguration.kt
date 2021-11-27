@@ -1,7 +1,7 @@
 package com.labijie.infra.oauth2.configuration
 
 import com.labijie.infra.oauth2.Constants
-import com.labijie.infra.oauth2.DefaultUserService
+import com.labijie.infra.oauth2.service.DefaultUserService
 import com.labijie.infra.oauth2.IIdentityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest

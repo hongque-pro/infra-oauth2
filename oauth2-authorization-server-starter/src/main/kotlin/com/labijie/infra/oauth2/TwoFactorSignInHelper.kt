@@ -8,10 +8,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.oauth2.core.*
@@ -25,7 +25,6 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import java.security.Principal
-import java.util.HashSet
 
 /**
  * Created with IntelliJ IDEA.
@@ -220,9 +219,21 @@ class TwoFactorSignInHelper(
 
             eventPublisher.publishEvent(UserSignedInEvent(this, token))
             token
-        } catch (ex: Exception) {
-            LOGGER.error("problem in authenticate", ex)
-            throw OAuth2AuthenticationException(OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR), ex)
+        }
+        catch (cex: BadCredentialsException){
+            val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null)
+            throw OAuth2AuthenticationException(error, cex)
+        }
+        catch (auEx: OAuth2AuthenticationException){
+            throw auEx
+        }
+        catch (auEx: AuthenticationException){
+            val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, auEx.message, null)
+            throw OAuth2AuthenticationException(error, auEx)
+        }
+        catch (ex: Exception) {
+            LOGGER.error("problem in sign in", ex)
+            throw OAuth2AuthenticationException(OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR, "Unhandled error has occurred when sign in.", null), ex)
         }
     }
 
