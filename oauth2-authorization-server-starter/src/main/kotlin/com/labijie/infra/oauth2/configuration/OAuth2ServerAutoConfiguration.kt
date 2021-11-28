@@ -106,6 +106,12 @@ class OAuth2ServerAutoConfiguration(private val jwtCustomizers: ObjectProvider<I
         return OAuth2ServerJwtCodec(jwkSource)
     }
 
+    @ConditionalOnMissingBean(ITokenIntrospectParser::class)
+    @Bean
+    fun oauth2ServerTokenIntrospectParser(oauth2ServerJwtCodec: IOAuth2ServerJwtCodec): ITokenIntrospectParser {
+        return OAuth2ServerTokenIntrospectParser(oauth2ServerJwtCodec)
+    }
+
 //    @Bean
 //    @ConditionalOnMissingBean(JwtEncoder::class)
 //    fun jwtEncode(jwkSource: JWKSource<SecurityContext?>?): JwtEncoder {

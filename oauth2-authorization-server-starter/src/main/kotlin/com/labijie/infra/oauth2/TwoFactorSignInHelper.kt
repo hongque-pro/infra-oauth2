@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2
 
+import com.labijie.infra.oauth2.OAuth2ServerUtils.getScopes
 import com.labijie.infra.oauth2.authentication.JwtUtils
 import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.labijie.infra.oauth2.events.UserSignedInEvent
@@ -165,7 +166,7 @@ class TwoFactorSignInHelper(
             val jwtAccessToken = jwtCodec.encode(headers, claims)
 
             // Use the scopes after customizing the token
-            authorizedScopes = claims.getClaim(OAuth2ParameterNames.SCOPE) ?: HashSet()
+            authorizedScopes = claims.getScopes()
             val accessToken = OAuth2AccessToken(
                 OAuth2AccessToken.TokenType.BEARER,
                 jwtAccessToken.tokenValue,
@@ -246,7 +247,7 @@ class TwoFactorSignInHelper(
         val value = OAuth2Utils.getTokenValue(au)?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
         val token = jwtCodec.decode(value)
         val client = token.claims[JwtClaimNames.SUB]?.toString() ?: ""
-        val scopeNames = (token.claims[OAuth2ParameterNames.SCOPE]?.toString() ?: "").split(",").filter { it.isNotBlank() }.toSet()
+        val scopeNames = token.getScopes()
         val username = (token.claims[Constants.CLAIM_USER_NAME]?.toString() ?: "")
         return signIn(client, username, true, scopeNames)
     }

@@ -1,13 +1,14 @@
 package com.labijie.infra.oauth2
 
-import com.labijie.infra.oauth2.OAuth2ServerUtils.md5Hex
-import com.sun.org.apache.bcel.internal.generic.RETURN
 import org.springframework.security.oauth2.core.AbstractOAuth2Token
 import org.springframework.security.oauth2.core.OAuth2AccessToken
 import org.springframework.security.oauth2.core.OAuth2AuthorizationCode
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.core.oidc.OidcIdToken
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.jwt.JwtClaimNames
+import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
 import org.springframework.util.StringUtils
@@ -88,5 +89,34 @@ object OAuth2ServerUtils {
         }
 
         return authorization.id
+    }
+
+    val Jwt.isExpired
+    get() = this.expiresAt != null && this.expiresAt!!.epochSecond <= Instant.now().epochSecond
+
+    private fun Map<String, *>.getScopes(): Set<String>{
+        val scope = this.getOrDefault(OAuth2ParameterNames.SCOPE, null) ?: return hashSetOf()
+        if(scope is String){
+            return StringUtils.commaDelimitedListToSet(scope)
+        }
+        if(scope is Collection<*>){
+            val set = hashSetOf<String>()
+            scope.forEach {
+                if(it != null){
+                    set.add(it.toString())
+                }
+            }
+            return set
+        }
+        return Collections.singleton(scope.toString())
+    }
+
+
+    fun Jwt.getScopes(): Set<String> {
+        return this.claims.getScopes()
+    }
+
+    fun JwtClaimsSet.getScopes(): Set<String> {
+        return this.claims.getScopes()
     }
 }

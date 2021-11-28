@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.jwt.JwtTimestampValidator
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector
 import org.springframework.security.web.SecurityFilterChain
 import java.security.interfaces.RSAPublicKey
 
@@ -81,7 +82,7 @@ class ResourceServerAutoConfiguration(
     }
 
     @Bean
-    @ConditionalOnMissingBean(LocalOpaqueTokenIntrospector::class)
+    @ConditionalOnMissingBean(OpaqueTokenIntrospector::class)
     @ConditionalOnBean(ITokenIntrospectParser::class)
     fun localOpaqueTokenIntrospector(tokenIntrospectParser: ITokenIntrospectParser): LocalOpaqueTokenIntrospector {
         return LocalOpaqueTokenIntrospector(tokenIntrospectParser)
