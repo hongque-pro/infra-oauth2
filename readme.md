@@ -4,14 +4,20 @@
 ![workflow status](https://img.shields.io/github/workflow/status/hongque-pro/infra-oauth2/Gradle%20Build%20And%20Release?label=CI%20publish&style=flat-square)
 ![license](https://img.shields.io/github/license/hongque-pro/infra-oauth2?style=flat-square)
 
-## 新版本 1.1.0 破坏性变化（breaking changes） :
+## 1.2.x Break Changes 
 
-- 完全兼容 Spring security 5.4.x
-- 使用方式由原来的注解变为 ” starter" + 配置。
-- Spring Cloud OAuth2 被移除（官方不再支持）
-- EnableResourceServer 的方式被移除（官方不再支持）
+- 移除 Spring Security OAuth 2。
+- 移除 Spring Cloud OAuth2 。
+- 不再支持 TOKEN STORE 配置 token 存储， 仅支持 JWT 。
+- 不再依赖 spring data redis ， 默认使用 [caching-kotlin](https://github.com/endink/caching-kotlin) 存储 token。
+- 集成 [spring-authorization-server](https://github.com/spring-projects/spring-authorization-server)。
+- 兼容原有的 Password Grant Type。
+- 不再需要 IClientDetailsServiceFactory 实现。
+- 包名由 oauth2-auth-server-starter 变更为 **oauth2-authorization-server-starter**
 
-> Spring Security 5.4 带来大量破坏性变化（程序中大量的类已经被标记为过时），使得该项目不得不跟随变化
+> **spring-authorization-server** 原生不支持 password GrantType，该授权方式已经在 Oauth2.1 被移除，官方暂无支持计划，具体请看:   
+> https://github.com/spring-projects/spring-authorization-server/issues/349   
+> *该项目通过扩展 spring-authorization-server 已经实现，完全兼容原有的 password 模式*。
 
 **Spring Security 5.4.6** 已经**弃用**spring cloud oauth2 和以前的 spring security oauth2, 具体对比参考这个文档:   
 https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Features-Matrix
@@ -21,7 +27,7 @@ Spring 官方迁移说明：
 https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Migration-Guide
 
 新版 Spring Security Resource Server 文档:   
-https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2   
+https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/index.html
 
 > 注意，该项目仅支持 servlet 应用，webflux 不提供支持
 
@@ -30,32 +36,35 @@ https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2
 
 【1】 引入依赖
 ```groovy
-    compile "com.labijie.infra:oauth2-auth-server-starter:$infra_oauth2_version"
+    compile "oauth2-authorization-server-starter:<your version>"
 ```
-【2】实现 **IIdentityService** 接口作为一个 Bean 注册给 Spring   
-
-【3】 实现 **IClientDetailsServiceFactory** 接口作为一个 Bean 注册给 Spring   
+【2】实现 **IIdentityService** 接口作为一个 Bean 注册给 Spring    
 
 
 ## 如何实现一个使用上面的 OAuth2 授权服务器授权的资源服务器？
 引入依赖包即可：
 
 ```groovy
-    compile "com.labijie.infra:oauth2-resource-server-starter:$infra_oauth2_version"
+    compile "com.labijie.infra:oauth2-resource-server-starter:<your version>"
 ```
 
+> 注意，不论是授权服务器还是资源服务器，都需要自己注解 **EnableWebSecurity** 到你的工程。
 
 ## 如何是一个OAuth2 服务器同时本身又包含需要授权的资源？   
 授权服务器项目包含资源服务器依赖包即可！
 
-## 灵活切换 JWT, Memory, Redis 的 OAuth2 Token 存储实现：
+## 配置 OAuth2AuthorizationService (用于存储 Oauth2 Token )
 使用配置 （ store 配置可用值：Jwt,  InMemory, Redis, 默认未 Jwt）：   
 ```yaml
 infra:
   oauth2:
-    token:
-      store: InMemory 
+    authorization-service: jdbc
 ```
+支持三种 OAuth2AuthorizationService
+
+- caching（**默认值**）: [caching-kotlin](https://github.com/endink/caching-kotlin) 存储 token
+- jdbc: 官方 jdbc 实现
+- memory: 官方 in memory 实现
 
 > 注意 redis 需要自己引入 Spring 官方的 **spring-boot-starter-data-redis** 包
 
@@ -66,68 +75,33 @@ infra:
 
 扩展 Spring 加入 **twoFactorRequired** 方法：
 ```kotlin
-class ResourceServerConfigurer : ResourceServerConfigurerAdapter() {
-    override fun configure(resources: ResourceServerSecurityConfigurer) {
-        resources.resourceId("test")
-    }
-
+class ResourceServerConfigurer : IResourceAuthorizationConfigurer {
+  
     @Throws(Exception::class)
-    override fun configure(http: HttpSecurity) {
-        http.requestMatchers().anyRequest()
-                .and()
-                .anonymous()
-                .and()
-                .authorizeRequests()
-                .antMatchers("/2f").twoFactorRequired()
-                .antMatchers("/**").authenticated()
+    override fun configure(registry: ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry) {
+        registry.mvcMatchers("/2f").twoFactorRequired()
+        registry.mvcMatchers("/other").twoFactorRequired()
     }
 }
 ```
+> 使用 **IResourceAuthorizationConfigurer** 接口可以避免 SecurityFilterChain 顺序问题。
 
 ## 更多能力
 
 - 实现 Token 中插入自定义字段，直接通过 token 访问该字段以减少数据库查询：
 ```kotlin
 interface IIdentityService {
-
-    val customPasswordChecks: Boolean
-        get() = false
-
-    @Throws(UsernameNotFoundException::class, InternalAuthenticationServiceException::class)
     fun getUserByName(userName: String): ITwoFactorUserDetails
-
-    fun authenticationChecks(authenticationCheckingContext: AuthenticationCheckingContext): SignInResult
 }
 ```   
-上面的 **IIdentityService** 接口中 getUserByName 实现的返回值未 **ITwoFactorUserDetails**,  ITwoFactorUserDetails 的 getTokenAttributes 返回的 Map 对象会放入 Token 中。
+上面的 **IIdentityService** 接口中 getUserByName 实现的返回值为 **ITwoFactorUserDetails**,
+ITwoFactorUserDetails 的 getTokenAttributes 返回的 Map 对象会放入 Token 中。
 
-字符串的自定义字段还支持 spring security 验证
+*字符串的自定义字段还支持 spring security 验证*
 
 ```kotlin
-registry
-         .mvcMatchers("/test/field-aaa-test").hasTokenAttributeValue("aaa", "test")
+registry.mvcMatchers("/test/field-aaa-test").hasTokenAttributeValue("aaa", "test")
 ```
 
 上述规则要求 token 中必须包含 aaa 属性，同时值必须是 test 。
 
-## 开发环境兼容性：
-
-|组件|版本|说明|
-|--------|--------|--------|
-|   kotlin    |      1.4.10    |           |
-|   jdk    |      1.8   |           |
-|   spring boot    |      2.4.5    |           |
-|   spring security    |     5.4.6    |      Spring 版本重大变化     |
-|   spring framework    |      5.3.6   |           |
-|   spring dpendency management    |      1.0.10.RELEASE    |           |
-
-## 发布到自己的 Nexus
-
-在项目根目录下新建 gradle.properties 文件，添加如下内容
-
-```text
-PUB_USER=[nexus user name]
-PUB_PWD=[nexus password]
-PUB_URL=http://XXXXXXX/repository/maven-releases/
-```
-运行  **gradle publish**
