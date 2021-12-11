@@ -4,9 +4,6 @@ import com.labijie.caching.configuration.CachingAutoConfiguration
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.Constants.DEFAULT_JWK_SET_ENDPOINT_PATH
 import com.labijie.infra.oauth2.Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH
-import com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
-import com.labijie.infra.oauth2.configuration.OAuth2SecurityAutoConfiguration
-import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
@@ -16,6 +13,8 @@ import com.labijie.infra.utils.ShortId
 import com.labijie.infra.utils.logger
 import org.junit.jupiter.api.Assertions
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -35,6 +34,7 @@ import kotlin.test.Test
     CachingAutoConfiguration::class,
     OAuth2TestServerAutoConfiguration::class])
 @WebMvcTest
+@ImportAutoConfiguration(classes =[SecurityFilterAutoConfiguration::class])
 class OAuth2ServerTester : OAuth2Tester() {
     @Autowired
     override lateinit var mockMvc: MockMvc
@@ -153,4 +153,5 @@ class OAuth2ServerTester : OAuth2Tester() {
 
         logger.debug(JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
     }
+
 }

@@ -1,7 +1,6 @@
 package com.labijie.infra.oauth2.configuration
 
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.context.annotation.Bean
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,10 +9,16 @@ import org.springframework.context.annotation.Bean
  */
 @ConfigurationProperties(prefix = "infra.oauth2")
 data class OAuth2ServerProperties(
-        var issuer:String = "https://labijie.com",
-        val token: TokenSettings = TokenSettings(),
-        val authorizationService: String = "caching",
-        var clientRepository: String = "jdbc",
-        val defaultClient: DefaultClient = DefaultClient(),
-        var scopeValidationEnabled: Boolean = false
-)
+    var issuer: String = "https://labijie.com",
+    val token: TokenSettings = TokenSettings(),
+    var authorizationService: String = "caching",
+    var clientRepository: String = "jdbc",
+    val defaultClient: DefaultClient = DefaultClient(),
+    var scopeValidationEnabled: Boolean = false
+) {
+    companion object {
+        const val PRIVATE_KEY_PROPERTY_PATH = "infra.oauth2.token.jwt.rsa.private-key"
+        const val PUBLIC_KEY_PROPERTY_PATH = "infra.oauth2.token.jwt.rsa.public-key"
+        const val AUTHORIZATION_SERVICE_PROPERTY_PATH = "infra.oauth2.authorization-service"
+    }
+}

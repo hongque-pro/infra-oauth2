@@ -53,13 +53,13 @@ import java.util.*
 @AutoConfigureAfter(OAuth2CustomizationAutoConfiguration::class)
 @AutoConfigureBefore(AuthorizationServerEndpointsConfiguration::class)
 class OAuth2ServerAutoConfiguration @Autowired constructor(
-        @JvmField private val authenticationManager: AuthenticationManager,
+        private val authenticationManager: AuthenticationManager,
         @param:Autowired(required = false)
-        @JvmField private val oauth2ExceptionHandler: IOAuth2ExceptionHandler?,
-        @JvmField private val serverProperties: OAuth2ServerProperties,
-        @JvmField private val oauth2RequestFactory: OAuth2RequestFactory,
-        @JvmField private val userDetailsService: UserDetailsService,
-        @JvmField private val clientDetailsService: ClientDetailsService,
+        private val oauth2ExceptionHandler: IOAuth2ExceptionHandler?,
+        private val serverProperties: OAuth2ServerProperties,
+        private val oauth2RequestFactory: OAuth2RequestFactory,
+        private val userDetailsService: UserDetailsService,
+        private val clientDetailsService: ClientDetailsService,
         @Autowired
         tokenStore: TokenStore
 ) : AuthorizationServerConfigurerAdapter() {

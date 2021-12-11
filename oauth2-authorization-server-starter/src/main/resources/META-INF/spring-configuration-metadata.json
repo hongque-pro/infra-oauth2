@@ -114,6 +114,12 @@
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClient",
       "defaultValue": "!QAZ@WSX"
+    },
+    {
+      "name":"infra.oauth2.default-client.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClient",
+      "defaultValue": true
     }
   ],
   "hints": [

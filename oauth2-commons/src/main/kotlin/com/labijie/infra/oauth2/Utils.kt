@@ -1,9 +1,5 @@
 package com.labijie.infra.oauth2
 
-import org.springframework.beans.factory.ObjectProvider
-import org.springframework.security.authentication.BadCredentialsException
-import org.springframework.security.core.Authentication
-import kotlin.jvm.Throws
 
 /**
  *
@@ -22,6 +18,7 @@ fun copyAttributesTo(source: Map<String, Any>, key: String, destination: Mutable
         }
     }
 }
+
 
 
 

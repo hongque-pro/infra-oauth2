@@ -3,17 +3,14 @@ package com.labijie.infra.oauth2.mvc
 import com.labijie.infra.oauth2.Constants
 import com.labijie.infra.oauth2.IOAuth2ServerJwtCodec
 import org.springframework.security.oauth2.jwt.JwtException
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.ResponseBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
 @RestController
 class CheckTokenController(
     private val jwtCodec: IOAuth2ServerJwtCodec
 ) {
-    @PostMapping(Constants.DEFAULT_CHECK_TOKEN_ENDPOINT_PATH)
+    @RequestMapping(Constants.DEFAULT_CHECK_TOKEN_ENDPOINT_PATH)
     @ResponseBody
     fun check(@RequestParam("token", required = true) token: String): CheckTokenResult {
         return try {

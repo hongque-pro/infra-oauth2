@@ -8,8 +8,9 @@ import com.labijie.infra.oauth2.testing.component.TestingIdentityService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
-import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 
+@EnableWebSecurity
 @Configuration
 @Import(
     OAuth2DependenciesAutoConfiguration::class,

@@ -42,8 +42,7 @@ import org.springframework.security.oauth2.provider.token.TokenStore
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(OAuth2ServerProperties::class)
 @Import(IntrospectEndpoint::class, JwkSetEndpoint::class)
-class OAuth2CustomizationAutoConfiguration(
-    @JvmField private val identityService: IIdentityService
+class OAuth2CustomizationAutoConfiguration(private val identityService: IIdentityService
 ) : WebSecurityConfigurerAdapter() {
 
     @Bean

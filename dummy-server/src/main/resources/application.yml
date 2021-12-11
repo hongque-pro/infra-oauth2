@@ -1,0 +1,9 @@
+infra:
+  oauth2:
+    authorization-service: jdbc
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+

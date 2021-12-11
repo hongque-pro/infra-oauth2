@@ -10,16 +10,16 @@ import java.io.Serializable
  * @date 2019-02-21
  */
 class SimpleTwoFactorUserDetails(
-        @JvmField private val userid:String = "",
-        @JvmField private val username:String = "",
-        @JvmField private val credentialsNonExpired:Boolean = false,
-        @JvmField private val enabled:Boolean = false,
-        @JvmField private val password:String = "",
-        @JvmField private val accountNonExpired:Boolean = false,
-        @JvmField private val accountNonLocked:Boolean = false,
-        @JvmField private val twoFactorEnabled: Boolean = false,
-        @JvmField private val authorities:ArrayList<SimpleGrantedAuthority> = arrayListOf(),
-        @JvmField  private val attachedFields:Map<String, String> = mapOf()) : ITwoFactorUserDetails, Serializable {
+        private val userid:String = "",
+        private val username:String = "",
+        private val credentialsNonExpired:Boolean = false,
+        private val enabled:Boolean = false,
+        private val password:String = "",
+        private val accountNonExpired:Boolean = false,
+        private val accountNonLocked:Boolean = false,
+        private val twoFactorEnabled: Boolean = false,
+        private val authorities:ArrayList<SimpleGrantedAuthority> = arrayListOf(),
+         private val attachedFields:Map<String, String> = mapOf()) : ITwoFactorUserDetails, Serializable {
 
     override fun getUserId(): String {
         return this.userid

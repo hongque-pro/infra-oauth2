@@ -65,7 +65,7 @@ fun extractClientIdAndSecretFromHeader(request: HttpServletRequest): Pair<String
 }
 
 fun extractClientIdAndSecretFromHeaderValue(header: String): Pair<String, String> {
-    if (!header.toLowerCase().startsWith("basic ")) {
+    if (!header.lowercase().startsWith("basic ")) {
         log.warn("Cant find basic authorization header while grant type was '${Constants.GRANT_TYPE_PASSWORD}'")
         return Pair("", "")
     }

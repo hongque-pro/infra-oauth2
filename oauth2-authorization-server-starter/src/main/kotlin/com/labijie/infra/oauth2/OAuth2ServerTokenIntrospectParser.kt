@@ -11,6 +11,7 @@ import com.nimbusds.oauth2.sdk.token.AccessTokenType
 import com.nimbusds.oauth2.sdk.token.BearerTokenError
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtClaimNames
 import org.springframework.security.oauth2.jwt.JwtException
@@ -40,15 +41,15 @@ class OAuth2ServerTokenIntrospectParser(
         }
     }
 
-    override fun parse(token: String): TokenIntrospectionResponse {
-        if (token.isBlank()) {
+    override fun parse(tokenValue: String): TokenIntrospectionResponse {
+        if (tokenValue.isBlank()) {
             return TokenIntrospectionErrorResponse(BearerTokenError.MISSING_TOKEN)
         }
 
         val token: Jwt = try {
-            jwtCodec.decode(token)
+            jwtCodec.decode(tokenValue)
         } catch (jwtException: JwtException) {
-            LOGGER.warn("Bad jwt token format.", jwtException)
+            LOGGER.warn("Bad jwt token format for introspection.", jwtException)
             return TokenIntrospectionErrorResponse(BearerTokenError.INVALID_TOKEN)
         }
 
@@ -62,7 +63,8 @@ class OAuth2ServerTokenIntrospectParser(
             })
             .scope(Scope.parse(token.getScopes()))
             .apply {
-                if (token.tokenValue.isNullOrBlank()) {
+                val type = token.claims[OAuth2ParameterNames.TOKEN_TYPE]?.toString()
+                if (type.isNullOrBlank()) {
                     this.tokenType(AccessTokenType.UNKNOWN)
                 } else {
                     this.tokenType(AccessTokenType(token.tokenValue))
@@ -72,7 +74,6 @@ class OAuth2ServerTokenIntrospectParser(
                 if (audience != null) {
                     this.audience(audience.map { Audience(it) })
                 }
-
 
                 val authorities = mutableSetOf<String>()
                 if (token.claims.containsKey(Constants.CLAIM_ROLES)) {

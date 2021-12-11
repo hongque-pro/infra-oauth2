@@ -1,12 +1,13 @@
 package com.labijie.infra.oauth2
 
+import com.labijie.infra.utils.throwIfNecessary
 import org.springframework.context.ApplicationContext
+import org.springframework.core.io.ClassPathResource
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
-import java.lang.RuntimeException
+import java.io.File
 import java.util.stream.Collectors
-import kotlin.jvm.Throws
 
 /**
  * Created with IntelliJ IDEA.
@@ -69,4 +70,39 @@ object OAuth2Utils {
 //            else -> ""
 //        }
 //    }
+
+    fun <T> loadContent(content: String, action: (content: String)-> T): T?{
+        return try{
+            action(content)
+        }catch (e: Throwable){
+            e.throwIfNecessary()
+            //content is resource
+            loadFile(content, action) ?: loadResource(content, action)
+        }
+    }
+
+    private fun <T> loadResource(content: String, action: (content: String) -> T): T? {
+        return try {
+            val cpr = ClassPathResource(content)
+            val stream = cpr.inputStream
+            val c = stream.readBytes().toString(Charsets.UTF_8)
+            action(c)
+        }catch (rex: Throwable){
+            null
+        }
+    }
+
+    private fun <T> loadFile(content: String, action: (content: String) -> T): T? {
+        return try {
+            val file = File(content)
+           if(file.exists() && file.isFile){
+                val fc = file.readBytes().toString(Charsets.UTF_8)
+                action(fc)
+            }else{
+                null
+            }
+        }catch (rex: Throwable){
+            null
+        }
+    }
 }

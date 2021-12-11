@@ -1,9 +1,4 @@
 infra:
   oauth2:
     client-repository: memory
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jws-algorithm:
+
