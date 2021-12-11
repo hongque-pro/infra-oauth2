@@ -59,7 +59,7 @@ infra:
     compile "com.labijie.infra:oauth2-resource-server-starter:<your version>"
 ```
 
-#### 资源服务器可以通过三种方式配置和资源服务器协作：
+#### 资源服务器可以通过三种方式配置和授权服务器协作的公钥（当前暂未实现 token 自省）：
 
 【1】 配置 RSA 公钥：
 ```yaml
