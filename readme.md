@@ -99,8 +99,12 @@ infra:
 - jdbc: 官方 jdbc 实现
 - memory: 官方 in memory 实现
 
-> 注意 redis 需要自己引入 **com.labijie:caching-kotlin-redis-starter**或
-> **com.labijie:caching-kotlin-redis-starter** 包，具体参考 [**caching-kotlin**](https://github.com/endink/caching-kotlin) 项目
+> 注意配置 caching 需要自己引入下列包之一： 
+> 
+> **com.labijie:caching-kotlin-core-starter**   
+> **com.labijie:caching-kotlin-redis-starter**   
+> 
+> 具体参考 [**caching-kotlin**](https://github.com/endink/caching-kotlin) 项目。
 
 ## 如何实现真正的两段身份验证？
 
