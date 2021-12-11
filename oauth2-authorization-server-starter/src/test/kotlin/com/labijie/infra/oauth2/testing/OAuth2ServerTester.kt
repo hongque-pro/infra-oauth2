@@ -30,14 +30,13 @@ import org.springframework.util.MultiValueMap
 import kotlin.test.Test
 
 
-@ContextConfiguration(classes = [
-    CachingAutoConfiguration::class,
-    OAuth2TestServerAutoConfiguration::class])
+@ContextConfiguration(classes = [OAuth2TestServerAutoConfiguration::class])
 @WebMvcTest
 @ImportAutoConfiguration(classes =[SecurityFilterAutoConfiguration::class])
 class OAuth2ServerTester : OAuth2Tester() {
     @Autowired
     override lateinit var mockMvc: MockMvc
+
 
     @Test
     fun testCorrectPasswordLogin() {
