@@ -4,8 +4,8 @@ import com.labijie.infra.oauth2.Constants
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal
-import org.springframework.security.oauth2.server.resource.introspection.OAuth2IntrospectionClaimAccessor
-import org.springframework.security.oauth2.server.resource.introspection.OAuth2IntrospectionClaimNames
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor
+import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNames
 import java.io.Serializable
 
 /**
@@ -15,7 +15,8 @@ import java.io.Serializable
  * @Description:
  */
 
-class TwoFactorAuthenticatedPrincipal(private val delegate: TwoFactorPrincipal) : OAuth2AuthenticatedPrincipal, OAuth2IntrospectionClaimAccessor, Serializable {
+class TwoFactorAuthenticatedPrincipal(private val delegate: TwoFactorPrincipal) : OAuth2AuthenticatedPrincipal,
+    OAuth2TokenIntrospectionClaimAccessor, Serializable {
     override fun getName(): String = delegate.userName
 
     fun getTwoFactorPrincipal(): TwoFactorPrincipal {
@@ -24,32 +25,32 @@ class TwoFactorAuthenticatedPrincipal(private val delegate: TwoFactorPrincipal) 
 
     private val mergedAttributes by lazy {
         val map = mutableMapOf<String, Any>()
-        map[OAuth2IntrospectionClaimNames.ACTIVE] = true
+        map[OAuth2TokenIntrospectionClaimNames.ACTIVE] = true
         map[Constants.CLAIM_USER_ID] = delegate.userId
-        map[OAuth2IntrospectionClaimNames.USERNAME] = delegate.userName
+        map[OAuth2TokenIntrospectionClaimNames.USERNAME] = delegate.userName
 
         if (delegate.attachedFields.containsKey(Constants.CLAIM_EXP)) {
-            map[OAuth2IntrospectionClaimNames.EXPIRES_AT] = delegate.attachedFields.getOrDefault(Constants.CLAIM_EXP, "")
+            map[OAuth2TokenIntrospectionClaimNames.EXP] = delegate.attachedFields.getOrDefault(Constants.CLAIM_EXP, "")
         }
 
         if (delegate.attachedFields.containsKey(Constants.CLAIM_AUD)) {
-            map[OAuth2IntrospectionClaimNames.AUDIENCE] = delegate.attachedFields.getOrDefault(Constants.CLAIM_AUD, "")
+            map[OAuth2TokenIntrospectionClaimNames.AUD] = delegate.attachedFields.getOrDefault(Constants.CLAIM_AUD, "")
         }
 
         if (delegate.attachedFields.containsKey(Constants.CLAIM_IAT)) {
-            map[OAuth2IntrospectionClaimNames.ISSUED_AT] = delegate.attachedFields.getOrDefault(Constants.CLAIM_IAT, "")
+            map[OAuth2TokenIntrospectionClaimNames.IAT] = delegate.attachedFields.getOrDefault(Constants.CLAIM_IAT, "")
         }
 
         if (delegate.attachedFields.containsKey(Constants.CLAIM_ISS)) {
-            map[OAuth2IntrospectionClaimNames.ISSUER] = delegate.attachedFields.getOrDefault(Constants.CLAIM_ISS, "")
+            map[OAuth2TokenIntrospectionClaimNames.ISS] = delegate.attachedFields.getOrDefault(Constants.CLAIM_ISS, "")
         }
 
         if (delegate.attachedFields.containsKey(Constants.CLAIM_NBF)) {
-            map[OAuth2IntrospectionClaimNames.NOT_BEFORE] = delegate.attachedFields.getOrDefault(Constants.CLAIM_NBF, "")
+            map[OAuth2TokenIntrospectionClaimNames.NBF] = delegate.attachedFields.getOrDefault(Constants.CLAIM_NBF, "")
         }
 
         if (delegate.attachedFields.containsKey(Constants.CLAIM_SUB)) {
-            map[OAuth2IntrospectionClaimNames.SUBJECT] = delegate.attachedFields.getOrDefault(Constants.CLAIM_SUB, "")
+            map[OAuth2TokenIntrospectionClaimNames.SUB] = delegate.attachedFields.getOrDefault(Constants.CLAIM_SUB, "")
         }
 
         delegate.attachedFields.forEach { (t, u) ->

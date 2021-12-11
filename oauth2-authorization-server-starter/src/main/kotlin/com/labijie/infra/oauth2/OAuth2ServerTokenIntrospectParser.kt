@@ -41,43 +41,43 @@ class OAuth2ServerTokenIntrospectParser(
         }
     }
 
-    override fun parse(tokenValue: String): TokenIntrospectionResponse {
-        if (tokenValue.isBlank()) {
+    override fun parse(token: String): TokenIntrospectionResponse {
+        if (token.isBlank()) {
             return TokenIntrospectionErrorResponse(BearerTokenError.MISSING_TOKEN)
         }
 
-        val token: Jwt = try {
-            jwtCodec.decode(tokenValue)
+        val jwt: Jwt = try {
+            jwtCodec.decode(token)
         } catch (jwtException: JwtException) {
             LOGGER.warn("Bad jwt token format for introspection.", jwtException)
             return TokenIntrospectionErrorResponse(BearerTokenError.INVALID_TOKEN)
         }
 
-        if (token.isExpired) {
+        if (jwt.isExpired) {
             return TokenIntrospectionErrorResponse(BearerTokenError.INVALID_TOKEN)
         }
 
         return TokenIntrospectionSuccessResponse.Builder(true)
-            .expirationTime(token.expiresAt?.let {
+            .expirationTime(jwt.expiresAt?.let {
                 Date.from(it)
             })
-            .scope(Scope.parse(token.getScopes()))
+            .scope(Scope.parse(jwt.getScopes()))
             .apply {
-                val type = token.claims[OAuth2ParameterNames.TOKEN_TYPE]?.toString()
+                val type = jwt.claims[OAuth2ParameterNames.TOKEN_TYPE]?.toString()
                 if (type.isNullOrBlank()) {
                     this.tokenType(AccessTokenType.UNKNOWN)
                 } else {
-                    this.tokenType(AccessTokenType(token.tokenValue))
+                    this.tokenType(AccessTokenType(jwt.tokenValue))
                 }
 
-                val audience = token.audience
+                val audience = jwt.audience
                 if (audience != null) {
                     this.audience(audience.map { Audience(it) })
                 }
 
                 val authorities = mutableSetOf<String>()
-                if (token.claims.containsKey(Constants.CLAIM_ROLES)) {
-                    val roles = token.claims[Constants.CLAIM_ROLES] as? Iterable<*>
+                if (jwt.claims.containsKey(Constants.CLAIM_ROLES)) {
+                    val roles = jwt.claims[Constants.CLAIM_ROLES] as? Iterable<*>
                     roles?.forEach {
                         if (it != null) {
                             authorities.add("ROLE_$it")
@@ -85,8 +85,8 @@ class OAuth2ServerTokenIntrospectParser(
                     }
                 }
 
-                if (token.claims.containsKey(Constants.CLAIM_AUTHORITIES)) {
-                    val roles = token.claims[Constants.CLAIM_AUTHORITIES] as? Iterable<*>
+                if (jwt.claims.containsKey(Constants.CLAIM_AUTHORITIES)) {
+                    val roles = jwt.claims[Constants.CLAIM_AUTHORITIES] as? Iterable<*>
                     roles?.forEach {
                         if (it != null) {
                             authorities.add(it.toString())
@@ -97,7 +97,7 @@ class OAuth2ServerTokenIntrospectParser(
                 this.parameter(Constants.CLAIM_AUTHORITIES, authorities)
             }
             .apply {
-                token.claims.filter {
+                jwt.claims.filter {
                     it.key != Constants.CLAIM_AUTHORITIES &&
                             it.key != Constants.CLAIM_ROLES &&
                             it.key != JwtClaimNames.AUD &&

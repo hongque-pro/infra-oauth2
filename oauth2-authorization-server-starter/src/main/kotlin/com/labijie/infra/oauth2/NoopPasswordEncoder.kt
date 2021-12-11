@@ -1,6 +1,5 @@
 package com.labijie.infra.oauth2
 
-import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 
 class NoopPasswordEncoder : PasswordEncoder {
@@ -8,9 +7,7 @@ class NoopPasswordEncoder : PasswordEncoder {
         val INSTANCE: PasswordEncoder = NoopPasswordEncoder()
     }
 
-    private fun NoOpPasswordEncoder() {}
-
-    override fun encode(rawPassword: CharSequence): String? {
+    override fun encode(rawPassword: CharSequence): String {
         return rawPassword.toString()
     }
 

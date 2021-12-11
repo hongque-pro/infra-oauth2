@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = "com.labijie.infra"
-    version = "1.5.0"
+    version = "1.2.0"
 
     infra {
         useDefault {
@@ -23,9 +23,6 @@ subprojects {
             usePublish {
                 description = "infrastructure for oauth2 library"
                 githubUrl("hongque-pro", "infra-oauth2")
-                artifactId {
-                    "mqts-${it.name}"
-                }
             }
         }
     }

@@ -23,14 +23,10 @@ class OAuth2SecurityAutoConfiguration : BeanPostProcessor {
     @Autowired
     private lateinit var identityService: IIdentityService
 
-    private fun getUserService(identityService: IIdentityService): DefaultUserService {
-        return DefaultUserService(this.identityService)
-    }
-
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any? {
         if (bean is AuthenticationManagerBuilder) {
             bean
-                .userDetailsService(this.getUserService(identityService)) // .passwordEncoder(passwordEncoder())
+                .userDetailsService(DefaultUserService(this.identityService)) // .passwordEncoder(passwordEncoder())
                 .and()
                 .eraseCredentials(true)
         }

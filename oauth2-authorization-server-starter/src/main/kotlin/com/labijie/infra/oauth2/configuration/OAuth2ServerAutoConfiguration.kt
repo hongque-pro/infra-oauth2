@@ -19,7 +19,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.context.ApplicationEventPublisherAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
@@ -139,16 +138,12 @@ class OAuth2ServerAutoConfiguration(
     }
 
     @Configuration(proxyBeanMethods = false)
-    protected class SecurityFilterChainConfiguration(private val properties: OAuth2ServerProperties) :
-        ApplicationContextAware, ApplicationEventPublisherAware {
+    protected class SecurityFilterChainConfiguration() : ApplicationContextAware {
 
-        private lateinit var eventPublisher: ApplicationEventPublisher
         private lateinit var springContext: ApplicationContext
 
         private fun HttpSecurity.addCustomOAuth2ResourceOwnerPasswordAuthenticationProvider() {
             val http = this
-            val eventPub = if (::eventPublisher.isInitialized) eventPublisher else null
-
             val authenticationManager = http.getSharedObject(AuthenticationManager::class.java)
 //        val providerSettings = http.getSharedObject(ProviderSettings::class.java)
             val authorizationService = http.getSharedObject(OAuth2AuthorizationService::class.java)
@@ -229,11 +224,6 @@ class OAuth2ServerAutoConfiguration(
                 }
                 .csrf().disable()
                 .build()
-        }
-
-
-        override fun setApplicationEventPublisher(applicationEventPublisher: ApplicationEventPublisher) {
-            this.eventPublisher = applicationEventPublisher
         }
 
         override fun setApplicationContext(applicationContext: ApplicationContext) {

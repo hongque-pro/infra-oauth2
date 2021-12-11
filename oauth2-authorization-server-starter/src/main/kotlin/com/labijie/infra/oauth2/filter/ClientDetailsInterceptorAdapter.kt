@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes
 import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.web.method.HandlerMethod
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter
+import org.springframework.web.servlet.HandlerInterceptor
 import java.time.Instant
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -19,9 +19,10 @@ import javax.servlet.http.HttpServletResponse
  * @author Anders Xiao
  * @date 2019-07-11
  */
-class ClientDetailsInterceptorAdapter(private val registeredClientRepository: RegisteredClientRepository): HandlerInterceptorAdapter() {
+class ClientDetailsInterceptorAdapter(private val registeredClientRepository: RegisteredClientRepository):
+    HandlerInterceptor {
 
-    private val errorConverter = OAuth2ErrorHttpMessageConverter();
+    private val errorConverter = OAuth2ErrorHttpMessageConverter()
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val method = handler as? HandlerMethod
