@@ -1,6 +1,6 @@
 # 基础组件包
 
-![maven central version](https://img.shields.io/maven-central/v/com.labijie.infra/oauth2-auth-server-starter?style=flat-square)
+![maven central version](https://img.shields.io/maven-central/v/com.labijie.infra/oauth2-commons?style=flat-square)
 ![workflow status](https://img.shields.io/github/workflow/status/hongque-pro/infra-oauth2/Gradle%20Build%20And%20Release?label=CI%20publish&style=flat-square)
 ![license](https://img.shields.io/github/license/hongque-pro/infra-oauth2?style=flat-square)
 
