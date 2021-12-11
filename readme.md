@@ -9,8 +9,8 @@
 - 移除 Spring Security OAuth 2。
 - 移除 Spring Cloud OAuth2 。
 - 不再支持 TOKEN STORE 配置 token 存储， 仅支持 JWT 。
-- 不再依赖 spring data redis ， 默认使用 [caching-kotlin](https://github.com/endink/caching-kotlin) 存储 token。
-- 集成 [spring-authorization-server](https://github.com/spring-projects/spring-authorization-server)。
+- 不再依赖 Spring Data Redis ， 默认使用 [**caching-kotlin**](https://github.com/endink/caching-kotlin) 存储 token。
+- 集成 [**Spring-Authorization-Server**](https://github.com/spring-projects/spring-authorization-server) 。
 - 兼容原有的 Password Grant Type。
 - 不再需要 IClientDetailsServiceFactory 实现。
 - 包名由 oauth2-auth-server-starter 变更为 **oauth2-authorization-server-starter**
@@ -39,7 +39,18 @@ https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/
     compile "oauth2-authorization-server-starter:<your version>"
 ```
 【2】实现 **IIdentityService** 接口作为一个 Bean 注册给 Spring    
-
+【3】配置 RSA 密钥用于 JWT 加密
+```yaml
+infra:
+  oauth2:
+    token:
+      jwt:
+        rsa:
+          private-key: <private_key>
+          public-key: <publick_key>
+```
+:bell:**注意**：为方便开发起见，程序中内置了 RSA 密钥对，如果不配置将使用默认密钥对，生产环境请自行生成密钥对，否则将有安全隐患。
+>授权服务器默认将在 **/oauth/.well-known/jwks.json** 路径上暴露 JWK 公钥信息。
 
 ## 如何实现一个使用上面的 OAuth2 授权服务器授权的资源服务器？
 引入依赖包即可：
@@ -48,13 +59,33 @@ https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/
     compile "com.labijie.infra:oauth2-resource-server-starter:<your version>"
 ```
 
+#### 资源服务器可以通过三种方式配置和资源服务器协作：
+
+1. 配置 RSA 公钥：
+```yaml
+infra.oauth2.resource-server.jwt.rsa-pub-key=<RSA_PUBLICK_KEY>
+```
+其中 **RSA_PUBLICK_KEY** 可以是 PEM 文件内容、CLASSPATH 资源文件路径或者磁盘上的文件路径。
+
+2. 配置授权服务器暴露的 JWK 端点：
+```yaml
+spring.security.oauth2.resourceserver.jwt.jwk-set-uri=<JWK_URI>
+```
+其中 **JWK_URI** 是授权服务器暴露的 JWK 终结点，默认为 **/oauth/.well-known/jwks.json**。 
+3. 通过 Spring-Authorization-Server 原生配置配置公钥资源文件：
+```yaml
+spring.security.oauth2.resourceserver.jwt.public-key-location=<public-key>
+```
+
+:bell:如果以上三项均未找到，将使用默认内置的 RSA 公钥，生产环境请自行配置，否则可能造成安全隐患。
+
 > 注意，不论是授权服务器还是资源服务器，都需要自己注解 **EnableWebSecurity** 到你的工程。
 
 ## 如何是一个OAuth2 服务器同时本身又包含需要授权的资源？   
 授权服务器项目包含资源服务器依赖包即可！
 
 ## 配置 OAuth2AuthorizationService (用于存储 Oauth2 Token )
-使用配置 （ store 配置可用值：Jwt,  InMemory, Redis, 默认未 Jwt）：   
+application.yml 中加入以下配置: 
 ```yaml
 infra:
   oauth2:
@@ -62,11 +93,12 @@ infra:
 ```
 支持三种 OAuth2AuthorizationService
 
-- caching（**默认值**）: [caching-kotlin](https://github.com/endink/caching-kotlin) 存储 token
+- caching（**默认值**）: [**caching-kotlin**](https://github.com/endink/caching-kotlin) 存储 token
 - jdbc: 官方 jdbc 实现
 - memory: 官方 in memory 实现
 
-> 注意 redis 需要自己引入 Spring 官方的 **spring-boot-starter-data-redis** 包
+> 注意 redis 需要自己引入 **com.labijie:caching-kotlin-redis-starter**或
+> **com.labijie:caching-kotlin-redis-starter** 包，具体参考 [**caching-kotlin**](https://github.com/endink/caching-kotlin) 项目
 
 ## 如何实现真正的两段身份验证？
 

@@ -1,6 +1,11 @@
 infra:
   oauth2:
     authorization-service: jdbc
+    token:
+      jwt:
+        rsa:
+          private-key:
+          public-key:
 management:
   endpoints:
     web:
