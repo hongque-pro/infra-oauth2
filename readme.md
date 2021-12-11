@@ -61,18 +61,20 @@ infra:
 
 #### 资源服务器可以通过三种方式配置和资源服务器协作：
 
-1. 配置 RSA 公钥：
+【1】 配置 RSA 公钥：
 ```yaml
 infra.oauth2.resource-server.jwt.rsa-pub-key=<RSA_PUBLICK_KEY>
 ```
-其中 **RSA_PUBLICK_KEY** 可以是 PEM 文件内容、CLASSPATH 资源文件路径或者磁盘上的文件路径。
+其中 **RSA_PUBLICK_KEY** 可以是 PEM 文件内容、CLASSPATH 资源文件路径或者磁盘上的文件路径。   
 
-2. 配置授权服务器暴露的 JWK 端点：
+【2】 配置授权服务器暴露的 JWK 端点：
 ```yaml
 spring.security.oauth2.resourceserver.jwt.jwk-set-uri=<JWK_URI>
 ```
-其中 **JWK_URI** 是授权服务器暴露的 JWK 终结点，默认为 **/oauth/.well-known/jwks.json**。 
-3. 通过 Spring-Authorization-Server 原生配置配置公钥资源文件：
+其中 **JWK_URI** 是授权服务器暴露的 JWK 终结点，默认为 **/oauth/.well-known/jwks.json**。    
+
+
+【3】 通过 Spring-Authorization-Server 原生配置配置公钥资源文件：
 ```yaml
 spring.security.oauth2.resourceserver.jwt.public-key-location=<public-key>
 ```
