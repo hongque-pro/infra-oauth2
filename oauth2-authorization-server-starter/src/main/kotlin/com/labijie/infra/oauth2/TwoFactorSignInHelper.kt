@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -41,7 +42,7 @@ class TwoFactorSignInHelper(
     private val jwtCodec: IOAuth2ServerJwtCodec,
     private val jwtCustomizer: OAuth2TokenCustomizer<JwtEncodingContext>,
     private val identityService: IIdentityService,
-): ApplicationContextAware {
+) : ApplicationContextAware {
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(TwoFactorSignInHelper::class.java)
@@ -52,7 +53,7 @@ class TwoFactorSignInHelper(
     private lateinit var authenticationManager: AuthenticationManager
     private lateinit var authorizationService: OAuth2AuthorizationService
 
-    fun setup(authenticationManager: AuthenticationManager, authorizationService: OAuth2AuthorizationService){
+    fun setup(authenticationManager: AuthenticationManager, authorizationService: OAuth2AuthorizationService) {
         this.authenticationManager = authenticationManager
         this.authorizationService = authorizationService
     }
@@ -62,77 +63,99 @@ class TwoFactorSignInHelper(
         clientId: String,
         userName: String,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String> = hashSetOf()
+        scopes: Set<String>? = null
     ): OAuth2AccessTokenAuthenticationToken {
-        if(userName.isBlank()){
+        if (userName.isBlank()) {
             throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
         }
 
         val user = identityService.getUserByName(userName)
+            ?: throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
+
 
         val client = clientRepository.findByClientId(clientId)
             ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT)
 
         return signIn(
             client,
-            user.username,
+            user,
             twoFactorGranted,
-            scopes,
-            null
+            scopes
         )
     }
 
+    fun signIn(
+        client: RegisteredClient,
+        userName: String,
+        twoFactorGranted: Boolean = false,
+        scopes: Set<String>? = null
+    ): OAuth2AccessTokenAuthenticationToken {
+
+        if (userName.isBlank()) {
+            throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
+        }
+
+        val user = identityService.getUserByName(userName)
+            ?: throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
+
+        return signIn(
+            client,
+            user,
+            twoFactorGranted,
+            scopes
+        )
+    }
 
     fun signIn(
         clientId: String,
         user: ITwoFactorUserDetails,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String> = hashSetOf()
+        scopes: Set<String>? = null
     ): OAuth2AccessTokenAuthenticationToken {
-        if (!user.isTwoFactorEnabled() && twoFactorGranted) {
-            throw IllegalArgumentException("SignIn user isTwoFactorEnabled = false, but twoFactorGranted be set to true.")
-        }
 
         val client = clientRepository.findByClientId(clientId)
             ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT)
 
         return signIn(
             client,
-            user.username,
+            user,
             twoFactorGranted,
-            scopes,
-            null
+            scopes
         )
     }
 
+    fun signIn(client: RegisteredClient, user: ITwoFactorUserDetails, twoFactorGranted: Boolean, scopes: Set<String>? = null): OAuth2AccessTokenAuthenticationToken {
+        if (!user.isTwoFactorEnabled() && twoFactorGranted) {
+            throw IllegalArgumentException("SignIn user isTwoFactorEnabled = false, but twoFactorGranted be set to true.")
+        }
+        val u = user.withoutPassword()
+        val aut = UsernamePasswordAuthenticationToken(u, null)
+        return signInCore(client, aut, twoFactorGranted, scopes ?: client.scopes)
+    }
 
     fun signIn(
-        registeredClient: RegisteredClient,
+        clientId: String,
         username: String,
+        password: String,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String> = hashSetOf(),
-        password: String? = null
+        scopes: Set<String>? = null
+    ): OAuth2AccessTokenAuthenticationToken {
+
+        val client = clientRepository.findByClientId(clientId)
+            ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT)
+
+        val auth = createUserAuthenticationToken(username, password)
+        return signInCore(client, auth, twoFactorGranted, scopes ?: client.scopes)
+    }
+
+
+    private fun signInCore(
+        registeredClient: RegisteredClient,
+        userAuthentication: Authentication,
+        twoFactorGranted: Boolean = false,
+        scopes: Set<String> = hashSetOf()
     ): OAuth2AccessTokenAuthenticationToken {
         return try {
-            val userAuthentication = if(password != null){
-                val usernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(username, password)
-                if (LOGGER.isDebugEnabled) {
-                    LOGGER.debug("got usernamePasswordAuthenticationToken=$usernamePasswordAuthenticationToken")
-                }
-                val r =  authenticationManager.authenticate(usernamePasswordAuthenticationToken)
-                val principal = (r.principal as? ITwoFactorUserDetails)?.withoutPassword()
-                if(principal != null){
-                    //尽量移除密码信息
-                    UsernamePasswordAuthenticationToken(principal, null)
-                }else{
-                    r
-                }
-            }else{
-                val user = identityService.getUserByName(username).withoutPassword()
-                UsernamePasswordAuthenticationToken(user, null)
-            }
-
-
             var authorizedScopes = registeredClient.scopes ?: HashSet() // Default to configured scopes
             if (scopes.isNotEmpty() && registeredClient.scopes.isNotEmpty()) { //没有配置 scope 认为忽略
                 val unauthorizedScopes: Set<String> = scopes
@@ -221,30 +244,51 @@ class TwoFactorSignInHelper(
 
             eventPublisher.publishEvent(UserSignedInEvent(this, token))
             token
-        }
-        catch (cex: BadCredentialsException){
+        } catch (cex: BadCredentialsException) {
             val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null)
             throw OAuth2AuthenticationException(error, cex)
-        }
-        catch (auEx: OAuth2AuthenticationException){
+        } catch (auEx: OAuth2AuthenticationException) {
             throw auEx
-        }
-        catch (auEx: AuthenticationException){
+        } catch (auEx: AuthenticationException) {
             val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, auEx.message, null)
             throw OAuth2AuthenticationException(error, auEx)
-        }
-        catch (ex: Exception) {
+        } catch (ex: Exception) {
             LOGGER.error("problem in sign in", ex)
-            throw OAuth2AuthenticationException(OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR, "Unhandled error has occurred when sign in.", null), ex)
+            throw OAuth2AuthenticationException(
+                OAuth2Error(
+                    OAuth2ErrorCodes.SERVER_ERROR,
+                    "Unhandled error has occurred when sign in.",
+                    null
+                ), ex
+            )
+        }
+    }
+
+    private fun createUserAuthenticationToken(
+        username: String,
+        password: String
+    ): Authentication {
+
+        val usernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(username, password)
+        if (LOGGER.isDebugEnabled) {
+            LOGGER.debug("got usernamePasswordAuthenticationToken=$usernamePasswordAuthenticationToken")
+        }
+        val r = authenticationManager.authenticate(usernamePasswordAuthenticationToken)
+        val principal = (r.principal as? ITwoFactorUserDetails)?.withoutPassword()
+        return if (principal != null) {
+            //尽量移除密码信息
+            UsernamePasswordAuthenticationToken(principal, null)
+        } else {
+            r
         }
     }
 
     fun signInTwoFactor(): OAuth2AccessTokenAuthenticationToken {
         val au = SecurityContextHolder.getContext().authentication
-        if(au == null || !au.isAuthenticated){
+        if (au == null || !au.isAuthenticated) {
             throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
         }
-        val value = OAuth2Utils.getTokenValue(au)?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
+        val value = OAuth2Utils.getTokenValue(au) ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
         val token = jwtCodec.decode(value)
         val client = token.claims[JwtClaimNames.SUB]?.toString() ?: ""
         val scopeNames = token.getScopes()
