@@ -144,6 +144,17 @@ class TwoFactorSignInHelper(
         val client = clientRepository.findByClientId(clientId)
             ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT)
 
+        return signIn(client, username, password, twoFactorGranted, scopes ?: client.scopes)
+    }
+
+    fun signIn(
+        client: RegisteredClient,
+        username: String,
+        password: String,
+        twoFactorGranted: Boolean = false,
+        scopes: Set<String>? = null
+    ): OAuth2AccessTokenAuthenticationToken {
+
         val auth = createUserAuthenticationToken(username, password)
         return signInCore(client, auth, twoFactorGranted, scopes ?: client.scopes)
     }

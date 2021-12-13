@@ -38,7 +38,7 @@ class ResourceOwnerPasswordAuthenticationProvider(
             throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
         }
 
-        return twoFactorSignInHelper.signIn(registeredClient, username, false, resourceOwnerPasswordAuthentication.scopes, password)
+        return twoFactorSignInHelper.signIn(registeredClient, username, password, false, resourceOwnerPasswordAuthentication.scopes)
     }
 
 
