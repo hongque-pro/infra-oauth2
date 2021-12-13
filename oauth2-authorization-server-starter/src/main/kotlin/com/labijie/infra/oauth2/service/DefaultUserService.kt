@@ -1,8 +1,10 @@
 package com.labijie.infra.oauth2.service
 
 import com.labijie.infra.oauth2.IIdentityService
+import com.labijie.infra.utils.ifNullOrBlank
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,6 +14,6 @@ import org.springframework.security.core.userdetails.UserDetailsService
 class DefaultUserService(private val identityService: IIdentityService) : UserDetailsService {
 
     override fun loadUserByUsername(username: String): UserDetails {
-        return identityService.getUserByName(username)
+        return identityService.getUserByName(username)?: throw UsernameNotFoundException("User with name '${username.ifNullOrBlank { "<empty>" }}' was not found")
     }
 }
