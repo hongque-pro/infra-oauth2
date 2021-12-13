@@ -31,8 +31,8 @@ class LocalOpaqueTokenIntrospector(
         if (response != null && response.isActive){
             return  convertClaimsSet(response)
         }
-        logger.trace("Did not validate token since it is inactive");
-        throw BadOpaqueTokenException("Provided token isn't active");
+        logger.trace("Did not validate token since it is inactive")
+        throw BadOpaqueTokenException("Provided token isn't active")
     }
 
     private fun convertClaimsSet(response: TokenIntrospectionSuccessResponse): OAuth2AuthenticatedPrincipal {
@@ -79,7 +79,7 @@ class LocalOpaqueTokenIntrospector(
             URL(uri)
         } catch (ex: Exception) {
             throw OAuth2IntrospectionException(
-                    "Invalid " + OAuth2IntrospectionClaimNames.ISSUER + " value: " + uri)
+                    "Invalid " + OAuth2TokenIntrospectionClaimNames.ISS + " value: " + uri)
         }
     }
 }
