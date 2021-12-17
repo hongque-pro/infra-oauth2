@@ -38,7 +38,7 @@ jobs:
           cat gradle.properties
       - name: Build with Gradle
         run: gradle clean build -x test
-      - name: Publish To Maven Central
-        run: gradle publishToSonatype closeAndReleaseSonatypeStagingRepository
       - name: Publish To GitHub Packages
         run: gradle publishToGitHubPackages
+      - name: Publish To Maven Central
+        run: gradle publishToSonatype closeAndReleaseSonatypeStagingRepository
