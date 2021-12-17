@@ -8,10 +8,9 @@ import org.springframework.web.context.request.ServletRequestAttributes
 import javax.servlet.http.HttpServletRequest
 
 class UserSignedInEvent(source: Any,
-                        private val authentication: Authentication) : ApplicationEvent(source) {
+                        private val authentication: Authentication,
+                        val httpServletRequest: HttpServletRequest?) : ApplicationEvent(source) {
     val principle by lazy {
         authentication.twoFactorPrincipal
     }
-
-    val httpServletRequest: HttpServletRequest? = (RequestContextHolder.currentRequestAttributes() as? ServletRequestAttributes)?.request
 }

@@ -22,12 +22,20 @@ object OAuth2TestingUtils {
 
         fun ResultActions.readToMap(logResult: Boolean = true): Map<String, Any> {
                 val resultString = this.andReturn().response.contentAsString
-                val map = JacksonHelper.deserializeMap(resultString.toByteArray(Charsets.UTF_8), String::class, Any::class)
-                val pretty = JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map)
-                if(logResult) {
-                        logger.info("Http Result: ${System.lineSeparator()}$pretty")
+                if(resultString.isNotBlank()) {
+                        val map = JacksonHelper.deserializeMap(
+                                resultString.toByteArray(Charsets.UTF_8),
+                                String::class,
+                                Any::class
+                        )
+                        val pretty = JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter()
+                                .writeValueAsString(map)
+                        if (logResult) {
+                                logger.info("Http Result: ${System.lineSeparator()}$pretty")
+                        }
+                        return map
                 }
-                return map
+                return mapOf()
         }
 
         fun <T: Any> ResultActions.readAs(type: KClass<T>): T {

@@ -28,6 +28,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenCusto
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
+import org.springframework.web.context.request.RequestContextHolder
+import org.springframework.web.context.request.ServletRequestAttributes
 import java.security.Principal
 
 /**
@@ -253,7 +255,8 @@ class TwoFactorSignInHelper(
             )
             token.isAuthenticated = true
 
-            eventPublisher.publishEvent(UserSignedInEvent(this, token))
+            val requestAttribute = (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)?.request
+            eventPublisher.publishEvent(UserSignedInEvent(this, token, requestAttribute))
             token
         } catch (cex: BadCredentialsException) {
             val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null)
