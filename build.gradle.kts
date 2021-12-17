@@ -24,6 +24,8 @@ subprojects {
                 description = "infrastructure for oauth2 library"
                 githubUrl("hongque-pro", "infra-oauth2")
             }
+
+            useGitHubPackages("hongque-pro", "infra-oauth2")
         }
     }
 }
