@@ -149,6 +149,7 @@ class ResourceServerAutoConfiguration(
                     this.applyJwtConfiguration(it)
                 }
             }
+            settings.cors()
             return settings.build()
         }
 

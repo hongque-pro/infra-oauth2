@@ -4,6 +4,8 @@ package com.labijie.dummy
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer
 import org.springframework.stereotype.Component
+import org.springframework.web.servlet.config.annotation.CorsRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 /**
  *
@@ -11,10 +13,14 @@ import org.springframework.stereotype.Component
  * @Date: 2021/12/11
  * @Description:
  */
-//@Component
-//class ResourceTestConfigure : IResourceAuthorizationConfigurer {
-//    override fun configure(registry: ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry) {
-//        registry.mvcMatchers("/test2").permitAll()
-//    }
-//
-//}
+@Component
+class ResourceTestConfigure : WebMvcConfigurer {
+
+    override fun addCorsMappings(registry: CorsRegistry) {
+        registry.addMapping("/**")
+            .allowedOrigins("*")
+            .allowedMethods("*")
+            .maxAge(3600)
+            .allowedHeaders("*")
+    }
+}

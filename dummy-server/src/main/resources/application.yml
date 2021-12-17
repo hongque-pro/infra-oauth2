@@ -1,7 +1,8 @@
 infra:
   oauth2:
     authorization-service: jdbc
-
+server:
+  port: 8088
 management:
   endpoints:
     web:

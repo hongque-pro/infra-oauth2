@@ -128,6 +128,7 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
         return PasswordPrincipalResolver()
     }
 
+
     @Bean
     @ConditionalOnMissingBean(PasswordEncoder::class)
     fun oauth2PasswordEncoder(): PasswordEncoder {

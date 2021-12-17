@@ -27,7 +27,6 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.ObjectPostProcessor
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationEndpointConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2TokenEndpointConfigurer
@@ -145,7 +144,6 @@ class OAuth2ServerAutoConfiguration(
         private fun HttpSecurity.addCustomOAuth2ResourceOwnerPasswordAuthenticationProvider() {
             val http = this
             val authenticationManager = http.getSharedObject(AuthenticationManager::class.java)
-//        val providerSettings = http.getSharedObject(ProviderSettings::class.java)
             val authorizationService = http.getSharedObject(OAuth2AuthorizationService::class.java)
 
             val sh = springContext.getBean(TwoFactorSignInHelper::class.java)
@@ -200,11 +198,8 @@ class OAuth2ServerAutoConfiguration(
             http.requestMatcher(endpointsMatcher)
                 .authorizeRequests {
                     it.anyRequest().authenticated()
-                }.csrf { csrf: CsrfConfigurer<HttpSecurity?> ->
-                    csrf.ignoringRequestMatchers(
-                        endpointsMatcher
-                    )
-                }
+                }.csrf().disable()
+                .cors().and()
                 .apply(authorizationServerConfigurer)
             val securityFilterChain: SecurityFilterChain = http.formLogin(Customizer.withDefaults()).build()
             /**
@@ -222,6 +217,8 @@ class OAuth2ServerAutoConfiguration(
                 .authorizeRequests {
                     it.anyRequest().permitAll()
                 }
+                .cors()
+                .and()
                 .csrf().disable()
                 .build()
         }

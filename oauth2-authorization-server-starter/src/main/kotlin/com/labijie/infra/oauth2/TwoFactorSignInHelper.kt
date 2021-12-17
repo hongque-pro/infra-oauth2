@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import java.security.Principal
+import javax.servlet.http.HttpServletRequest
 
 /**
  * Created with IntelliJ IDEA.
@@ -65,7 +66,8 @@ class TwoFactorSignInHelper(
         clientId: String,
         userName: String,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String>? = null
+        scopes: Set<String>? = null,
+        request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
         if (userName.isBlank()) {
             throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
@@ -82,7 +84,8 @@ class TwoFactorSignInHelper(
             client,
             user,
             twoFactorGranted,
-            scopes
+            scopes,
+            request
         )
     }
 
@@ -90,7 +93,8 @@ class TwoFactorSignInHelper(
         client: RegisteredClient,
         userName: String,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String>? = null
+        scopes: Set<String>? = null,
+        request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
 
         if (userName.isBlank()) {
@@ -104,7 +108,8 @@ class TwoFactorSignInHelper(
             client,
             user,
             twoFactorGranted,
-            scopes
+            scopes,
+            request
         )
     }
 
@@ -112,7 +117,8 @@ class TwoFactorSignInHelper(
         clientId: String,
         user: ITwoFactorUserDetails,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String>? = null
+        scopes: Set<String>? = null,
+        request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
 
         val client = clientRepository.findByClientId(clientId)
@@ -122,17 +128,24 @@ class TwoFactorSignInHelper(
             client,
             user,
             twoFactorGranted,
-            scopes
+            scopes,
+            request
         )
     }
 
-    fun signIn(client: RegisteredClient, user: ITwoFactorUserDetails, twoFactorGranted: Boolean, scopes: Set<String>? = null): OAuth2AccessTokenAuthenticationToken {
+    fun signIn(
+        client: RegisteredClient,
+        user: ITwoFactorUserDetails,
+        twoFactorGranted: Boolean,
+        scopes: Set<String>? = null,
+        request: HttpServletRequest? = null
+    ): OAuth2AccessTokenAuthenticationToken {
         if (!user.isTwoFactorEnabled() && twoFactorGranted) {
             throw IllegalArgumentException("SignIn user isTwoFactorEnabled = false, but twoFactorGranted be set to true.")
         }
         val u = user.withoutPassword()
         val aut = UsernamePasswordAuthenticationToken(u, null)
-        return signInCore(client, aut, twoFactorGranted, scopes ?: client.scopes)
+        return signInCore(client, aut, twoFactorGranted, scopes ?: client.scopes, request)
     }
 
     fun signIn(
@@ -140,13 +153,14 @@ class TwoFactorSignInHelper(
         username: String,
         password: String,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String>? = null
+        scopes: Set<String>? = null,
+        request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
 
         val client = clientRepository.findByClientId(clientId)
             ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT)
 
-        return signIn(client, username, password, twoFactorGranted, scopes ?: client.scopes)
+        return signIn(client, username, password, twoFactorGranted, scopes ?: client.scopes, request)
     }
 
     fun signIn(
@@ -154,11 +168,12 @@ class TwoFactorSignInHelper(
         username: String,
         password: String,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String>? = null
+        scopes: Set<String>? = null,
+        request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
 
         val auth = createUserAuthenticationToken(username, password)
-        return signInCore(client, auth, twoFactorGranted, scopes ?: client.scopes)
+        return signInCore(client, auth, twoFactorGranted, scopes ?: client.scopes, request)
     }
 
 
@@ -166,7 +181,8 @@ class TwoFactorSignInHelper(
         registeredClient: RegisteredClient,
         userAuthentication: Authentication,
         twoFactorGranted: Boolean = false,
-        scopes: Set<String> = hashSetOf()
+        scopes: Set<String> = hashSetOf(),
+        request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
         return try {
             var authorizedScopes = registeredClient.scopes ?: HashSet() // Default to configured scopes
@@ -255,26 +271,38 @@ class TwoFactorSignInHelper(
             )
             token.isAuthenticated = true
 
-            val requestAttribute = (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)?.request
+            val requestAttribute =
+                request ?: (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)?.request
             eventPublisher.publishEvent(UserSignedInEvent(this, token, requestAttribute))
             token
-        } catch (cex: BadCredentialsException) {
-            val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null)
-            throw OAuth2AuthenticationException(error, cex)
-        } catch (auEx: OAuth2AuthenticationException) {
-            throw auEx
-        } catch (auEx: AuthenticationException) {
-            val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, auEx.message, null)
-            throw OAuth2AuthenticationException(error, auEx)
         } catch (ex: Exception) {
-            LOGGER.error("problem in sign in", ex)
-            throw OAuth2AuthenticationException(
-                OAuth2Error(
-                    OAuth2ErrorCodes.SERVER_ERROR,
-                    "Unhandled error has occurred when sign in.",
-                    null
-                ), ex
-            )
+            processException(ex)
+        }
+    }
+
+    private fun processException(ex: Exception): Nothing {
+        when (ex) {
+            is BadCredentialsException -> {
+                val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null)
+                throw OAuth2AuthenticationException(error, ex)
+            }
+            is OAuth2AuthenticationException -> {
+                throw ex
+            }
+            is AuthenticationException -> {
+                val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, ex.message, null)
+                throw OAuth2AuthenticationException(error, ex)
+            }
+            else -> {
+                LOGGER.error("problem in sign in", ex)
+                throw OAuth2AuthenticationException(
+                    OAuth2Error(
+                        OAuth2ErrorCodes.SERVER_ERROR,
+                        "Unhandled error has occurred when sign in.",
+                        null
+                    ), ex
+                )
+            }
         }
     }
 
@@ -287,7 +315,11 @@ class TwoFactorSignInHelper(
         if (LOGGER.isDebugEnabled) {
             LOGGER.debug("got usernamePasswordAuthenticationToken=$usernamePasswordAuthenticationToken")
         }
-        val r = authenticationManager.authenticate(usernamePasswordAuthenticationToken)
+        val r = try {
+            authenticationManager.authenticate(usernamePasswordAuthenticationToken)
+        } catch (ex: Exception) {
+            processException(ex)
+        }
         val principal = (r.principal as? ITwoFactorUserDetails)?.withoutPassword()
         return if (principal != null) {
             //尽量移除密码信息

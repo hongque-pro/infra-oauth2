@@ -46,8 +46,10 @@ class OAuth2SecurityAutoConfiguration : BeanPostProcessor {
                         .anyRequest().permitAll()
                 }
                 .sessionManagement().disable()
-                //.formLogin(withDefaults())
                 .csrf().disable()
+                //.formLogin(withDefaults())
+                .cors()
+                .and()
                 .headers().frameOptions().sameOrigin()
             return http.build()
         }
