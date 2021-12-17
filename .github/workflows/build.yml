@@ -8,6 +8,7 @@ env:
   GPG_PWD: ${{ secrets.MAVEN_SIGN_KEY_PWD }}
   PUB_USER: ${{ secrets.MAVEN_USER_NAME }}
   PUB_PWD: ${{ secrets.MAVEN_USER_PWD }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 on:
   workflow_dispatch:
   release:

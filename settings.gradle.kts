@@ -6,3 +6,9 @@ include("oauth2-authorization-server-starter")
 include("oauth2-resource-server-starter")
 //include("oauth2-resource-token-starter")
 include("dummy-server")
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+    }
+}

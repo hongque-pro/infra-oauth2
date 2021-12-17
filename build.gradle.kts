@@ -12,6 +12,8 @@ allprojects {
             infraBomVersion = Versions.infraBom
             kotlinVersion = Versions.kotlin
             useMavenProxy = false
+
+            addHongQueGitHubPackages()
         }
 
         useNexusPublish()
