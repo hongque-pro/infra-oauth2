@@ -2,7 +2,6 @@ package com.labijie.infra.oauth2.testing
 
 import com.labijie.infra.oauth2.Constants
 import com.labijie.infra.oauth2.TwoFactorPrincipal
-import com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readString
@@ -23,11 +22,12 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 @ContextConfiguration(
-        classes = [
-            ResourceServerTestingConfiguration::class,
-        ]
+    classes = [
+        ResourceServerTestingConfiguration::class,
+    ]
 )
 @WebMvcTest
 class ResourceServerTester : OAuth2Tester() {
@@ -43,32 +43,55 @@ class ResourceServerTester : OAuth2Tester() {
 
     private fun performPost(tokenValue: String, url: String, jsonResponseAssertion: Boolean = true): ResultActions {
         return mockMvc.perform(
-                post(url)
-                        .withBearerToken(tokenValue)
-                        .accept(MediaType.APPLICATION_JSON)
-        )
-                .let {
-                    if (jsonResponseAssertion) {
-                        it.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                    } else {
-                        it
+            post(url)
+                .apply {
+                    if(tokenValue.isNotBlank()){
+                        this.withBearerToken(tokenValue)
                     }
                 }
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .let {
+                if (jsonResponseAssertion) {
+                    it.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                } else {
+                    it
+                }
+            }
     }
 
     private fun performGet(tokenValue: String, url: String, jsonResponseAssertion: Boolean = true): ResultActions {
         return mockMvc.perform(
-                get(url)
-                        .withBearerToken(tokenValue)
-                        .accept(MediaType.APPLICATION_JSON)
-        )
-                .let {
-                    if (jsonResponseAssertion) {
-                        it.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                    } else {
-                        it
+            get(url)
+                .apply {
+                    if(tokenValue.isNotBlank()){
+                        this.withBearerToken(tokenValue)
                     }
                 }
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .let {
+                if (jsonResponseAssertion) {
+                    it.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                } else {
+                    it
+                }
+            }
+    }
+
+    @Test
+    fun testPermitAll() {
+        val result = performGet("","/test/permitAll").andExpect(status().isOk)
+        val r = result.readString()
+        Assertions.assertEquals("ok", r)
+    }
+
+    @Test
+    fun tokeRequiredAccess() {
+        val result = performGet("", "/test/1fac")
+        result.andExpect(status().is4xxClientError)
+        val map = result.readToMap()
+        assertEquals(map["error"], "access_denied")
     }
 
     @Test
@@ -101,11 +124,12 @@ class ResourceServerTester : OAuth2Tester() {
         Assertions.assertTrue(twoFacTokenMap[Constants.CLAIM_TWO_FACTOR] as Boolean)
 
         val diffrentKeys = arrayOf(
-                Constants.CLAIM_JTI,
-                OAuth2ParameterNames.EXPIRES_IN,
-                OAuth2ParameterNames.REFRESH_TOKEN,
-                OAuth2ParameterNames.ACCESS_TOKEN,
-                Constants.CLAIM_TWO_FACTOR)
+            Constants.CLAIM_JTI,
+            OAuth2ParameterNames.EXPIRES_IN,
+            OAuth2ParameterNames.REFRESH_TOKEN,
+            OAuth2ParameterNames.ACCESS_TOKEN,
+            Constants.CLAIM_TWO_FACTOR
+        )
 
         tokenMap.forEach { (k, v) ->
             val newValue = twoFacTokenMap[k]
@@ -164,7 +188,10 @@ class ResourceServerTester : OAuth2Tester() {
         }.readToMap()
 
         Assertions.assertNotNull(p)
-        Assertions.assertEquals(OAuth2TestingUtils.TestUser.authorities.size, (p[TwoFactorPrincipal::authorities.name] as List<*>).size)
+        Assertions.assertEquals(
+            OAuth2TestingUtils.TestUser.authorities.size,
+            (p[TwoFactorPrincipal::authorities.name] as List<*>).size
+        )
 
         val first = (p[TwoFactorPrincipal::authorities.name] as List<*>).first() as Map<*, *>
         Assertions.assertEquals(OAuth2TestingUtils.TestUser.authorities.first().authority, first["authority"])

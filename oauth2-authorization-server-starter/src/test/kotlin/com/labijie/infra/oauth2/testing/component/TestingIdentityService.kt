@@ -1,9 +1,10 @@
 package com.labijie.infra.oauth2.testing.component
 
-import com.labijie.infra.oauth2.*
+import com.labijie.infra.oauth2.IIdentityService
+import com.labijie.infra.oauth2.ITwoFactorUserDetails
+import com.labijie.infra.oauth2.SimpleTwoFactorUserDetails
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.core.userdetails.UserDetails
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,7 +23,7 @@ class TestingIdentityService: IIdentityService {
             }
 
             override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
-                return mutableListOf(SimpleGrantedAuthority("aa"))
+                return mutableListOf(SimpleGrantedAuthority("ROLE_aa"))
             }
 
             override fun isEnabled(): Boolean = true

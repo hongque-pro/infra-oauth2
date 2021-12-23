@@ -1,6 +1,5 @@
 package com.labijie.infra.oauth2.testing
 
-import com.labijie.caching.configuration.CachingAutoConfiguration
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.Constants.DEFAULT_JWK_SET_ENDPOINT_PATH
 import com.labijie.infra.oauth2.Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH
@@ -18,6 +17,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAut
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -28,6 +28,7 @@ import org.springframework.util.Base64Utils
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 
 @ContextConfiguration(classes = [OAuth2TestServerAutoConfiguration::class])
@@ -49,6 +50,9 @@ class OAuth2ServerTester : OAuth2Tester() {
         EventTestSubscription
         val r = this.performTokenAction(password = "!@#@$###GD")
         r.andExpect(status().is4xxClientError)
+
+        val json = r.readToMap()
+        assertEquals(json["error"], OAuth2ErrorCodes.INVALID_GRANT)
     }
 
     @Test

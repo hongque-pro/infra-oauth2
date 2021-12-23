@@ -5,8 +5,6 @@ import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -21,6 +19,11 @@ class ResourceTestController {
     @PostMapping("/sign-2f")
     fun twoFacSignIn(): Map<String, Any> {
         return signInHelper.signInTwoFactor().toResponse()
+    }
+
+    @GetMapping("/permitAll")
+    fun permitAll(): String {
+        return "ok"
     }
 
     @GetMapping("/2fac")

@@ -183,6 +183,7 @@ class OAuth2ServerAutoConfiguration(
                         )
                     )
                 )
+                tokenEndpoint.errorResponseHandler(OAuth2ExceptionHandler.INSTANCE)
             })
 
 

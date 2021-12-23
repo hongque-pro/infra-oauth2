@@ -13,5 +13,6 @@ class TestingResourceConfigurer : IResourceAuthorizationConfigurer {
                 .mvcMatchers("/test/field-bbb-test").hasTokenAttributeValue("bbb", "miss")
                 .mvcMatchers("/test/role-aa-test").hasRole("aa")
                 .mvcMatchers("/test/role-bb-test").hasRole("bb")
+                .mvcMatchers("/test/permitAll").permitAll()
     }
 }

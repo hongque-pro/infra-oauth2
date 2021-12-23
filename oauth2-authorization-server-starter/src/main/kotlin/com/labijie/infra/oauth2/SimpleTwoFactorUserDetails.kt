@@ -19,7 +19,7 @@ class SimpleTwoFactorUserDetails(
         private val accountNonLocked:Boolean = false,
         private val twoFactorEnabled: Boolean = false,
         private val authorities:ArrayList<SimpleGrantedAuthority> = arrayListOf(),
-         private val attachedFields:Map<String, String> = mapOf()) : ITwoFactorUserDetails, Serializable {
+        private val attachedFields:Map<String, String> = mapOf()) : ITwoFactorUserDetails, Serializable {
 
     override fun getUserId(): String {
         return this.userid

@@ -1,12 +1,10 @@
 package com.labijie.infra.oauth2.resource.configuration
 
-import com.labijie.infra.oauth2.Constants
-import com.labijie.infra.oauth2.ITokenIntrospectParser
-import com.labijie.infra.oauth2.OAuth2Utils
-import com.labijie.infra.oauth2.RsaUtils
+import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.resource.ActuatorAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
+import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
 import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorSecurityExpressionHandler
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
@@ -37,6 +35,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.util.matcher.RequestMatcher
 import java.io.IOException
 import java.security.interfaces.RSAPublicKey
 
@@ -46,7 +45,7 @@ import java.security.interfaces.RSAPublicKey
 class ResourceServerAutoConfiguration(
     private val oauth2ResProperties: OAuth2ResourceServerProperties,
     private val resourceServerProperties: ResourceServerProperties
-) : InitializingBean {
+): InitializingBean {
 
 
     companion object {
@@ -130,7 +129,7 @@ class ResourceServerAutoConfiguration(
         }
 
         @Bean
-        @Order(SecurityProperties.BASIC_AUTH_ORDER -10)
+        @Order(SecurityProperties.BASIC_AUTH_ORDER - 10)
         fun resourceServerSecurityChain(http: HttpSecurity): SecurityFilterChain {
             val settings = http
                 .csrf().disable()
@@ -148,8 +147,12 @@ class ResourceServerAutoConfiguration(
                 obj.jwt().also {
                     this.applyJwtConfiguration(it)
                 }
+                obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint())
             }
             settings.cors()
+            settings.exceptionHandling {
+                it.accessDeniedHandler(OAuth2ExceptionHandler.INSTANCE)
+            }
             return settings.build()
         }
 

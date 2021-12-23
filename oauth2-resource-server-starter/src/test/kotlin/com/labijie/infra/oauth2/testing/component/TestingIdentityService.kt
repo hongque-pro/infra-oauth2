@@ -21,7 +21,7 @@ class TestingIdentityService: IIdentityService {
             }
 
             override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
-                return mutableListOf(SimpleGrantedAuthority("aa"))
+                return mutableListOf(SimpleGrantedAuthority("ROLE_aa"))
             }
 
             override fun isEnabled(): Boolean = true
