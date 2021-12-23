@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.ObjectPostProcessor
@@ -198,6 +199,7 @@ class OAuth2ServerAutoConfiguration(
 
             http.requestMatcher(endpointsMatcher)
                 .authorizeRequests {
+                    it.antMatchers(HttpMethod.OPTIONS).permitAll()
                     it.anyRequest().authenticated()
                 }.csrf().disable()
                 .cors().and()

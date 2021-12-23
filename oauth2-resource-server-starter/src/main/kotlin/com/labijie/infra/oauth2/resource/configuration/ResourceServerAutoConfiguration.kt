@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
@@ -35,7 +36,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.util.matcher.RequestMatcher
 import java.io.IOException
 import java.security.interfaces.RSAPublicKey
 
@@ -55,7 +55,8 @@ class ResourceServerAutoConfiguration(
 
 
         private fun getConverter(targetDescriptor: TypeDescriptor): Converter<Any, *> {
-            return Converter { source: Any ->
+            return Converter { source: Any? ->
+                if(source == null) null else
                 ClaimConversionService.getSharedInstance().convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor)
             }
         }
@@ -134,6 +135,8 @@ class ResourceServerAutoConfiguration(
             val settings = http
                 .csrf().disable()
                 .authorizeRequests { authorize ->
+                    authorize.and().cors()
+                    authorize.antMatchers(HttpMethod.OPTIONS).permitAll()
                     resourceConfigurers.orderedStream().forEach {
                         it.configure(authorize)
                     }
@@ -149,7 +152,6 @@ class ResourceServerAutoConfiguration(
                 }
                 obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint())
             }
-            settings.cors()
             settings.exceptionHandling {
                 it.accessDeniedHandler(OAuth2ExceptionHandler.INSTANCE)
             }
