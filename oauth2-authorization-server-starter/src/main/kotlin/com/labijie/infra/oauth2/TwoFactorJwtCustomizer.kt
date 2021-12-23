@@ -17,7 +17,7 @@ class TwoFactorJwtCustomizer : IJwtCustomizer {
            }
             context.claims.claim(Constants.CLAIM_USER_ID, details.getUserId())
             context.claims.claim(Constants.CLAIM_USER_NAME, details.username)
-            context.claims.claim(Constants.CLAIM_AUTHORITIES, details.authorities.map { "ROLE_${it.authority}" })
+            context.claims.claim(Constants.CLAIM_AUTHORITIES, details.authorities)
         }
     }
 }
