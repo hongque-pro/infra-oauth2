@@ -29,10 +29,7 @@ import org.springframework.security.config.annotation.web.configurers.oauth2.ser
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2TokenValidator
 import org.springframework.security.oauth2.core.converter.ClaimConversionService
-import org.springframework.security.oauth2.jwt.Jwt
-import org.springframework.security.oauth2.jwt.JwtTimestampValidator
-import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
+import org.springframework.security.oauth2.jwt.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector
 import org.springframework.security.web.SecurityFilterChain
@@ -45,7 +42,7 @@ import java.security.interfaces.RSAPublicKey
 class ResourceServerAutoConfiguration(
     private val oauth2ResProperties: OAuth2ResourceServerProperties,
     private val resourceServerProperties: ResourceServerProperties
-): InitializingBean {
+) : InitializingBean {
 
 
     companion object {
@@ -56,8 +53,8 @@ class ResourceServerAutoConfiguration(
 
         private fun getConverter(targetDescriptor: TypeDescriptor): Converter<Any, *> {
             return Converter { source: Any? ->
-                if(source == null) null else
-                ClaimConversionService.getSharedInstance().convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor)
+                if (source == null) null else
+                    ClaimConversionService.getSharedInstance().convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor)
             }
         }
 
@@ -99,35 +96,67 @@ class ResourceServerAutoConfiguration(
         return ActuatorAuthorizationConfigurer()
     }
 
+    private fun createOAuth2TokenValidator(): OAuth2TokenValidator<Jwt> {
+        return DelegatingOAuth2TokenValidator(
+            JwtTimestampValidator(resourceServerProperties.jwt.clockSkew)
+        )
+    }
+
+    private fun createJwtClaimSetConverter(): MappedJwtClaimSetConverter {
+        val collectionStringConverter = getConverter(
+            TypeDescriptor.collection(MutableCollection::class.java, STRING_TYPE_DESCRIPTOR)
+        )
+
+        return MappedJwtClaimSetConverter
+            .withDefaults(
+                mapOf(
+                    Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
+                    Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
+                    Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
+                    Constants.CLAIM_AUTHORITIES to collectionStringConverter
+                )
+            )
+    }
+
+
+    @Bean
+    fun jwtDecoder(): JwtDecoder{
+        val decoder = if (resourceServerProperties.jwt.rsaPubKey.isNotBlank()) {
+
+            val rsaPubKey = OAuth2Utils.loadContent(resourceServerProperties.jwt.rsaPubKey, RsaUtils::getPublicKey)
+                ?: throw IOException("${ResourceServerProperties.PUBLIC_KEY_CONFIG_PATH} is not an pem content or file/resource path.")
+
+            NimbusJwtDecoder.withPublicKey(rsaPubKey)
+                .build()
+        } else if (!oauth2ResProperties.jwt.jwkSetUri.isNullOrBlank()) {
+            NimbusJwtDecoder.withJwkSetUri(oauth2ResProperties.jwt.jwkSetUri)
+                .build()
+        } else if (oauth2ResProperties.jwt.publicKeyLocation?.exists() == true) {
+            val pubKey = RsaUtils.getPublicKey(oauth2ResProperties.jwt.readPublicKey())
+            NimbusJwtDecoder.withPublicKey(pubKey)
+                .build()
+        } else {
+            NimbusJwtDecoder.withPublicKey(RsaUtils.defaultKeyPair.public as RSAPublicKey)
+                .build()
+        }
+
+        val withClockSkew: OAuth2TokenValidator<Jwt> = createOAuth2TokenValidator()
+        decoder.setJwtValidator(withClockSkew)
+
+        val converter = createJwtClaimSetConverter()
+        decoder.setClaimSetConverter(converter)
+        return decoder
+    }
+
 
     @Configuration(proxyBeanMethods = false)
     class ResourceServerSecurityFilterChainConfiguration(
+        private val jwtDecoder: JwtDecoder,
         private val oauth2ResProperties: OAuth2ResourceServerProperties,
         private val resourceServerProperties: ResourceServerProperties,
         private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>
     ) {
 
-        private fun createOAuth2TokenValidator(): OAuth2TokenValidator<Jwt> {
-            return DelegatingOAuth2TokenValidator(
-                JwtTimestampValidator(resourceServerProperties.jwt.clockSkew)
-            )
-        }
-
-        private fun createJwtClaimSetConverter(): MappedJwtClaimSetConverter {
-            val collectionStringConverter = getConverter(
-                TypeDescriptor.collection(MutableCollection::class.java, STRING_TYPE_DESCRIPTOR)
-            )
-
-            return MappedJwtClaimSetConverter
-                .withDefaults(
-                    mapOf(
-                        Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
-                        Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
-                        Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
-                        Constants.CLAIM_AUTHORITIES to collectionStringConverter
-                    )
-                )
-        }
 
         @Bean
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 10)
@@ -161,36 +190,12 @@ class ResourceServerAutoConfiguration(
         fun applyJwtConfiguration(
             configurer: OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer
         ): OAuth2ResourceServerConfigurer<HttpSecurity>.JwtConfigurer {
-            //参考：https://docs.spring.io/spring-security/site/docs/current/reference/html5/#oauth2resourceserver-jwt-decoder-secret-key
-            val decoder = if (resourceServerProperties.jwt.rsaPubKey.isNotBlank()) {
-
-                val rsaPubKey = OAuth2Utils.loadContent(resourceServerProperties.jwt.rsaPubKey, RsaUtils::getPublicKey)
-                    ?: throw IOException("${ResourceServerProperties.PUBLIC_KEY_CONFIG_PATH} is not an pem content or file/resource path.")
-
-                NimbusJwtDecoder.withPublicKey(rsaPubKey)
-                    .build()
-            } else if (!oauth2ResProperties.jwt.jwkSetUri.isNullOrBlank()) {
-                NimbusJwtDecoder.withJwkSetUri(oauth2ResProperties.jwt.jwkSetUri)
-                    .build()
-            } else if (oauth2ResProperties.jwt.publicKeyLocation?.exists() == true) {
-                val pubKey = RsaUtils.getPublicKey(oauth2ResProperties.jwt.readPublicKey())
-                NimbusJwtDecoder.withPublicKey(pubKey)
-                    .build()
-            } else {
-                NimbusJwtDecoder.withPublicKey(RsaUtils.defaultKeyPair.public as RSAPublicKey)
-                    .build()
-            }
-
-            val withClockSkew: OAuth2TokenValidator<Jwt> = createOAuth2TokenValidator()
-            decoder.setJwtValidator(withClockSkew)
-
-            val converter = createJwtClaimSetConverter()
-            decoder.setClaimSetConverter(converter)
-
-            configurer.decoder(decoder)
+            configurer.decoder(jwtDecoder)
 
             return configurer
         }
+
+
     }
 
 

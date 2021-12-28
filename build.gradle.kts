@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = "com.labijie.infra"
-    version = "1.2.4"
+    version = "1.2.5"
 
     infra {
         useDefault {
