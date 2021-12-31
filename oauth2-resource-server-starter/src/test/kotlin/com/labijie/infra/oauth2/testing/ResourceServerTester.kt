@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
@@ -21,6 +22,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -100,6 +102,15 @@ class ResourceServerTester : OAuth2Tester() {
         val result = performGet(tokenValue, "/test/1fac").andExpect(status().isOk)
         val r = result.readString()
         Assertions.assertEquals("ok", r)
+    }
+
+    @Test
+    fun testBadAccessToken() {
+        val result = performGet(UUID.randomUUID().toString(), "/test/1fac")
+        result.andExpect(status().is4xxClientError)
+        val map = result.readToMap()
+        val errorCode = map["error"]?.toString()
+        assertEquals(OAuth2ErrorCodes.INVALID_TOKEN, errorCode)
     }
 
     @Test

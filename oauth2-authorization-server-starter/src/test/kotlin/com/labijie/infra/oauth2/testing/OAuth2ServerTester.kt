@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.util.Base64Utils
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -59,6 +60,26 @@ class OAuth2ServerTester : OAuth2Tester() {
     fun testBadClientSecretLogin() {
         val r = this.performTokenAction(clientSecret = "abcdefg")
         r.andExpect(status().is4xxClientError)
+    }
+
+
+    @Test
+    fun testBadRefreshToken(){
+        val params: MultiValueMap<String, String> = LinkedMultiValueMap()
+        params.add("grant_type", "refresh_token")
+        //params.add("scope", "api")
+        params.add("refresh_token", UUID.randomUUID().toString())
+        val result = mockMvc.perform(post("/oauth/token")
+            .params(params)
+            .header(HttpHeaders.AUTHORIZATION,
+                "Basic " + Base64Utils.encodeToString("${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)))
+            .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().is4xxClientError)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+        val map = result.readToMap()
+        val errorCode = map["error"]?.toString()
+        Assertions.assertEquals(OAuth2ErrorCodes.INVALID_GRANT, errorCode)
     }
 
     @Test
