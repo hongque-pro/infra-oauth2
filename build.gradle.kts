@@ -14,6 +14,7 @@ allprojects {
             useMavenProxy = false
             jvmVersion = "17"
         }
+        usePublishPlugin()
     }
 }
 subprojects {
@@ -24,6 +25,8 @@ subprojects {
                     description = "infrastructure for oauth2 library"
                     githubUrl("hongque-pro", "infra-oauth2")
                 }
+
+                toGithubPackages("hongque-pro", "infra-oauth2")
             }
         }
     }
