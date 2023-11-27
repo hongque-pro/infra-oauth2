@@ -1,6 +1,6 @@
 package com.labijie.infra.oauth2.resource.token
 
-import com.labijie.infra.oauth2.Constants
+import com.labijie.infra.oauth2.OAuth2Constants
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 
 /**
@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
  */
 class DefaultJwtAuthenticationConverter : JwtAuthenticationConverter(){
     init {
-        super.setPrincipalClaimName(Constants.CLAIM_USER_NAME)
+        super.setPrincipalClaimName(OAuth2Constants.CLAIM_USER_NAME)
         super.setJwtGrantedAuthoritiesConverter(DefaultJwtGrantedAuthoritiesConverter())
     }
 }

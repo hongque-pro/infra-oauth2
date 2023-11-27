@@ -14,9 +14,11 @@ import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.transaction.annotation.EnableTransactionManagement
 
 
 @Configuration(proxyBeanMethods = false)
+@EnableTransactionManagement
 @AutoConfigureAfter(OAuth2ServerAutoConfiguration::class)
 class OAuth2SecurityAutoConfiguration : BeanPostProcessor {
 
@@ -25,10 +27,7 @@ class OAuth2SecurityAutoConfiguration : BeanPostProcessor {
 
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any? {
         if (bean is AuthenticationManagerBuilder) {
-            bean
-                .userDetailsService(DefaultUserService(this.identityService)) // .passwordEncoder(passwordEncoder())
-                .and()
-                .eraseCredentials(true)
+            bean.userDetailsService(DefaultUserService(this.identityService)) // .passwordEncoder(passwordEncoder())
         }
         return bean
     }
@@ -40,17 +39,18 @@ class OAuth2SecurityAutoConfiguration : BeanPostProcessor {
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
         fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain? {
 
-            http.requestMatcher(EndpointRequest.toAnyEndpoint())
-                .authorizeRequests { authorizeRequests ->
-                    authorizeRequests
-                        .anyRequest().permitAll()
+            http.securityMatcher(EndpointRequest.toAnyEndpoint())
+                .sessionManagement {
+                    it.disable()
                 }
-                .sessionManagement().disable()
-                .csrf().disable()
-                //.formLogin(withDefaults())
-                .cors()
-                .and()
-                .headers().frameOptions().sameOrigin()
+                .csrf {
+                    it.disable()
+                }
+                .headers {
+                    it.frameOptions {
+                        h->h.sameOrigin()
+                    }
+                }
             return http.build()
         }
     }

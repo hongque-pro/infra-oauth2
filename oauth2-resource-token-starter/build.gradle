@@ -1,4 +1,0 @@
-dependencies {
-    api project(":oauth2-auth-server-starter")
-    compileOnly "com.labijie:caching-kotlin:$infra_caching_version"
-}

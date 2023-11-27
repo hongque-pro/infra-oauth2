@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
  */
 @EnableWebSecurity
 @RestController
-@SpringBootApplication(exclude = [DataSourceAutoConfiguration::class])
+@SpringBootApplication
 class Application{
 
     @GetMapping("/test")

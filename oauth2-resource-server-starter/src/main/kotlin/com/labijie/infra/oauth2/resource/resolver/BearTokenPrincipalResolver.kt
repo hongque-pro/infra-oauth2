@@ -1,11 +1,10 @@
 package com.labijie.infra.oauth2.resource.resolver
 
-import com.labijie.infra.oauth2.Constants
+import com.labijie.infra.oauth2.OAuth2Constants
 import com.labijie.infra.oauth2.IPrincipalResolver
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.isWellKnownClaim
 import com.labijie.infra.oauth2.resource.TwoFactorAuthenticatedPrincipal
-import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorSecurityExpressionHandler
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken
 
@@ -40,11 +39,11 @@ class BearTokenPrincipalResolver : IPrincipalResolver {
         }
 
         return TwoFactorPrincipal(
-                token.tokenAttributes.getOrDefault(Constants.CLAIM_USER_ID, "").toString(),
-                authentication.name ?: token.tokenAttributes.getOrDefault(Constants.CLAIM_USER_NAME, "").toString(),
-                isTwoFactorGranted = token.tokenAttributes.getOrDefault(Constants.CLAIM_TWO_FACTOR, "false").toString().toBoolean(),
+                token.tokenAttributes.getOrDefault(OAuth2Constants.CLAIM_USER_ID, "").toString(),
+                authentication.name ?: token.tokenAttributes.getOrDefault(OAuth2Constants.CLAIM_USER_NAME, "").toString(),
+                isTwoFactorGranted = token.tokenAttributes.getOrDefault(OAuth2Constants.CLAIM_TWO_FACTOR, "false").toString().toBoolean(),
                 authorities = token.authorities.filter {
-                    it.authority.startsWith(Constants.ROLE_AUTHORITY_PREFIX)
+                    it.authority.startsWith(OAuth2Constants.ROLE_AUTHORITY_PREFIX)
                 }.toMutableList(),
                 attachedFields = attachments
         )

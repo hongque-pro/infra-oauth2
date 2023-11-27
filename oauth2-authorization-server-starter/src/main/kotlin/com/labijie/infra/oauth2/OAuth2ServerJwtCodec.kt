@@ -2,12 +2,12 @@ package com.labijie.infra.oauth2
 
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
-import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
 import org.springframework.security.oauth2.jwt.*
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
 
 class OAuth2ServerJwtCodec(jwkSource: JWKSource<SecurityContext>) : IOAuth2ServerJwtCodec {
     private val decoder = OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)
-    private val encoder = NimbusJwsEncoder(jwkSource)
+    private val encoder = NimbusJwtEncoder(jwkSource)
 
     @Throws(JwtException::class)
     override fun decode(token: String): Jwt {
@@ -16,8 +16,8 @@ class OAuth2ServerJwtCodec(jwkSource: JWKSource<SecurityContext>) : IOAuth2Serve
 
 
     @Throws(JwtEncodingException::class)
-    override fun encode(headers: JoseHeader, claims: JwtClaimsSet): Jwt {
-        return encoder.encode(headers, claims)
+    override fun encode(headers: JwsHeader, claims: JwtClaimsSet): Jwt {
+        return encoder.encode(JwtEncoderParameters.from(headers, claims))
     }
 
     fun jwtDecoder(): JwtDecoder = decoder

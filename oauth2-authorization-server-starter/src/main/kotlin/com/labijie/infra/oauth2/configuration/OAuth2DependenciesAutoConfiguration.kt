@@ -1,19 +1,19 @@
 package com.labijie.infra.oauth2.configuration
 
 import com.labijie.caching.ICacheManager
-import com.labijie.infra.oauth2.Constants
+import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorJwtCustomizer
 import com.labijie.infra.oauth2.filter.ClientDetailsArgumentResolver
 import com.labijie.infra.oauth2.filter.ClientDetailsInterceptorAdapter
 import com.labijie.infra.oauth2.resolver.PasswordPrincipalResolver
 import com.labijie.infra.oauth2.serialization.kryo.OAuth2KryoCacheDataSerializerCustomizer
 import com.labijie.infra.oauth2.service.CachingOAuth2AuthorizationService
+import com.labijie.infra.oauth2.service.OAuth2JdbcDataInitializer
 import com.labijie.infra.utils.logger
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.*
+import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -34,15 +34,17 @@ import org.springframework.security.oauth2.server.authorization.client.JdbcRegis
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
-import org.springframework.security.oauth2.server.authorization.config.ProviderSettings
-import org.springframework.security.oauth2.server.authorization.config.TokenSettings
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.util.function.Consumer
+import javax.sql.DataSource
 
 
 @Configuration(proxyBeanMethods = false)
+@AutoConfigureAfter(JdbcTemplateAutoConfiguration::class)
 @EnableConfigurationProperties(OAuth2ServerProperties::class)
 class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
 
@@ -56,12 +58,11 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
         @ConditionalOnMissingBean(RegisteredClientRepository::class)
         @ConditionalOnBean(JdbcTemplate::class)
         fun jdbcClientRepository(jdbcTemplate: JdbcTemplate): JdbcRegisteredClientRepository {
-            return JdbcRegisteredClientRepository(jdbcTemplate).apply {
-                val mapper = RegisteredClientParametersMapper()
-                this.setRegisteredClientParametersMapper(mapper)
-            }.apply {
-                this.saveResourceOwnerPasswordClient(properties)
-            }
+//            return JdbcRegisteredClientRepository(jdbcTemplate).apply {
+//                val mapper = RegisteredClientParametersMapper()
+//                this.setRegisteredClientParametersMapper(mapper)
+//            }
+            return JdbcRegisteredClientRepository(jdbcTemplate)
         }
 
         @Bean
@@ -88,34 +89,11 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
                 .clientSecret(properties.defaultClient.secret)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
+                .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .tokenSettings(tokenSetting)
                 .build()
         }
-
-        private fun RegisteredClientRepository.saveResourceOwnerPasswordClient(
-            properties: OAuth2ServerProperties
-        ) {
-            if(properties.defaultClient.enabled) {
-                val passwordRegisteredClient = passwordClientRegistration(properties)
-                val registeredClients = mutableListOf<RegisteredClient>()
-                registeredClients.add(passwordRegisteredClient)
-
-                registeredClients.forEach(Consumer { registeredClient: RegisteredClient? ->
-                    val id = registeredClient!!.id
-                    val clientId = registeredClient.clientId
-                    val dbRegisteredClient = this.findById(id) ?: this.findByClientId(clientId)
-                    if (dbRegisteredClient == null) {
-                        this.save(registeredClient)
-
-                        logger.info("Default client with client id '${properties.defaultClient.clientId}', secret '${properties.defaultClient.secret}' has been created.")
-                    }
-                })
-
-            }
-        }
-
     }
 
     @Bean
@@ -146,6 +124,7 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
         fun oauth2KryoCacheDataSerializerCustomizer(): OAuth2KryoCacheDataSerializerCustomizer = OAuth2KryoCacheDataSerializerCustomizer()
     }
 
+
     @Configuration
     @ConditionalOnBean(RegisteredClientRepository::class)
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -164,17 +143,16 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
     }
 
     @Bean
-    @ConditionalOnMissingBean(OAuth2ServerProperties::class)
-    fun providerSettings(serverProperties: OAuth2ServerProperties): ProviderSettings? {
-        return ProviderSettings.builder()
-            .authorizationEndpoint("/oauth/authorize")
-            .tokenEndpoint("/oauth/token")
-            .jwkSetEndpoint(Constants.DEFAULT_JWK_SET_ENDPOINT_PATH)
-            .tokenRevocationEndpoint("/oauth/revoke")
-            .tokenIntrospectionEndpoint(Constants.DEFAULT_JWS_INTROSPECT_ENDPOINT_PATH)
-            .oidcClientRegistrationEndpoint("/connect/register")
-            .issuer(serverProperties.issuer)
-            .build()
+    fun authorizationServerSettings(): AuthorizationServerSettings {
+        return AuthorizationServerSettings.builder().build()
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(OAuth2JdbcDataInitializer::class)
+    @ConditionalOnBean(DataSource::class)
+    @ConditionalOnProperty(prefix = "infra.oauth2", name = ["create-jdbc-schema"], havingValue = "true", matchIfMissing = false)
+    fun oauth2JdbcDataInitializer(dataSource: DataSource, properties: OAuth2ServerProperties) : OAuth2JdbcDataInitializer {
+        return OAuth2JdbcDataInitializer(dataSource, properties)
     }
 
     @Bean

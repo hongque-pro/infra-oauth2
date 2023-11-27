@@ -1,13 +1,12 @@
 package com.labijie.infra.oauth2.testing.abstraction
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.labijie.infra.json.JacksonHelper
+import com.labijie.infra.oauth2.OAuth2Constants
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
 import com.labijie.infra.oauth2.testing.configuration.EventTestSubscription
 import com.labijie.infra.utils.logger
 import org.junit.jupiter.api.Assertions
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -15,9 +14,9 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
-import org.springframework.util.Base64Utils
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
+import java.util.*
 
 abstract class OAuth2Tester {
 
@@ -46,10 +45,10 @@ abstract class OAuth2Tester {
         params.add("password", password)
 
         EventTestSubscription.resetFireCount()
-        val result = mockMvc.perform(MockMvcRequestBuilders.post("/oauth/token")
+        val result = mockMvc.perform(MockMvcRequestBuilders.post(OAuth2Constants.ENDPOINT_TOKEN_ENDPOINT)
                 .params(params)
                 .header(HttpHeaders.AUTHORIZATION,
-                        "Basic " + Base64Utils.encodeToString("$clientId:$clientSecret".toByteArray(Charsets.UTF_8)))
+                        "Basic " + Base64.getEncoder().encodeToString("$clientId:$clientSecret".toByteArray(Charsets.UTF_8)))
                 .accept(MediaType.APPLICATION_JSON))
 
         result.andExpect {

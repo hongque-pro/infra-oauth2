@@ -52,6 +52,12 @@
       "defaultValue": false
     },
     {
+      "name":"infra.oauth2.create-jdbc-schema",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "defaultValue": false
+    },
+    {
       "name":"infra.oauth2.token.jwt.rsa.private-key",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.RSASettings",
@@ -63,43 +69,22 @@
       "sourceType": "com.labijie.infra.oauth2.configuration.RSASettings",
       "defaultValue": ""
     },
-
-
-    {
-      "name":"infra.oauth2.token.store",
-      "type": "com.labijie.infra.oauth2.configuration.TokenStoreType",
-      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
-      "description": "token store type, default: jwt",
-      "defaultValue": "Jwt"
-    },
     {
       "name":"infra.oauth2.token.reuse-refresh-tokens",
       "type": "java.lang.Boolean",
-      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
-      "defaultValue": true
-    },
-    {
-      "name":"infra.oauth2.token.refresh-token-enabled",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
-      "defaultValue": true
-    },
-    {
-      "name":"infra.oauth2.token.reuse-refresh-tokens",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.TokenProperties",
       "defaultValue": true
     },
     {
       "name":"infra.oauth2.token.access-token-expiration",
       "type": "java.time.Duration",
-      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.TokenProperties",
       "defaultValue": "1h"
     },
     {
       "name":"infra.oauth2.token.refresh-token-expiration",
       "type": "java.time.Duration",
-      "sourceType": "com.labijie.infra.oauth2.configuration.TokenSettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.TokenProperties",
       "defaultValue": "1d"
     },
 

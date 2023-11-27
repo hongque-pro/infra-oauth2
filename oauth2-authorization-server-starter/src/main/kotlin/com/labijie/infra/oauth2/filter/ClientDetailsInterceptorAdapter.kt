@@ -1,6 +1,8 @@
 package com.labijie.infra.oauth2.filter
 
 import com.labijie.infra.oauth2.extractClientIdAndSecretFromHeader
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.server.ServletServerHttpResponse
@@ -11,8 +13,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
 import java.time.Instant
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 
 /**
  * Created with IntelliJ IDEA.

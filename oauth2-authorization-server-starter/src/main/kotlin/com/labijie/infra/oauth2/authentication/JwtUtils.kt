@@ -3,7 +3,7 @@ package com.labijie.infra.oauth2.authentication
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm
-import org.springframework.security.oauth2.jwt.JoseHeader
+import org.springframework.security.oauth2.jwt.JwsHeader
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.util.StringUtils
@@ -13,8 +13,8 @@ import java.util.*
 
 
 object JwtUtils {
-    fun headers(): JoseHeader.Builder {
-        return JoseHeader.withAlgorithm(SignatureAlgorithm.RS256)
+    fun headers(): JwsHeader.Builder {
+        return JwsHeader.with(SignatureAlgorithm.RS256)
     }
 
     fun accessTokenClaims(

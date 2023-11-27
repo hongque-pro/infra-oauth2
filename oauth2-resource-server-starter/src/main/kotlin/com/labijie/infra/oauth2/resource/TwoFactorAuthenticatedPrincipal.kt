@@ -1,6 +1,6 @@
 package com.labijie.infra.oauth2.resource
 
-import com.labijie.infra.oauth2.Constants
+import com.labijie.infra.oauth2.OAuth2Constants
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal
@@ -26,43 +26,43 @@ class TwoFactorAuthenticatedPrincipal(private val delegate: TwoFactorPrincipal) 
     private val mergedAttributes by lazy {
         val map = mutableMapOf<String, Any>()
         map[OAuth2TokenIntrospectionClaimNames.ACTIVE] = true
-        map[Constants.CLAIM_USER_ID] = delegate.userId
+        map[OAuth2Constants.CLAIM_USER_ID] = delegate.userId
         map[OAuth2TokenIntrospectionClaimNames.USERNAME] = delegate.userName
 
-        if (delegate.attachedFields.containsKey(Constants.CLAIM_EXP)) {
-            map[OAuth2TokenIntrospectionClaimNames.EXP] = delegate.attachedFields.getOrDefault(Constants.CLAIM_EXP, "")
+        if (delegate.attachedFields.containsKey(OAuth2Constants.CLAIM_EXP)) {
+            map[OAuth2TokenIntrospectionClaimNames.EXP] = delegate.attachedFields.getOrDefault(OAuth2Constants.CLAIM_EXP, "")
         }
 
-        if (delegate.attachedFields.containsKey(Constants.CLAIM_AUD)) {
-            map[OAuth2TokenIntrospectionClaimNames.AUD] = delegate.attachedFields.getOrDefault(Constants.CLAIM_AUD, "")
+        if (delegate.attachedFields.containsKey(OAuth2Constants.CLAIM_AUD)) {
+            map[OAuth2TokenIntrospectionClaimNames.AUD] = delegate.attachedFields.getOrDefault(OAuth2Constants.CLAIM_AUD, "")
         }
 
-        if (delegate.attachedFields.containsKey(Constants.CLAIM_IAT)) {
-            map[OAuth2TokenIntrospectionClaimNames.IAT] = delegate.attachedFields.getOrDefault(Constants.CLAIM_IAT, "")
+        if (delegate.attachedFields.containsKey(OAuth2Constants.CLAIM_IAT)) {
+            map[OAuth2TokenIntrospectionClaimNames.IAT] = delegate.attachedFields.getOrDefault(OAuth2Constants.CLAIM_IAT, "")
         }
 
-        if (delegate.attachedFields.containsKey(Constants.CLAIM_ISS)) {
-            map[OAuth2TokenIntrospectionClaimNames.ISS] = delegate.attachedFields.getOrDefault(Constants.CLAIM_ISS, "")
+        if (delegate.attachedFields.containsKey(OAuth2Constants.CLAIM_ISS)) {
+            map[OAuth2TokenIntrospectionClaimNames.ISS] = delegate.attachedFields.getOrDefault(OAuth2Constants.CLAIM_ISS, "")
         }
 
-        if (delegate.attachedFields.containsKey(Constants.CLAIM_NBF)) {
-            map[OAuth2TokenIntrospectionClaimNames.NBF] = delegate.attachedFields.getOrDefault(Constants.CLAIM_NBF, "")
+        if (delegate.attachedFields.containsKey(OAuth2Constants.CLAIM_NBF)) {
+            map[OAuth2TokenIntrospectionClaimNames.NBF] = delegate.attachedFields.getOrDefault(OAuth2Constants.CLAIM_NBF, "")
         }
 
-        if (delegate.attachedFields.containsKey(Constants.CLAIM_SUB)) {
-            map[OAuth2TokenIntrospectionClaimNames.SUB] = delegate.attachedFields.getOrDefault(Constants.CLAIM_SUB, "")
+        if (delegate.attachedFields.containsKey(OAuth2Constants.CLAIM_SUB)) {
+            map[OAuth2TokenIntrospectionClaimNames.SUB] = delegate.attachedFields.getOrDefault(OAuth2Constants.CLAIM_SUB, "")
         }
 
         delegate.attachedFields.forEach { (t, u) ->
             when (t) {
-                Constants.CLAIM_EXP,
-                Constants.CLAIM_AUD,
-                Constants.CLAIM_IAT,
-                Constants.CLAIM_ISS,
-                Constants.CLAIM_NBF,
-                Constants.CLAIM_SUB,
-                Constants.CLAIM_USER_NAME,
-                Constants.CLAIM_USER_ID -> {
+                OAuth2Constants.CLAIM_EXP,
+                OAuth2Constants.CLAIM_AUD,
+                OAuth2Constants.CLAIM_IAT,
+                OAuth2Constants.CLAIM_ISS,
+                OAuth2Constants.CLAIM_NBF,
+                OAuth2Constants.CLAIM_SUB,
+                OAuth2Constants.CLAIM_USER_NAME,
+                OAuth2Constants.CLAIM_USER_ID -> {
                 }
                 else -> map[t] = u
             }

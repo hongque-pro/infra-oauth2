@@ -2,6 +2,7 @@ package com.labijie.infra.oauth2.resource
 
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer
 
 /**
@@ -12,7 +13,7 @@ import org.springframework.security.config.annotation.web.configurers.Expression
  */
 class ActuatorAuthorizationConfigurer : IResourceAuthorizationConfigurer {
 
-    override fun configure(registry: ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry) {
+    override fun configure(registry: AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry) {
         registry.requestMatchers(EndpointRequest.toAnyEndpoint()).permitAll()
     }
 }

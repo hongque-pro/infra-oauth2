@@ -5,6 +5,7 @@ import com.labijie.infra.oauth2.authentication.JwtUtils
 import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.labijie.infra.oauth2.events.UserSignedInEvent
 import com.labijie.infra.utils.ifNullOrBlank
+import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -12,26 +13,27 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.oauth2.core.*
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
-import org.springframework.security.oauth2.jwt.JoseHeader
+import org.springframework.security.oauth2.jwt.JwsHeader
 import org.springframework.security.oauth2.jwt.JwtClaimNames
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import java.security.Principal
-import javax.servlet.http.HttpServletRequest
 
 /**
  * Created with IntelliJ IDEA.
@@ -53,14 +55,22 @@ class TwoFactorSignInHelper(
 
     private lateinit var context: ApplicationContext
 
-    private lateinit var authenticationManager: AuthenticationManager
-    private lateinit var authorizationService: OAuth2AuthorizationService
-
-    fun setup(authenticationManager: AuthenticationManager, authorizationService: OAuth2AuthorizationService) {
-        this.authenticationManager = authenticationManager
-        this.authorizationService = authorizationService
+    private val authenticationManager: AuthenticationManager by lazy {
+        context.getBean(AuthenticationConfiguration::class.java).authenticationManager
+    }
+    private val authorizationService: OAuth2AuthorizationService by lazy {
+        context.getBean(OAuth2AuthorizationService::class.java)
     }
 
+
+    private fun getUser(userName: String?): ITwoFactorUserDetails {
+        if (userName.isNullOrBlank()) {
+            throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
+        }
+
+        return identityService.getUserByName(userName)
+            ?: throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
+    }
 
     fun signIn(
         clientId: String,
@@ -69,12 +79,7 @@ class TwoFactorSignInHelper(
         scopes: Set<String>? = null,
         request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
-        if (userName.isBlank()) {
-            throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
-        }
-
-        val user = identityService.getUserByName(userName)
-            ?: throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
+        val user = getUser(userName)
 
 
         val client = clientRepository.findByClientId(clientId)
@@ -97,12 +102,7 @@ class TwoFactorSignInHelper(
         request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
 
-        if (userName.isBlank()) {
-            throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
-        }
-
-        val user = identityService.getUserByName(userName)
-            ?: throw UsernameNotFoundException("User with name '${userName.ifNullOrBlank { "<empty>" }}' was not found")
+        val user = getUser(userName)
 
         return signIn(
             client,
@@ -197,7 +197,7 @@ class TwoFactorSignInHelper(
             }
             val issuer = serverProperties.issuer
 
-            val headersBuilder: JoseHeader.Builder = JwtUtils.headers()
+            val headersBuilder: JwsHeader.Builder = JwtUtils.headers()
             val claimsBuilder: JwtClaimsSet.Builder = JwtUtils.accessTokenClaims(
                 registeredClient, issuer, registeredClient.clientId, authorizedScopes
             )
@@ -206,14 +206,14 @@ class TwoFactorSignInHelper(
                 .principal(userAuthentication)
                 .authorizedScopes(authorizedScopes)
                 .tokenType(OAuth2TokenType.ACCESS_TOKEN)
-                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
-                .put(Constants.CLAIM_TWO_FACTOR, twoFactorGranted)
+                .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
+                .put(OAuth2Constants.CLAIM_TWO_FACTOR, twoFactorGranted)
                 //.authorizationGrant(resourceOwnerPasswordAuthentication)
                 .build()
             jwtCustomizer.customize(context)
 
 
-            val headers = context.headers.build()
+            val headers = context.jwsHeader.build()
             val claims = context.claims.build()
             val jwtAccessToken = jwtCodec.encode(headers, claims)
 
@@ -233,13 +233,13 @@ class TwoFactorSignInHelper(
             }
             val authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
                 .principalName(registeredClient.clientId)
-                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
+                .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
                 .token<OAuth2Token>(
                     accessToken
                 ) { metadata: MutableMap<String?, Any?> ->
                     metadata[OAuth2Authorization.Token.CLAIMS_METADATA_NAME] = jwtAccessToken.claims
                 }
-                .attribute(OAuth2Authorization.AUTHORIZED_SCOPE_ATTRIBUTE_NAME, authorizedScopes)
+                .attribute(OAuth2Constants.CLAIM_SCOPE, authorizedScopes)
                 .attribute(Principal::class.java.name, userAuthentication)
             if (refreshToken != null) {
                 authorizationBuilder.refreshToken(refreshToken)
@@ -313,8 +313,9 @@ class TwoFactorSignInHelper(
 
         val usernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(username, password)
         if (LOGGER.isDebugEnabled) {
-            LOGGER.debug("got usernamePasswordAuthenticationToken=$usernamePasswordAuthenticationToken")
+            LOGGER.debug("Got usernamePasswordAuthenticationToken=$usernamePasswordAuthenticationToken")
         }
+
         val r = try {
             authenticationManager.authenticate(usernamePasswordAuthenticationToken)
         } catch (ex: Exception) {
@@ -338,7 +339,7 @@ class TwoFactorSignInHelper(
         val token = jwtCodec.decode(value)
         val client = token.claims[JwtClaimNames.SUB]?.toString() ?: ""
         val scopeNames = token.getScopes()
-        val username = (token.claims[Constants.CLAIM_USER_NAME]?.toString() ?: "")
+        val username = (token.claims[OAuth2Constants.CLAIM_USER_NAME]?.toString() ?: "")
         return signIn(client, username, true, scopeNames)
     }
 

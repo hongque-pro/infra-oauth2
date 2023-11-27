@@ -1,14 +1,12 @@
 package com.labijie.infra.oauth2.resource.token
 
-import com.labijie.infra.oauth2.Constants
+import com.labijie.infra.oauth2.OAuth2Constants
 import org.springframework.core.convert.converter.Converter
-import org.springframework.core.log.LogMessage
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
 import org.springframework.util.StringUtils
-import java.util.*
 
 /**
  *
@@ -31,7 +29,7 @@ class DefaultJwtGrantedAuthoritiesConverter : Converter<Jwt, MutableCollection<G
 
     @Suppress("UNCHECKED_CAST")
     private fun getRoleAuthorities(jwt: Jwt): Collection<String> {
-        val authorities = jwt.getClaim<Any>(Constants.CLAIM_AUTHORITIES)
+        val authorities = jwt.getClaim<Any>(OAuth2Constants.CLAIM_AUTHORITIES)
         if (authorities is String) {
             return if (StringUtils.hasText(authorities)) {
                 authorities.split(" ".toRegex())

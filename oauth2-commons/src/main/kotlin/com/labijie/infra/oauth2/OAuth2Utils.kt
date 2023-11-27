@@ -1,13 +1,21 @@
 package com.labijie.infra.oauth2
 
 import com.labijie.infra.utils.throwIfNecessary
+import com.nimbusds.jose.jwk.JWKSelector
+import com.nimbusds.jose.jwk.JWKSet
+import com.nimbusds.jose.jwk.OctetSequenceKey
+import com.nimbusds.jose.jwk.source.JWKSource
 import org.springframework.context.ApplicationContext
 import org.springframework.core.io.ClassPathResource
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.oauth2.core.AuthorizationGrantType
 import java.io.File
 import java.util.stream.Collectors
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,6 +26,10 @@ object OAuth2Utils {
 
     private lateinit var principalResolvers: List<IPrincipalResolver>
     private lateinit var tokeValueResolvers: List<ITokenValueResolver>
+
+    val PASSWORD_GRANT_TYPE = AuthorizationGrantType("password")
+
+
 
     internal fun setApplicationContext(applicationContext: ApplicationContext?) {
         if (applicationContext != null && !this::principalResolvers.isInitialized) {

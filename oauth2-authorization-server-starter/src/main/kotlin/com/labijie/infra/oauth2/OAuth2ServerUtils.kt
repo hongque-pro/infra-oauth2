@@ -1,16 +1,16 @@
 package com.labijie.infra.oauth2
 
-import org.springframework.security.oauth2.core.AbstractOAuth2Token
-import org.springframework.security.oauth2.core.OAuth2AccessToken
-import org.springframework.security.oauth2.core.OAuth2AuthorizationCode
-import org.springframework.security.oauth2.core.OAuth2RefreshToken
+import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
+import org.springframework.security.oauth2.core.*
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.core.oidc.OidcIdToken
 import org.springframework.security.oauth2.jwt.Jwt
-import org.springframework.security.oauth2.jwt.JwtClaimNames
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
 import org.springframework.util.StringUtils
 import java.security.MessageDigest
 import java.time.Duration
@@ -20,6 +20,41 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 object OAuth2ServerUtils {
+
+//    private fun createJwtEncoder(secret: String, algorithm: String): JwtEncoder {
+//        val secretKey: SecretKey = SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), algorithm)
+//        val secretKeyJwk: OctetSequenceKey = TestJwks.jwk(secretKey).build()
+//        val jwkSource: JWKSource<SecurityContext> =
+//            JWKSource<SecurityContext> { jwkSelector: JWKSelector, _: SecurityContext? ->
+//                jwkSelector.select(
+//                    JWKSet(secretKeyJwk)
+//                )
+//            }
+//        return NimbusJwtEncoder(jwkSource)
+//    }
+
+    private fun buildTokenSettings(properties: OAuth2ServerProperties): TokenSettings {
+
+        val tokenSettingsBuilder: TokenSettings.Builder =
+            TokenSettings.builder().accessTokenTimeToLive(properties.token.accessTokenExpiration)
+                .refreshTokenTimeToLive(properties.token.refreshTokenExpiration)
+                .reuseRefreshTokens(properties.token.reuseRefreshToken)
+        return tokenSettingsBuilder.build()
+    }
+
+    fun createDefaultClientRegistration(properties: OAuth2ServerProperties): RegisteredClient {
+        val tokenSetting = buildTokenSettings(properties)
+        return RegisteredClient.withId(properties.defaultClient.clientId)
+            .clientId(properties.defaultClient.clientId)
+            .clientName("infra_default")
+            .clientSecret(properties.defaultClient.secret)
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
+            .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+            .tokenSettings(tokenSetting)
+            .build()
+    }
 
     fun Long?.toInstant(unit: TimeUnit = TimeUnit.SECONDS): Instant? {
         if (this == null){

@@ -9,10 +9,10 @@ import com.labijie.infra.oauth2.OAuth2AuthorizationConverter
 import com.labijie.infra.oauth2.OAuth2ServerUtils.md5Hex
 import com.labijie.infra.oauth2.OAuth2ServerUtils.tokenId
 import com.labijie.infra.oauth2.TokenPlainObject
-import org.springframework.security.oauth2.core.OAuth2TokenType
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import java.time.Duration
 
 class CachingOAuth2AuthorizationService(

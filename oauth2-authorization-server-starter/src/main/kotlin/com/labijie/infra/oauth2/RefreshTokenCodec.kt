@@ -10,8 +10,7 @@ object RefreshTokenCodec{
     fun encode(encoder: JwtEncoder, claims: JwtClaimsSet, tokenTimeToLive: Duration): OAuth2RefreshToken {
         val issuedAt = Instant.now()
         val expiresAt = issuedAt.plus(tokenTimeToLive)
-        val header = JoseHeader.builder().build()
-        val value = encoder.encode(header, claims).tokenValue
+        val value = encoder.encode(JwtEncoderParameters.from(claims)).tokenValue
         return OAuth2RefreshToken(value, expiresAt)
     }
 

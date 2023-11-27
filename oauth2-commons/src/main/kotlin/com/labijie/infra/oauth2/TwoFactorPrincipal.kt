@@ -17,7 +17,7 @@ data class TwoFactorPrincipal(
 
     @get:JsonIgnore
     val roleNames: List<String> by lazy {
-        this.authorities.filter { it.authority.startsWith(Constants.ROLE_AUTHORITY_PREFIX) }.map { it.authority }
+        this.authorities.filter { it.authority.startsWith(OAuth2Constants.ROLE_AUTHORITY_PREFIX) }.map { it.authority }
     }
 
 }

@@ -5,7 +5,6 @@ import com.labijie.infra.oauth2.resource.ActuatorAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
 import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
-import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorSecurityExpressionHandler
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import com.labijie.infra.oauth2.resource.token.DefaultJwtAuthenticationConverter
@@ -20,11 +19,13 @@ import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2Res
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.ImportRuntimeHints
 import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2TokenValidator
@@ -39,6 +40,8 @@ import java.security.interfaces.RSAPublicKey
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(ResourceServerProperties::class)
+@EnableWebSecurity
+@ImportRuntimeHints(OAuth2SecurityRuntimeHints::class)
 class ResourceServerAutoConfiguration(
     private val oauth2ResProperties: OAuth2ResourceServerProperties,
     private val resourceServerProperties: ResourceServerProperties
@@ -110,10 +113,10 @@ class ResourceServerAutoConfiguration(
         return MappedJwtClaimSetConverter
             .withDefaults(
                 mapOf(
-                    Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
-                    Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
-                    Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
-                    Constants.CLAIM_AUTHORITIES to collectionStringConverter
+                    OAuth2Constants.CLAIM_USER_NAME to getConverter(STRING_TYPE_DESCRIPTOR),
+                    OAuth2Constants.CLAIM_TWO_FACTOR to getConverter(BOOL_TYPE_DESCRIPTOR),
+                    OAuth2Constants.CLAIM_USER_ID to getConverter(STRING_TYPE_DESCRIPTOR),
+                    OAuth2Constants.CLAIM_AUTHORITIES to collectionStringConverter
                 )
             )
     }
@@ -161,23 +164,25 @@ class ResourceServerAutoConfiguration(
         @Bean
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 10)
         fun resourceServerSecurityChain(http: HttpSecurity): SecurityFilterChain {
+
+            http.csrf {
+                it.disable()
+            }
+            http.sessionManagement {
+                it.disable()
+            }
             val settings = http
-                .csrf().disable()
-                .authorizeRequests { authorize ->
-                    authorize.and().cors()
-                    authorize.antMatchers(HttpMethod.OPTIONS).permitAll()
+                .authorizeHttpRequests {
+                    authorize ->
+                    authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
                     resourceConfigurers.orderedStream().forEach {
                         it.configure(authorize)
                     }
-
-                    authorize
-                        .expressionHandler(OAuth2TwoFactorSecurityExpressionHandler(http))
-                        .anyRequest().authenticated()
+                    authorize.anyRequest().authenticated()
                 }
-            settings.sessionManagement().disable()
             settings.oauth2ResourceServer { obj ->
-                obj.jwt().also {
-                    this.applyJwtConfiguration(it)
+                obj.jwt {
+                    applyJwtConfiguration(it)
                 }
                 obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint())
             }
@@ -214,5 +219,13 @@ class ResourceServerAutoConfiguration(
                 .toString()
             logger.warn(warn)
         }
+
+        val information = StringBuilder()
+        information.appendLine("The following endpoints are already active:")
+        information.appendLine(OAuth2Constants.ENDPOINT_JWK_SET_ENDPOINT)
+        information.appendLine(OAuth2Constants.ENDPOINT_TOKEN_ENDPOINT)
+        information.appendLine(OAuth2Constants.ENDPOINT_CONSENT_ENDPOINT)
+        information.appendLine(OAuth2Constants.ENDPOINT_TOKEN_REVOCATION_ENDPOINT)
+        information.appendLine(OAuth2Constants.ENDPOINT_AUTHORIZE_ENDPOINT)
     }
 }

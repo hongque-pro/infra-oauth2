@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.configuration
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.NestedConfigurationProperty
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,11 +11,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "infra.oauth2")
 data class OAuth2ServerProperties(
     var issuer: String = "https://labijie.com",
-    val token: TokenSettings = TokenSettings(),
+    @NestedConfigurationProperty
+    val token: TokenProperties = TokenProperties(),
     var authorizationService: String = "caching",
     var clientRepository: String = "jdbc",
     val defaultClient: DefaultClient = DefaultClient(),
-    var scopeValidationEnabled: Boolean = false
+    var scopeValidationEnabled: Boolean = false,
+    var createJdbcSchema: Boolean = false
 ) {
     companion object {
         const val PRIVATE_KEY_PROPERTY_PATH = "infra.oauth2.token.jwt.rsa.private-key"

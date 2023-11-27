@@ -24,7 +24,7 @@ class PasswordPrincipalResolver : IPrincipalResolver {
         return TwoFactorPrincipal(
             user.getUserId(),
             user.username,
-            user.getTokenAttributes().getOrDefault(Constants.CLAIM_TWO_FACTOR, "false").toBoolean(),
+            user.getTokenAttributes().getOrDefault(OAuth2Constants.CLAIM_TWO_FACTOR, "false").toBoolean(),
             user.authorities.toMutableList(),
             user.getTokenAttributes().filter { !isWellKnownClaim(it.key) }
         )

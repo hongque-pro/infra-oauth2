@@ -1,48 +1,52 @@
 package com.labijie.infra.oauth2.resource
 
-import com.labijie.infra.oauth2.Constants
+import com.labijie.infra.oauth2.OAuth2Constants
+import com.labijie.infra.oauth2.resource.expression.OAuth2ExpressionAuthorizationManager
 import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorExpressionRoot
-import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer
+import org.springframework.security.authorization.AuthorityAuthorizationManager
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.jwt.JwtClaimAccessor
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext
 import org.springframework.util.Assert
 import org.springframework.util.StringUtils
 
 
 val JwtClaimAccessor.twoFactorGranted: Boolean?
-    get() = this.getClaimAsBoolean(Constants.CLAIM_TWO_FACTOR)
+    get() = this.getClaimAsBoolean(OAuth2Constants.CLAIM_TWO_FACTOR)
 
-val JwtClaimAccessor.userId: String?
-    get() = this.getClaimAsString(Constants.CLAIM_USER_ID) ?: ""
+val JwtClaimAccessor.userId: String
+    get() = this.getClaimAsString(OAuth2Constants.CLAIM_USER_ID) ?: ""
 
 val JwtClaimAccessor.roles: List<String>
-    get() = this.getClaimAsStringList(Constants.CLAIM_ROLES) ?: listOf()
+    get() = this.getClaimAsStringList(OAuth2Constants.CLAIM_ROLES) ?: listOf()
 
 
-fun ExpressionUrlAuthorizationConfigurer<*>.MvcMatchersAuthorizedUrl.hasScope(scope: String): ExpressionUrlAuthorizationConfigurer<*>.ExpressionInterceptUrlRegistry {
+fun AuthorizeHttpRequestsConfigurer<*>.AuthorizedUrl.hasScope(scope: String): AuthorizeHttpRequestsConfigurer<*>.AuthorizationManagerRequestMatcherRegistry {
     Assert.notNull(scope, "scope cannot be null")
-    Assert.isTrue(!scope.startsWith(Constants.SCOPE_AUTHORITY_PREFIX)) { "scope should not start with '${Constants.SCOPE_AUTHORITY_PREFIX}' since it is automatically inserted. Got '$scope'" }
-
-    return this.access("hasAuthority('${Constants.SCOPE_AUTHORITY_PREFIX}$scope')")
+    Assert.isTrue(!scope.startsWith(OAuth2Constants.SCOPE_AUTHORITY_PREFIX)) { "scope should not start with '${OAuth2Constants.SCOPE_AUTHORITY_PREFIX}' since it is automatically inserted. Got '$scope'" }
+    return this.hasAuthority("${OAuth2Constants.SCOPE_AUTHORITY_PREFIX}$scope")
 }
 
-fun ExpressionUrlAuthorizationConfigurer<*>.MvcMatchersAuthorizedUrl.hasAnyScope(vararg scopes: String): ExpressionUrlAuthorizationConfigurer<*>.ExpressionInterceptUrlRegistry {
-    val anyAuthorities = StringUtils.arrayToDelimitedString(scopes, "','${Constants.SCOPE_AUTHORITY_PREFIX}")
-    val expr = "hasAnyAuthority('${Constants.SCOPE_AUTHORITY_PREFIX}$anyAuthorities')"
-    return this.access(expr)
+
+fun AuthorizeHttpRequestsConfigurer<*>.AuthorizedUrl.hasAnyScope(vararg scopes: String): AuthorizeHttpRequestsConfigurer<*>.AuthorizationManagerRequestMatcherRegistry {
+    val anyAuthorities = StringUtils.arrayToDelimitedString(scopes, "','${OAuth2Constants.SCOPE_AUTHORITY_PREFIX}")
+
+    AuthorityAuthorizationManager.hasAnyAuthority<RequestAuthorizationContext>(anyAuthorities)
+    return this.hasAnyAuthority("${OAuth2Constants.SCOPE_AUTHORITY_PREFIX}$anyAuthorities")
 }
 
-fun ExpressionUrlAuthorizationConfigurer<*>.AuthorizedUrl.hasTokenAttributeValue(attribute: String, value: String): ExpressionUrlAuthorizationConfigurer<*>.ExpressionInterceptUrlRegistry {
-    return this.access("${OAuth2TwoFactorExpressionRoot::hasTokenAttributeValue.name}('$attribute','$value')")
+fun AuthorizeHttpRequestsConfigurer<*>.AuthorizedUrl.hasTokenAttributeValue(attribute: String, value: String): AuthorizeHttpRequestsConfigurer<*>.AuthorizationManagerRequestMatcherRegistry {
+    return this.access(OAuth2ExpressionAuthorizationManager("${OAuth2TwoFactorExpressionRoot::hasTokenAttributeValue.name}('$attribute','$value')"))
 }
 
-fun ExpressionUrlAuthorizationConfigurer<*>.AuthorizedUrl.hasTokenAttribute(attribute: String): ExpressionUrlAuthorizationConfigurer<*>.ExpressionInterceptUrlRegistry {
-    return this.access("${OAuth2TwoFactorExpressionRoot::hasTokenAttribute.name}('$attribute')")
+fun AuthorizeHttpRequestsConfigurer<*>.AuthorizedUrl.hasTokenAttribute(attribute: String): AuthorizeHttpRequestsConfigurer<*>.AuthorizationManagerRequestMatcherRegistry {
+    return this.access(OAuth2ExpressionAuthorizationManager("${OAuth2TwoFactorExpressionRoot::hasTokenAttribute.name}('$attribute')"))
 }
 
-fun ExpressionUrlAuthorizationConfigurer<*>.AuthorizedUrl.twoFactorRequired(): ExpressionUrlAuthorizationConfigurer<*>.ExpressionInterceptUrlRegistry {
-    return this.access("${OAuth2TwoFactorExpressionRoot::twoFactorRequired.name}()")
+fun AuthorizeHttpRequestsConfigurer<*>.AuthorizedUrl.twoFactorRequired(): AuthorizeHttpRequestsConfigurer<*>.AuthorizationManagerRequestMatcherRegistry {
+    return this.access(OAuth2ExpressionAuthorizationManager("${OAuth2TwoFactorExpressionRoot::twoFactorRequired.name}()"))
 }
 
 
@@ -65,7 +69,7 @@ fun Authentication.getTokenAttributes(attribute: String): Any? {
 
 private fun readIsTwoFactorGranted(details: Map<*, *>?): Boolean {
     return if (!details.isNullOrEmpty()) {
-        val v = details.getOrDefault(Constants.CLAIM_TWO_FACTOR, true)
+        val v = details.getOrDefault(OAuth2Constants.CLAIM_TWO_FACTOR, true)
         if (v is Boolean) {
             v
         } else {

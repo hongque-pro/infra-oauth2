@@ -1,11 +1,8 @@
 dependencies {
     api(project(":oauth2-commons"))
+    api("org.springframework.boot:spring-boot-starter-jdbc")
     api("org.springframework.boot:spring-boot-starter-security")
-    api("org.springframework.security:spring-security-oauth2-authorization-server:${Versions.springAuthorizationServer}")
-
-
-    implementation("org.springframework:spring-jdbc")
-
+    api("org.springframework.security:spring-security-oauth2-authorization-server")
 
     implementation("com.labijie:caching-kotlin:${Versions.infraCaching}")
 

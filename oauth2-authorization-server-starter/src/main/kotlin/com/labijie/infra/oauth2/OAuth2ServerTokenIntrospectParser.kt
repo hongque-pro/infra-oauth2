@@ -76,8 +76,8 @@ class OAuth2ServerTokenIntrospectParser(
                 }
 
                 val authorities = mutableSetOf<String>()
-                if (jwt.claims.containsKey(Constants.CLAIM_ROLES)) {
-                    val roles = jwt.claims[Constants.CLAIM_ROLES] as? Iterable<*>
+                if (jwt.claims.containsKey(OAuth2Constants.CLAIM_ROLES)) {
+                    val roles = jwt.claims[OAuth2Constants.CLAIM_ROLES] as? Iterable<*>
                     roles?.forEach {
                         if (it != null) {
                             authorities.add("ROLE_$it")
@@ -85,8 +85,8 @@ class OAuth2ServerTokenIntrospectParser(
                     }
                 }
 
-                if (jwt.claims.containsKey(Constants.CLAIM_AUTHORITIES)) {
-                    val roles = jwt.claims[Constants.CLAIM_AUTHORITIES] as? Iterable<*>
+                if (jwt.claims.containsKey(OAuth2Constants.CLAIM_AUTHORITIES)) {
+                    val roles = jwt.claims[OAuth2Constants.CLAIM_AUTHORITIES] as? Iterable<*>
                     roles?.forEach {
                         if (it != null) {
                             authorities.add(it.toString())
@@ -94,12 +94,12 @@ class OAuth2ServerTokenIntrospectParser(
                     }
                 }
 
-                this.parameter(Constants.CLAIM_AUTHORITIES, authorities)
+                this.parameter(OAuth2Constants.CLAIM_AUTHORITIES, authorities)
             }
             .apply {
                 jwt.claims.filter {
-                    it.key != Constants.CLAIM_AUTHORITIES &&
-                            it.key != Constants.CLAIM_ROLES &&
+                    it.key != OAuth2Constants.CLAIM_AUTHORITIES &&
+                            it.key != OAuth2Constants.CLAIM_ROLES &&
                             it.key != JwtClaimNames.AUD &&
                             it.key != JwtClaimNames.EXP
                 }.forEach { (key, v) ->

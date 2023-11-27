@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = "com.labijie.infra"
-    version = "1.2.5"
+    version = "2.0.0"
 
     infra {
         useDefault {
@@ -12,22 +12,19 @@ allprojects {
             infraBomVersion = Versions.infraBom
             kotlinVersion = Versions.kotlin
             useMavenProxy = false
-
-            addHongQueGitHubPackages()
+            jvmVersion = "17"
         }
-
-        useNexusPublish()
     }
 }
 subprojects {
     if(!project.name.startsWith("dummy")){
         infra {
-            usePublish {
-                description = "infrastructure for oauth2 library"
-                githubUrl("hongque-pro", "infra-oauth2")
+            publishing {
+                pom {
+                    description = "infrastructure for oauth2 library"
+                    githubUrl("hongque-pro", "infra-oauth2")
+                }
             }
-
-            useGitHubPackages("hongque-pro", "infra-oauth2")
         }
     }
 }

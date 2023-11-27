@@ -1,5 +1,5 @@
 dependencies {
-    api("com.labijie.infra:commons:${Versions.infraCommons}")
+    api("com.labijie.infra:commons-core:${Versions.infraCommons}")
     api("org.springframework.boot:spring-boot-starter-web")
 //    api 'javax.xml.bind:jaxb-api'
 //    api 'com.sun.xml.bind:jaxb-core'

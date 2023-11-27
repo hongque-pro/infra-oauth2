@@ -1,6 +1,6 @@
 package com.labijie.infra.oauth2.testing
 
-import com.labijie.infra.oauth2.Constants
+import com.labijie.infra.oauth2.OAuth2Constants
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
@@ -132,14 +132,14 @@ class ResourceServerTester : OAuth2Tester() {
         val twoFactorToken = performPost(tokenValue, "/test/sign-2f")
         val twoFacTokenMap = twoFactorToken.readToMap(true)
 
-        Assertions.assertTrue(twoFacTokenMap[Constants.CLAIM_TWO_FACTOR] as Boolean)
+        Assertions.assertTrue(twoFacTokenMap[OAuth2Constants.CLAIM_TWO_FACTOR] as Boolean)
 
         val diffrentKeys = arrayOf(
-            Constants.CLAIM_JTI,
+            OAuth2Constants.CLAIM_JTI,
             OAuth2ParameterNames.EXPIRES_IN,
             OAuth2ParameterNames.REFRESH_TOKEN,
             OAuth2ParameterNames.ACCESS_TOKEN,
-            Constants.CLAIM_TWO_FACTOR
+            OAuth2Constants.CLAIM_TWO_FACTOR
         )
 
         tokenMap.forEach { (k, v) ->
@@ -188,6 +188,8 @@ class ResourceServerTester : OAuth2Tester() {
             status().`is`(403)
         }
     }
+
+
 
     @Test
     fun testPrincipal() {

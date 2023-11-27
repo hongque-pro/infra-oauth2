@@ -3,7 +3,7 @@ package com.labijie.infra.oauth2
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.Authentication
 import java.util.*
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 
 /**
@@ -66,7 +66,7 @@ fun extractClientIdAndSecretFromHeader(request: HttpServletRequest): Pair<String
 
 fun extractClientIdAndSecretFromHeaderValue(header: String): Pair<String, String> {
     if (!header.lowercase().startsWith("basic ")) {
-        log.warn("Cant find basic authorization header while grant type was '${Constants.GRANT_TYPE_PASSWORD}'")
+        log.warn("Cant find basic authorization header while grant type was '${OAuth2Constants.GRANT_TYPE_PASSWORD}'")
         return Pair("", "")
     }
 
@@ -75,7 +75,7 @@ fun extractClientIdAndSecretFromHeaderValue(header: String): Pair<String, String
     try {
         decoded = Base64.getDecoder().decode(base64Token)
     } catch (e: IllegalArgumentException) {
-        log.warn("Failed to decode basic authentication token while grant type was '${Constants.GRANT_TYPE_PASSWORD}")
+        log.warn("Failed to decode basic authentication token while grant type was '${OAuth2Constants.GRANT_TYPE_PASSWORD}")
         return Pair("", "")
     }
 
@@ -84,7 +84,7 @@ fun extractClientIdAndSecretFromHeaderValue(header: String): Pair<String, String
     val delim = token.indexOf(":")
 
     if (delim == -1) {
-        log.warn("Failed to decode basic authentication token while grant type was '${Constants.GRANT_TYPE_PASSWORD}")
+        log.warn("Failed to decode basic authentication token while grant type was '${OAuth2Constants.GRANT_TYPE_PASSWORD}")
         return Pair("", "")
     }
     //return arrayOf(token.substring(0, delim), token.substring(delim + 1))
@@ -95,6 +95,6 @@ fun extractClientIdAndSecretFromHeaderValue(header: String): Pair<String, String
     if (strings.count() == 2) {
         return Pair(strings.first(), strings.last())
     }
-    log.warn("Failed to decode basic authentication token while grant type was '${Constants.GRANT_TYPE_PASSWORD}")
+    log.warn("Failed to decode basic authentication token while grant type was '${OAuth2Constants.GRANT_TYPE_PASSWORD}")
     return Pair("", "")
 }

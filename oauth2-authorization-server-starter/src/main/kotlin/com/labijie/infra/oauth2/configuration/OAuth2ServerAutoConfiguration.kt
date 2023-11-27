@@ -2,6 +2,7 @@ package com.labijie.infra.oauth2.configuration
 
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.OAuth2Utils.loadContent
+import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
 import com.labijie.infra.oauth2.mvc.CheckTokenController
@@ -24,24 +25,16 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
-import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.Customizer
-import org.springframework.security.config.annotation.ObjectPostProcessor
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationEndpointConfigurer
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2TokenEndpointConfigurer
-import org.springframework.security.oauth2.server.authorization.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenCustomizer
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider
+import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
-import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter
-import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeAuthenticationConverter
-import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ClientCredentialsAuthenticationConverter
-import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2RefreshTokenAuthenticationConverter
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.util.Base64Utils
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
@@ -70,9 +63,9 @@ class OAuth2ServerAutoConfiguration(
     private fun getRsaKey(): RSAKey {
         val kp = if (useDefaultRsaKey) {
             serverProperties.token.jwt.rsa.privateKey =
-                Base64Utils.encodeToString(RsaUtils.defaultKeyPair.private.encoded)
+                Base64.getEncoder().encodeToString(RsaUtils.defaultKeyPair.private.encoded)
             serverProperties.token.jwt.rsa.publicKey =
-                Base64Utils.encodeToString(RsaUtils.defaultKeyPair.public.encoded)
+                Base64.getEncoder().encodeToString(RsaUtils.defaultKeyPair.public.encoded)
             RsaUtils.defaultKeyPair
         } else {
             val privateKey = loadContent(serverProperties.token.jwt.rsa.privateKey, RsaUtils::getPrivateKey)
@@ -116,13 +109,13 @@ class OAuth2ServerAutoConfiguration(
         clientRepository: RegisteredClientRepository,
         eventPublisher: ApplicationEventPublisher,
         identityService: IIdentityService,
-        JwtDecoder: IOAuth2ServerJwtCodec
+        jwtDecoder: IOAuth2ServerJwtCodec
     ): TwoFactorSignInHelper {
         return TwoFactorSignInHelper(
             clientRepository,
             serverProperties,
             eventPublisher,
-            JwtDecoder,
+            jwtDecoder,
             customizer,
             identityService
         )
@@ -138,91 +131,85 @@ class OAuth2ServerAutoConfiguration(
     }
 
     @Configuration(proxyBeanMethods = false)
-    protected class SecurityFilterChainConfiguration() : ApplicationContextAware {
+    protected class SecurityFilterChainConfiguration : ApplicationContextAware {
 
         private lateinit var springContext: ApplicationContext
 
-        private fun HttpSecurity.addCustomOAuth2ResourceOwnerPasswordAuthenticationProvider() {
-            val http = this
-            val authenticationManager = http.getSharedObject(AuthenticationManager::class.java)
-            val authorizationService = http.getSharedObject(OAuth2AuthorizationService::class.java)
-
-            val sh = springContext.getBean(TwoFactorSignInHelper::class.java)
-
-            sh.setup(authenticationManager, authorizationService)
-
-            val resourceOwnerPasswordAuthenticationProvider =
-                ResourceOwnerPasswordAuthenticationProvider(sh)
-
-            // This will add new authentication provider in the list of existing authentication providers.
-            http.authenticationProvider(resourceOwnerPasswordAuthenticationProvider)
-        }
 
         @Bean
         @Order(Ordered.HIGHEST_PRECEDENCE)
         fun authorizationServerSecurityFilterChain(
-            http: HttpSecurity
+            http: HttpSecurity,
+            clientRepository: RegisteredClientRepository,
+            authorizationService: OAuth2AuthorizationService,
+            authorizationServerSettings: AuthorizationServerSettings
         ): SecurityFilterChain? {
-            val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer<HttpSecurity>()
 
-            authorizationServerConfigurer.withObjectPostProcessor(object :
-                ObjectPostProcessor<OAuth2ClientAuthenticationProvider> {
-                override fun <O : OAuth2ClientAuthenticationProvider> postProcess(provider: O): O {
-                    provider.setPasswordEncoder(NoopPasswordEncoder.INSTANCE)
-                    return provider
+
+            val sh = springContext.getBean(TwoFactorSignInHelper::class.java)
+
+            val resourceOwnerClientAuthenticationConverter = ResourceOwnerClientAuthenticationConverter()
+            val resourceOwnerPasswordAuthenticationConverter = ResourceOwnerPasswordAuthenticationConverter()
+            val resourceOwnerPasswordAuthenticationProvider = ResourceOwnerPasswordAuthenticationProvider(sh, authorizationService, clientRepository)
+
+            //
+            //OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+            val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
+
+
+            authorizationServerConfigurer
+                .clientAuthentication { clientAuthentication ->
+                    clientAuthentication
+                        .authenticationConverter(resourceOwnerClientAuthenticationConverter)
+                        .authenticationProviders { providers ->
+                            providers.forEach {
+                                if(ClientSecretAuthenticationProvider::class.java.isAssignableFrom(it::class.java)){
+                                    (it as ClientSecretAuthenticationProvider).setPasswordEncoder(NoopPasswordEncoder.INSTANCE)
+                                }
+                            }
+                        }
                 }
-            })
+                .authorizationEndpoint { authorizationEndpoint ->
+                    authorizationEndpoint.errorResponseHandler(OAuth2ExceptionHandler.INSTANCE)
+                }
+                .tokenEndpoint {
+                    it.accessTokenRequestConverter(resourceOwnerPasswordAuthenticationConverter)
+                    it.authenticationProvider(resourceOwnerPasswordAuthenticationProvider)
+                }
 
-            http.apply(authorizationServerConfigurer.tokenEndpoint { tokenEndpoint: OAuth2TokenEndpointConfigurer ->
-                tokenEndpoint.accessTokenRequestConverter(
-                    DelegatingAuthenticationConverter(
-                        listOf(
-                            OAuth2AuthorizationCodeAuthenticationConverter(),
-                            OAuth2RefreshTokenAuthenticationConverter(),
-                            OAuth2ClientCredentialsAuthenticationConverter(),
-                            ResourceOwnerPasswordAuthenticationConverter()
-                        )
-                    )
-                )
-                tokenEndpoint.errorResponseHandler(OAuth2ExceptionHandler.INSTANCE)
-            })
+                .oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
 
-
-            authorizationServerConfigurer.authorizationEndpoint { authorizationEndpoint: OAuth2AuthorizationEndpointConfigurer ->
-                authorizationEndpoint.consentPage(
-                    "/oauth/consent"
-                )
-            }
             val endpointsMatcher = authorizationServerConfigurer.endpointsMatcher
 
 
-
-            http.requestMatcher(endpointsMatcher)
-                .authorizeRequests {
-                    it.antMatchers(HttpMethod.OPTIONS).permitAll()
+            http.securityMatcher(endpointsMatcher)
+                .authorizeHttpRequests {
+                    it.requestMatchers(HttpMethod.OPTIONS).permitAll()
                     it.anyRequest().authenticated()
-                }.csrf().disable()
-                .cors().and()
-                .apply(authorizationServerConfigurer)
-            val securityFilterChain: SecurityFilterChain = http.formLogin(Customizer.withDefaults()).build()
-            /**
-             * Custom configuration for Resource Owner Password grant type. Current implementation has no support for Resource Owner
-             * Password grant type
-             */
-            http.addCustomOAuth2ResourceOwnerPasswordAuthenticationProvider()
-            return securityFilterChain
+                }
+                .csrf {
+                    it.disable()
+                }
+                .cors {
+                }.with(authorizationServerConfigurer) {
+
+                }
+
+
+            return http.formLogin(Customizer.withDefaults()).build()
         }
 
         @Bean
         @Order(Ordered.HIGHEST_PRECEDENCE + 1)
         fun checkTokenFilterChain(http: HttpSecurity): SecurityFilterChain {
-            return http.mvcMatcher(Constants.DEFAULT_CHECK_TOKEN_ENDPOINT_PATH)
-                .authorizeRequests {
+
+            return http.securityMatcher(OAuth2Constants.ENDPOINT_CHECK_TOKEN_ENDPOINT)
+                .authorizeHttpRequests {
                     it.anyRequest().permitAll()
                 }
-                .cors()
-                .and()
-                .csrf().disable()
+                .csrf {
+                    it.disable()
+                }
                 .build()
         }
 

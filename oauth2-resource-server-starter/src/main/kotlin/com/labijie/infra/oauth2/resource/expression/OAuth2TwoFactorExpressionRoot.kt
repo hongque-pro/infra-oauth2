@@ -2,17 +2,19 @@ package com.labijie.infra.oauth2.resource.expression
 
 import com.labijie.infra.oauth2.resource.getTokenAttributes
 import com.labijie.infra.oauth2.resource.isTwoFactorGranted
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.expression.WebSecurityExpressionRoot
+import java.util.function.Supplier
 
 /**
  * Created with IntelliJ IDEA.
  * @author Anders Xiao
  * @date 2019-02-24
  */
-class OAuth2TwoFactorExpressionRoot(a: Authentication?, fi: FilterInvocation?)
-    : WebSecurityExpressionRoot(a, fi) {
+class OAuth2TwoFactorExpressionRoot(authentication : Supplier<Authentication>, request: HttpServletRequest)
+    : WebSecurityExpressionRoot(authentication, request) {
 
     fun twoFactorRequired(): Boolean {
         return this.authentication.isTwoFactorGranted
