@@ -37,7 +37,7 @@
       "name":"infra.oauth2.client-repository",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
-      "defaultValue": "jdbc"
+      "defaultValue": "memory"
     },
     {
       "name":"infra.oauth2.authorization-service",
@@ -126,15 +126,15 @@
       "values": [
         {
           "value": "caching",
-          "description": "jdbc oauth2 client repository"
+          "description": "jdbc oauth2 authorization service"
         },
         {
           "value": "jdbc",
-          "description": "jdbc oauth2 client repository"
+          "description": "jdbc oauth2 authorization service"
         },
         {
           "value": "memory",
-          "description": "in memory oauth2 client repository"
+          "description": "in memory oauth2 authorization service"
         }
       ]
     }

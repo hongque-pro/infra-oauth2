@@ -26,7 +26,7 @@ object RsaUtils {
         val keyValue = key
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
-        val keyBytes: ByteArray = Base64.getDecoder().decode(keyValue)
+        val keyBytes: ByteArray = Base64.getMimeDecoder().decode(keyValue)
         val keySpec = X509EncodedKeySpec(keyBytes)
         val keyFactory = KeyFactory.getInstance("RSA")
         return keyFactory.generatePublic(keySpec) as RSAPublicKey
@@ -35,7 +35,7 @@ object RsaUtils {
 
     fun getPrivateKey(key: String): RSAPrivateKey {
         val keyValue = key.replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "")
-        val keyBytes: ByteArray = Base64.getDecoder().decode(keyValue)
+        val keyBytes: ByteArray = Base64.getMimeDecoder().decode(keyValue)
         val keySpec = PKCS8EncodedKeySpec(keyBytes)
         val keyFactory = KeyFactory.getInstance("RSA")
         return keyFactory.generatePrivate(keySpec) as RSAPrivateKey

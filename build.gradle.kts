@@ -14,7 +14,6 @@ allprojects {
             useMavenProxy = false
             jvmVersion = "17"
         }
-        usePublishPlugin()
     }
 }
 subprojects {

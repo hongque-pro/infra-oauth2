@@ -1,7 +1,9 @@
 package com.labijie.infra.oauth2.configuration
 
+import org.springframework.beans.factory.support.RootBeanDefinition
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
+import org.springframework.context.annotation.Role
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,7 +16,7 @@ data class OAuth2ServerProperties(
     @NestedConfigurationProperty
     val token: TokenProperties = TokenProperties(),
     var authorizationService: String = "caching",
-    var clientRepository: String = "jdbc",
+    var clientRepository: String = "memory",
     val defaultClient: DefaultClient = DefaultClient(),
     var scopeValidationEnabled: Boolean = false,
     var createJdbcSchema: Boolean = false

@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.configuration
 
 import com.labijie.infra.oauth2.*
+import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN_ENDPOINT
 import com.labijie.infra.oauth2.OAuth2Utils.loadContent
 import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
@@ -12,8 +13,9 @@ import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.support.RootBeanDefinition
+import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
@@ -22,6 +24,7 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Role
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
@@ -46,8 +49,7 @@ import java.util.*
 class OAuth2ServerAutoConfiguration(
     private val serverProperties: OAuth2ServerProperties,
     private val jwtCustomizers: ObjectProvider<IJwtCustomizer>
-) :
-    InitializingBean {
+) {
 
     companion object {
 
@@ -152,8 +154,6 @@ class OAuth2ServerAutoConfiguration(
             val resourceOwnerPasswordAuthenticationConverter = ResourceOwnerPasswordAuthenticationConverter()
             val resourceOwnerPasswordAuthenticationProvider = ResourceOwnerPasswordAuthenticationProvider(sh, authorizationService, clientRepository)
 
-            //
-            //OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
             val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
 
 
@@ -203,7 +203,7 @@ class OAuth2ServerAutoConfiguration(
         @Order(Ordered.HIGHEST_PRECEDENCE + 1)
         fun checkTokenFilterChain(http: HttpSecurity): SecurityFilterChain {
 
-            return http.securityMatcher(OAuth2Constants.ENDPOINT_CHECK_TOKEN_ENDPOINT)
+            return http.securityMatcher(ENDPOINT_CHECK_TOKEN_ENDPOINT)
                 .authorizeHttpRequests {
                     it.anyRequest().permitAll()
                 }
@@ -227,17 +227,37 @@ class OAuth2ServerAutoConfiguration(
         return CheckTokenController(jwtCodec)
     }
 
-    override fun afterPropertiesSet() {
-        if (useDefaultRsaKey) {
-            val warn = StringBuilder()
-                .appendLine("The oauth2 authorization server uses a built-in rsa key, which can be a security issue.")
-                .appendLine("Configure following properties can be fix this warning:")
-                .appendLine("  1. ${OAuth2ServerProperties.PRIVATE_KEY_PROPERTY_PATH}")
-                .appendLine("  2. ${OAuth2ServerProperties.PUBLIC_KEY_PROPERTY_PATH}")
-                .appendLine("All above configuration can be pem file content, file path, or classpath resource file path.")
-                .toString()
+    @Bean
+    fun afterOauth2ServerRunner(applicationContext: ApplicationContext) : CommandLineRunner {
 
-            LOGGER.warn(warn)
+        return object: CommandLineRunner {
+            val settings = applicationContext.getBean(AuthorizationServerSettings::class.java)
+
+            override fun run(vararg args: String?) {
+                if (useDefaultRsaKey) {
+                    val warn = StringBuilder()
+                        .appendLine("The oauth2 authorization server uses a built-in rsa key, which can be a security issue.")
+                        .appendLine("Configure following properties can be fix this warning:")
+                        .appendLine("  1. ${OAuth2ServerProperties.PRIVATE_KEY_PROPERTY_PATH}")
+                        .appendLine("  2. ${OAuth2ServerProperties.PUBLIC_KEY_PROPERTY_PATH}")
+                        .appendLine("All above configuration can be pem file content, file path, or classpath resource file path.")
+                        .toString()
+
+                    LOGGER.warn(warn)
+                }
+
+                val information = StringBuilder()
+                information.appendLine("The following endpoints are already active:")
+                information.appendLine(settings.jwkSetEndpoint)
+                information.appendLine(settings.tokenEndpoint)
+                information.appendLine(ENDPOINT_CHECK_TOKEN_ENDPOINT)
+                information.appendLine(settings.tokenRevocationEndpoint)
+                information.appendLine(settings.authorizationEndpoint)
+
+                LOGGER.info(information.toString())
+            }
+
+
         }
     }
 }

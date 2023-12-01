@@ -15,6 +15,8 @@ import org.springframework.core.io.ResourceLoader
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator
 import org.springframework.jdbc.datasource.init.ScriptException
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
@@ -39,24 +41,38 @@ class OAuth2JdbcDataInitializer(
     private lateinit var applicationContext: ApplicationContext
 
     override fun run(args: ApplicationArguments?) {
+        val clientRepository = applicationContext.getBeanProvider(JdbcRegisteredClientRepository::class.java).ifAvailable
+        val oauth2AuthorizationService = applicationContext.getBeanProvider(JdbcOAuth2AuthorizationService::class.java).ifAvailable
+        val consentService = applicationContext.getBeanProvider(JdbcOAuth2AuthorizationConsentService::class.java).ifAvailable
+        var scripts = 0;
+
         try {
             val populator = ResourceDatabasePopulator()
-                .addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
-                .addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
-                .addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
 
-            populator.setContinueOnError(false)
-            populator.setSqlScriptEncoding("UTF-8")
+            consentService?.let {
+                populator.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
+                scripts++
+            }
+            clientRepository?.let {
+                populator.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
+                scripts++
+            }
+            oauth2AuthorizationService?.let {
+                populator.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
+                scripts++
+            }
+            if(scripts > 0) {
 
-            DatabasePopulatorUtils.execute(populator, this.dataSource)
+                populator.setContinueOnError(false)
+                populator.setSqlScriptEncoding("UTF-8")
 
-            if (serverProperties.defaultClient.enabled) {
-                val clientRepository = try {
-                    applicationContext.getBean(JdbcRegisteredClientRepository::class.java)
-                } catch (_: NoSuchBeanDefinitionException) {
-                    null
+                DatabasePopulatorUtils.execute(populator, this.dataSource)
+
+                if (serverProperties.defaultClient.enabled) {
+                    clientRepository?.let {
+                        clientRepository.saveDefaultClientRegistrationIfNotExisted(serverProperties)
+                    }
                 }
-                clientRepository?.saveDefaultClientRegistrationIfNotExisted(serverProperties)
             }
 
         } catch (_: ScriptException) {

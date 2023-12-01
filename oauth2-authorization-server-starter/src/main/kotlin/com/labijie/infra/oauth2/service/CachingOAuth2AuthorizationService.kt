@@ -19,9 +19,9 @@ class CachingOAuth2AuthorizationService(
     private val cache: ICacheManager) : OAuth2AuthorizationService {
 
     companion object{
-        private fun getCacheKey(key: String) = "tk_${key}"
-        private fun getSateCacheKey(key: String) = "tks_${key}"
-        private fun getRefreshTokenCacheKey(key: String) = "tkr_${key}"
+        private fun getCacheKey(key: String) = "o2_tk_${key}"
+        private fun getSateCacheKey(key: String) = "o2_tks_${key}"
+        private fun getRefreshTokenCacheKey(key: String) = "o2_tkr_${key}"
     }
 
     override fun save(authorization: OAuth2Authorization) {

@@ -1,6 +1,5 @@
 infra:
   oauth2:
-    authorization-service: jdbc
     create-jdbc-schema: true
 server:
   port: 8088
@@ -11,4 +10,3 @@ spring:
     username: sa
     password: password
     driverClassName: org.h2.Driver
-

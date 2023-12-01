@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.configuration
 
 import com.labijie.caching.ICacheManager
+import com.labijie.infra.oauth2.IIdentityService
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorJwtCustomizer
 import com.labijie.infra.oauth2.filter.ClientDetailsArgumentResolver
@@ -8,9 +9,11 @@ import com.labijie.infra.oauth2.filter.ClientDetailsInterceptorAdapter
 import com.labijie.infra.oauth2.resolver.PasswordPrincipalResolver
 import com.labijie.infra.oauth2.serialization.kryo.OAuth2KryoCacheDataSerializerCustomizer
 import com.labijie.infra.oauth2.service.CachingOAuth2AuthorizationService
+import com.labijie.infra.oauth2.service.DefaultUserService
 import com.labijie.infra.oauth2.service.OAuth2JdbcDataInitializer
 import com.labijie.infra.utils.logger
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.support.RootBeanDefinition
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.*
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration
@@ -19,7 +22,10 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Role
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder
@@ -31,7 +37,6 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository
-import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository.RegisteredClientParametersMapper
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
@@ -39,7 +44,6 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
-import java.util.function.Consumer
 import javax.sql.DataSource
 
 
@@ -50,6 +54,14 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
 
     private lateinit var springContext: ApplicationContext
 
+    @Bean
+    @ConditionalOnMissingBean(UserDetailsService::class)
+    @ConditionalOnBean(IIdentityService::class)
+    fun defaultUserDetailService(identityService: IIdentityService): DefaultUserService {
+        return DefaultUserService(identityService)
+    }
+
+
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnMissingBean(RegisteredClientRepository::class)
     protected class RegisteredClientRepositoryAutoConfiguration(private val properties: OAuth2ServerProperties) {
@@ -57,16 +69,14 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
         @Bean
         @ConditionalOnMissingBean(RegisteredClientRepository::class)
         @ConditionalOnBean(JdbcTemplate::class)
+        @ConditionalOnProperty(prefix = "infra.oauth2", name = ["client-repository"], havingValue = "jdbc", matchIfMissing = false)
         fun jdbcClientRepository(jdbcTemplate: JdbcTemplate): JdbcRegisteredClientRepository {
-//            return JdbcRegisteredClientRepository(jdbcTemplate).apply {
-//                val mapper = RegisteredClientParametersMapper()
-//                this.setRegisteredClientParametersMapper(mapper)
-//            }
             return JdbcRegisteredClientRepository(jdbcTemplate)
         }
 
         @Bean
         @ConditionalOnMissingBean(RegisteredClientRepository::class)
+        @ConditionalOnProperty(prefix = "infra.oauth2", name = ["client-repository"], havingValue = "memory", matchIfMissing = true)
         fun inMemoryClientRepository(): InMemoryRegisteredClientRepository {
             val client = passwordClientRegistration(properties)
             return InMemoryRegisteredClientRepository(client)
@@ -110,10 +120,7 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
     @Bean
     @ConditionalOnMissingBean(PasswordEncoder::class)
     fun oauth2PasswordEncoder(): PasswordEncoder {
-        val encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder() as DelegatingPasswordEncoder
-        return encoder.apply {
-            this.setDefaultPasswordEncoderForMatches(BCryptPasswordEncoder())
-        }
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder()
     }
 
 
@@ -147,13 +154,6 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
         return AuthorizationServerSettings.builder().build()
     }
 
-    @Bean
-    @ConditionalOnMissingBean(OAuth2JdbcDataInitializer::class)
-    @ConditionalOnBean(DataSource::class)
-    @ConditionalOnProperty(prefix = "infra.oauth2", name = ["create-jdbc-schema"], havingValue = "true", matchIfMissing = false)
-    fun oauth2JdbcDataInitializer(dataSource: DataSource, properties: OAuth2ServerProperties) : OAuth2JdbcDataInitializer {
-        return OAuth2JdbcDataInitializer(dataSource, properties)
-    }
 
     @Bean
     @ConditionalOnMissingBean(OAuth2AuthorizationService::class)
@@ -192,6 +192,15 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
             else -> InMemoryOAuth2AuthorizationService()
         }
         return svc ?: InMemoryOAuth2AuthorizationService()
+    }
+
+
+    @Bean
+    @ConditionalOnMissingBean(OAuth2JdbcDataInitializer::class)
+    @ConditionalOnBean(DataSource::class)
+    @ConditionalOnProperty(prefix = "infra.oauth2", name = ["create-jdbc-schema"], havingValue = "true", matchIfMissing = false)
+    fun oauth2JdbcDataInitializer(dataSource: DataSource, properties: OAuth2ServerProperties) : OAuth2JdbcDataInitializer {
+        return OAuth2JdbcDataInitializer(dataSource, properties)
     }
 
     override fun setApplicationContext(applicationContext: ApplicationContext) {

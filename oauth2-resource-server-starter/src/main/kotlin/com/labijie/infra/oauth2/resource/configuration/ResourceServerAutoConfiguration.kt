@@ -8,14 +8,15 @@ import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import com.labijie.infra.oauth2.resource.token.DefaultJwtAuthenticationConverter
-import com.labijie.infra.utils.logger
-import org.springframework.beans.factory.InitializingBean
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.boot.CommandLineRunner
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.security.SecurityProperties
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties
+import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -38,21 +39,23 @@ import java.io.IOException
 import java.security.interfaces.RSAPublicKey
 
 
+@EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(ResourceServerProperties::class)
-@EnableWebSecurity
+@AutoConfigureAfter(OAuth2ResourceServerAutoConfiguration::class)
 @ImportRuntimeHints(OAuth2SecurityRuntimeHints::class)
 class ResourceServerAutoConfiguration(
-    private val oauth2ResProperties: OAuth2ResourceServerProperties,
-    private val resourceServerProperties: ResourceServerProperties
-) : InitializingBean {
+    private val resourceServerProperties: ResourceServerProperties,
+) {
 
 
     companion object {
         private val OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Any::class.java)
         private val STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String::class.java)
         private val BOOL_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Boolean::class.java)
-
+        private val logger by lazy {
+             LoggerFactory.getLogger(ResourceServerAutoConfiguration::class.java)
+        }
 
         private fun getConverter(targetDescriptor: TypeDescriptor): Converter<Any, *> {
             return Converter { source: Any? ->
@@ -60,13 +63,9 @@ class ResourceServerAutoConfiguration(
                     ClaimConversionService.getSharedInstance().convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor)
             }
         }
-
-
-//        fun genHS256Key(key: String): SecretKey {
-//            val encodedKey: ByteArray = key.toByteArray(Charsets.UTF_8)
-//            return SecretKeySpec(encodedKey, 0, encodedKey.size, JwsAlgorithms.HS256)
-//        }
     }
+
+    private var defaultPubKeyUsed = false
 
     @Bean
     @ConditionalOnMissingBean(JwtAuthenticationConverter::class)
@@ -123,6 +122,7 @@ class ResourceServerAutoConfiguration(
 
 
     @Bean
+    @ConditionalOnMissingBean(JwtDecoder::class)
     fun jwtDecoder(): JwtDecoder{
         val decoder = if (resourceServerProperties.jwt.rsaPubKey.isNotBlank()) {
 
@@ -131,14 +131,8 @@ class ResourceServerAutoConfiguration(
 
             NimbusJwtDecoder.withPublicKey(rsaPubKey)
                 .build()
-        } else if (!oauth2ResProperties.jwt.jwkSetUri.isNullOrBlank()) {
-            NimbusJwtDecoder.withJwkSetUri(oauth2ResProperties.jwt.jwkSetUri)
-                .build()
-        } else if (oauth2ResProperties.jwt.publicKeyLocation?.exists() == true) {
-            val pubKey = RsaUtils.getPublicKey(oauth2ResProperties.jwt.readPublicKey())
-            NimbusJwtDecoder.withPublicKey(pubKey)
-                .build()
         } else {
+            defaultPubKeyUsed = true
             NimbusJwtDecoder.withPublicKey(RsaUtils.defaultKeyPair.public as RSAPublicKey)
                 .build()
         }
@@ -155,8 +149,6 @@ class ResourceServerAutoConfiguration(
     @Configuration(proxyBeanMethods = false)
     class ResourceServerSecurityFilterChainConfiguration(
         private val jwtDecoder: JwtDecoder,
-        private val oauth2ResProperties: OAuth2ResourceServerProperties,
-        private val resourceServerProperties: ResourceServerProperties,
         private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>
     ) {
 
@@ -199,33 +191,21 @@ class ResourceServerAutoConfiguration(
 
             return configurer
         }
-
-
     }
 
-
-    override fun afterPropertiesSet() {
-        val useDefaultPublic = resourceServerProperties.jwt.rsaPubKey.isBlank() &&
-                oauth2ResProperties.jwt.jwkSetUri.isNullOrBlank() &&
-                oauth2ResProperties.jwt.publicKeyLocation?.exists() != true
-
-        if (useDefaultPublic) {
-            val warn = StringBuilder()
-                .appendLine("The oauth2 resource server uses a built-in public key for token decoding, which can be a security issue.")
-                .appendLine("Configure one of following properties can be fix this warning:")
-                .appendLine("  1. ${ResourceServerProperties.PUBLIC_KEY_CONFIG_PATH} (pem content/file path/classpath resource)")
-                .appendLine("  2. spring.security.oauth2.resourceserver.jwt.public-key-location (resource path)")
-                .appendLine("  3. spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
-                .toString()
-            logger.warn(warn)
+    @Bean
+    fun afterOauth2ResourceServerRunner() : CommandLineRunner{
+        return CommandLineRunner {
+            if(defaultPubKeyUsed) {
+                val warn = StringBuilder()
+                    .appendLine("The oauth2 resource server uses a built-in public key for token decoding, which can be a security issue.")
+                    .appendLine("Configure one of following properties can be fix this warning:")
+                    .appendLine("  1. ${ResourceServerProperties.PUBLIC_KEY_CONFIG_PATH} (pem content/file path/classpath resource)")
+                    .appendLine("  2. spring.security.oauth2.resourceserver.jwt.public-key-location (resource path)")
+                    .appendLine("  3. spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
+                    .toString()
+                logger.warn(warn)
+            }
         }
-
-        val information = StringBuilder()
-        information.appendLine("The following endpoints are already active:")
-        information.appendLine(OAuth2Constants.ENDPOINT_JWK_SET_ENDPOINT)
-        information.appendLine(OAuth2Constants.ENDPOINT_TOKEN_ENDPOINT)
-        information.appendLine(OAuth2Constants.ENDPOINT_CONSENT_ENDPOINT)
-        information.appendLine(OAuth2Constants.ENDPOINT_TOKEN_REVOCATION_ENDPOINT)
-        information.appendLine(OAuth2Constants.ENDPOINT_AUTHORIZE_ENDPOINT)
     }
 }
