@@ -88,6 +88,7 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
         val message = JacksonHelper.defaultObjectMapper.writeValueAsString(errorMessage)
         response.status = status.value()
         response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        response.characterEncoding = Charsets.UTF_8.name()
         response.writer.write(message)
     }
 
