@@ -1,5 +1,7 @@
 package com.labijie.dummy
 
+import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
+import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
@@ -26,6 +28,17 @@ class Application{
     @GetMapping("/test2")
     fun t2(): String {
         return "permitted"
+    }
+
+    class T: IResourceServerSecretsStore, IOAuth2ServerSecretsStore {
+        override fun getRsaPrivateKey(): String {
+            TODO("Not yet implemented")
+        }
+
+        override fun getRsaPublicKey(): String {
+            TODO("Not yet implemented")
+        }
+
     }
 }
 

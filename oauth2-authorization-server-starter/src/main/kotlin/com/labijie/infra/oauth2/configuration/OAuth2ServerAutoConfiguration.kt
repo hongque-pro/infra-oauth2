@@ -6,6 +6,7 @@ import com.labijie.infra.oauth2.OAuth2Utils.loadContent
 import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
+import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
 import com.labijie.infra.oauth2.mvc.CheckTokenController
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
@@ -14,6 +15,7 @@ import com.nimbusds.jose.proc.SecurityContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -60,8 +62,12 @@ class OAuth2ServerAutoConfiguration(
     private val useDefaultRsaKey
         get() = serverProperties.token.jwt.rsa.privateKey.isBlank() || serverProperties.token.jwt.rsa.publicKey.isBlank()
 
-    private fun getRsaKey(): RSAKey {
-        val kp = if (useDefaultRsaKey) {
+    private fun getRsaKey(secretsStore: IOAuth2ServerSecretsStore?): RSAKey {
+        val kp = if (secretsStore != null) {
+            val pub = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey())
+            val pri = RsaUtils.getPrivateKey(secretsStore.getRsaPrivateKey())
+            KeyPair(pub, pri)
+        } else if (useDefaultRsaKey) {
             serverProperties.token.jwt.rsa.privateKey =
                 Base64.getEncoder().encodeToString(RsaUtils.defaultKeyPair.private.encoded)
             serverProperties.token.jwt.rsa.publicKey =
@@ -84,8 +90,8 @@ class OAuth2ServerAutoConfiguration(
     }
 
     @Bean
-    fun jwkSource(): JWKSource<SecurityContext> {
-        val rsaKey = getRsaKey()
+    fun jwkSource(@Autowired(required = false) secretsStore: IOAuth2ServerSecretsStore?): JWKSource<SecurityContext> {
+        val rsaKey = getRsaKey(secretsStore)
         val jwkSet = JWKSet(rsaKey)
         return JWKSource<SecurityContext> { jwkSelector, _ -> jwkSelector.select(jwkSet) }
     }
@@ -150,7 +156,8 @@ class OAuth2ServerAutoConfiguration(
 
             val resourceOwnerClientAuthenticationConverter = ResourceOwnerClientAuthenticationConverter()
             val resourceOwnerPasswordAuthenticationConverter = ResourceOwnerPasswordAuthenticationConverter()
-            val resourceOwnerPasswordAuthenticationProvider = ResourceOwnerPasswordAuthenticationProvider(sh, authorizationService, clientRepository)
+            val resourceOwnerPasswordAuthenticationProvider =
+                ResourceOwnerPasswordAuthenticationProvider(sh, authorizationService, clientRepository)
 
             val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
 
@@ -161,7 +168,7 @@ class OAuth2ServerAutoConfiguration(
                         .authenticationConverter(resourceOwnerClientAuthenticationConverter)
                         .authenticationProviders { providers ->
                             providers.forEach {
-                                if(ClientSecretAuthenticationProvider::class.java.isAssignableFrom(it::class.java)){
+                                if (ClientSecretAuthenticationProvider::class.java.isAssignableFrom(it::class.java)) {
                                     (it as ClientSecretAuthenticationProvider).setPasswordEncoder(NoopPasswordEncoder.INSTANCE)
                                 }
                             }
@@ -226,9 +233,9 @@ class OAuth2ServerAutoConfiguration(
     }
 
     @Bean
-    fun afterOauth2ServerRunner(applicationContext: ApplicationContext) : CommandLineRunner {
+    fun afterOauth2ServerRunner(applicationContext: ApplicationContext): CommandLineRunner {
 
-        return object: CommandLineRunner {
+        return object : CommandLineRunner {
             val settings = applicationContext.getBean(AuthorizationServerSettings::class.java)
 
             override fun run(vararg args: String?) {

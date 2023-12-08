@@ -5,11 +5,13 @@ import com.labijie.infra.oauth2.resource.ActuatorAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
 import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
+import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import com.labijie.infra.oauth2.resource.token.DefaultJwtAuthenticationConverter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -54,7 +56,7 @@ class ResourceServerAutoConfiguration(
         private val STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String::class.java)
         private val BOOL_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Boolean::class.java)
         private val logger by lazy {
-             LoggerFactory.getLogger(ResourceServerAutoConfiguration::class.java)
+            LoggerFactory.getLogger(ResourceServerAutoConfiguration::class.java)
         }
 
         private fun getConverter(targetDescriptor: TypeDescriptor): Converter<Any, *> {
@@ -123,8 +125,14 @@ class ResourceServerAutoConfiguration(
 
     @Bean
     @ConditionalOnMissingBean(JwtDecoder::class)
-    fun jwtDecoder(): JwtDecoder{
-        val decoder = if (resourceServerProperties.jwt.rsaPubKey.isNotBlank()) {
+    fun jwtDecoder(@Autowired(required = false) secretsStore: IResourceServerSecretsStore?): JwtDecoder {
+
+        val decoder = if(secretsStore != null ){
+
+            val pubKey = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey())
+            NimbusJwtDecoder.withPublicKey(pubKey)
+                .build()
+        } else if (resourceServerProperties.jwt.rsaPubKey.isNotBlank()) {
 
             val rsaPubKey = OAuth2Utils.loadContent(resourceServerProperties.jwt.rsaPubKey, RsaUtils::getPublicKey)
                 ?: throw IOException("${ResourceServerProperties.PUBLIC_KEY_CONFIG_PATH} is not an pem content or file/resource path.")
@@ -164,8 +172,7 @@ class ResourceServerAutoConfiguration(
                 it.disable()
             }
             val settings = http
-                .authorizeHttpRequests {
-                    authorize ->
+                .authorizeHttpRequests { authorize ->
                     authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
                     resourceConfigurers.orderedStream().forEach {
                         it.configure(authorize)
@@ -194,15 +201,16 @@ class ResourceServerAutoConfiguration(
     }
 
     @Bean
-    fun afterOauth2ResourceServerRunner() : CommandLineRunner{
+    fun afterOauth2ResourceServerRunner(): CommandLineRunner {
         return CommandLineRunner {
-            if(defaultPubKeyUsed) {
+            if (defaultPubKeyUsed) {
                 val warn = StringBuilder()
                     .appendLine("The oauth2 resource server uses a built-in public key for token decoding, which can be a security issue.")
                     .appendLine("Configure one of following properties can be fix this warning:")
                     .appendLine("  1. ${ResourceServerProperties.PUBLIC_KEY_CONFIG_PATH} (pem content/file path/classpath resource)")
                     .appendLine("  2. spring.security.oauth2.resourceserver.jwt.public-key-location (resource path)")
                     .appendLine("  3. spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
+                    .appendLine("  4. implement a bean that inherits from IResourceServerSecretsStore interface")
                     .toString()
                 logger.warn(warn)
             }
