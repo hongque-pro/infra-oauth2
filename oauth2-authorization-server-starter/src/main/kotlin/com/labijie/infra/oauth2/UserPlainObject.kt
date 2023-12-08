@@ -1,7 +1,5 @@
 package com.labijie.infra.oauth2
 
-import org.springframework.security.core.authority.SimpleGrantedAuthority
-
 data class UserPlainObject(
     var userid:String = "",
     var username:String = "",

@@ -20,19 +20,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 object OAuth2ServerUtils {
-
-//    private fun createJwtEncoder(secret: String, algorithm: String): JwtEncoder {
-//        val secretKey: SecretKey = SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), algorithm)
-//        val secretKeyJwk: OctetSequenceKey = TestJwks.jwk(secretKey).build()
-//        val jwkSource: JWKSource<SecurityContext> =
-//            JWKSource<SecurityContext> { jwkSelector: JWKSelector, _: SecurityContext? ->
-//                jwkSelector.select(
-//                    JWKSet(secretKeyJwk)
-//                )
-//            }
-//        return NimbusJwtEncoder(jwkSource)
-//    }
-
     private fun buildTokenSettings(properties: OAuth2ServerProperties): TokenSettings {
 
         val tokenSettingsBuilder: TokenSettings.Builder =
@@ -71,7 +58,7 @@ object OAuth2ServerUtils {
         return md.digest(this.toByteArray(Charsets.UTF_8)).toHexString()
     }
 
-    fun generateRefreshToken(tokenTimeToLive: Duration): OAuth2RefreshToken? {
+    fun generateRefreshToken(tokenTimeToLive: Duration): OAuth2RefreshToken {
         val issuedAt = Instant.now()
         val expiresAt = issuedAt.plus(tokenTimeToLive)
         return OAuth2RefreshToken(UUID.randomUUID().toString(), issuedAt, expiresAt)

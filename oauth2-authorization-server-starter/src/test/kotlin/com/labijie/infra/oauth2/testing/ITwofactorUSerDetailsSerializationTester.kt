@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.labijie.infra.json.JacksonHelper
+import com.labijie.infra.oauth2.OAuth2AuthorizationConverter
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2JacksonModule
 import com.labijie.infra.oauth2.testing.component.TestingIdentityService
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -18,19 +19,11 @@ class ITwofactorUSerDetailsSerializationTester {
 
 
     val testUer = TestingIdentityService().getUserByName("SerTester")
-    private val objectMapper = JacksonHelper.defaultObjectMapper.copy().apply {
-        this.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
-        this.registerModule(CoreJackson2Module())
-        val classLoader = JdbcOAuth2AuthorizationService::class.java.classLoader
-        val securityModules = SecurityJackson2Modules.getModules(classLoader)
-        this.registerModules(securityModules)
-        this.registerModule(OAuth2AuthorizationServerJackson2Module())
-        this.registerModule(OAuth2JacksonModule())
-    }
+
 
     private fun writeMap(data: Map<String, Any>): String {
         return try {
-            objectMapper.writeValueAsString(data)
+            OAuth2AuthorizationConverter.objectMapper.writeValueAsString(data)
         } catch (ex: Exception) {
             throw IllegalArgumentException(ex.message, ex)
         }
@@ -41,7 +34,7 @@ class ITwofactorUSerDetailsSerializationTester {
             return mapOf()
         }
         return try {
-            objectMapper.readValue(data, object : TypeReference<Map<String, Any>>() {})
+            OAuth2AuthorizationConverter.objectMapper.readValue(data, object : TypeReference<Map<String, Any>>() {})
         } catch (ex: Exception) {
             throw IllegalArgumentException(ex.message, ex)
         }
@@ -54,17 +47,17 @@ class ITwofactorUSerDetailsSerializationTester {
             "b" to 123456,
             "c" to testUer
         )
-        val json = objectMapper.writeValueAsString(testData)
+        val json = OAuth2AuthorizationConverter.objectMapper.writeValueAsString(testData)
     }
 
     @Test
     fun deserializeMap(){
         val principal = UsernamePasswordAuthenticationToken(testUer, "PROTE")
-        val json = objectMapper.writeValueAsString(principal)
+        val json = OAuth2AuthorizationConverter.objectMapper.writeValueAsString(principal)
 //        val file = this.javaClass.getResourceAsStream("/test.json")
 //        val json = file.readBytes().toString(Charsets.UTF_8)
 //        val map = readMap(json)
-        val v = objectMapper.readValue(json, UsernamePasswordAuthenticationToken::class.java)
+        val v = OAuth2AuthorizationConverter.objectMapper.readValue(json, UsernamePasswordAuthenticationToken::class.java)
         assertEquals(principal.principal::class.java, v.principal::class.java)
         assertEquals(principal.credentials, principal.credentials)
     }

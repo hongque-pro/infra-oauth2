@@ -29,12 +29,12 @@ import kotlin.reflect.full.createInstance
 class OAuth2AuthorizationConverter private constructor() {
 
     companion object {
-        private val objectMapper = JacksonHelper.defaultObjectMapper.copy().apply {
+        val objectMapper = JacksonHelper.defaultObjectMapper.copy().apply {
             //spring CAS module BUG
 //            val classLoader = JdbcOAuth2AuthorizationService::class.java.classLoader
 //            val securityModules = SecurityJackson2Modules.getModules(classLoader)
 //            this.registerModules(securityModules)
-
+            this.deactivateDefaultTyping()
             this.registerModule(OAuth2AuthorizationServerJackson2Module())
             this.registerModule(OAuth2JacksonModule())
 
@@ -137,10 +137,6 @@ class OAuth2AuthorizationConverter private constructor() {
     }
 
     fun convertFromPlain(plainObject: AuthorizationPlainObject): OAuth2Authorization {
-//        val registeredClient: RegisteredClient = clientRepository.findById(plainObject.clientId)
-//            ?: throw DataRetrievalFailureException(
-//                "The RegisteredClient with id '${plainObject.clientId.ifEmpty { "<empty>" }}' was not found in the RegisteredClientRepository."
-//            )
 
         val client = RegisteredClient.withId(plainObject.clientId)
             .clientId(plainObject.clientId)
