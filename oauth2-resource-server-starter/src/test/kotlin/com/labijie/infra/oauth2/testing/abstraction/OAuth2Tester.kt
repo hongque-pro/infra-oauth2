@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Assertions
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -21,6 +22,8 @@ import java.util.*
 abstract class OAuth2Tester {
 
     protected abstract val mockMvc: MockMvc
+
+    protected val defaultOAuth2ServerSettings = AuthorizationServerSettings.builder().build()
 
     @Throws(Exception::class)
     protected fun obtainAccessToken(username: String = OAuth2TestingUtils.TestUserNme, password: String = OAuth2TestingUtils.TestUserPassword): String? {
@@ -45,7 +48,7 @@ abstract class OAuth2Tester {
         params.add("password", password)
 
         EventTestSubscription.resetFireCount()
-        val result = mockMvc.perform(MockMvcRequestBuilders.post(OAuth2Constants.ENDPOINT_TOKEN_ENDPOINT)
+        val result = mockMvc.perform(MockMvcRequestBuilders.post(defaultOAuth2ServerSettings.tokenEndpoint)
                 .params(params)
                 .header(HttpHeaders.AUTHORIZATION,
                         "Basic " + Base64.getEncoder().encodeToString("$clientId:$clientSecret".toByteArray(Charsets.UTF_8)))

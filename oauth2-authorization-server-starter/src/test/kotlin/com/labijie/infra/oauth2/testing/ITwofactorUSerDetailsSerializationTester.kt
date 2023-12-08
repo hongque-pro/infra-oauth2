@@ -1,6 +1,8 @@
 package com.labijie.infra.oauth2.testing
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2JacksonModule
 import com.labijie.infra.oauth2.testing.component.TestingIdentityService
@@ -13,8 +15,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ITwofactorUSerDetailsSerializationTester {
+
+
     val testUer = TestingIdentityService().getUserByName("SerTester")
     private val objectMapper = JacksonHelper.defaultObjectMapper.copy().apply {
+        this.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
         this.registerModule(CoreJackson2Module())
         val classLoader = JdbcOAuth2AuthorizationService::class.java.classLoader
         val securityModules = SecurityJackson2Modules.getModules(classLoader)

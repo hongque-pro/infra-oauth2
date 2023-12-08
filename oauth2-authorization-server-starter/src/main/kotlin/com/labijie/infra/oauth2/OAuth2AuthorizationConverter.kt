@@ -1,9 +1,14 @@
 package com.labijie.infra.oauth2
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.OAuth2ServerUtils.toInstant
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2JacksonModule
+import org.springframework.security.jackson2.CoreJackson2Module
 import org.springframework.security.jackson2.SecurityJackson2Modules
 import org.springframework.security.oauth2.core.*
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
@@ -13,19 +18,38 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module
+import org.springframework.security.web.jackson2.WebJackson2Module
+import org.springframework.security.web.jackson2.WebServletJackson2Module
+import org.springframework.security.web.server.jackson2.WebServerJackson2Module
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
+
 
 class OAuth2AuthorizationConverter private constructor() {
 
     companion object {
         private val objectMapper = JacksonHelper.defaultObjectMapper.copy().apply {
-            val classLoader = JdbcOAuth2AuthorizationService::class.java.classLoader
-            val securityModules = SecurityJackson2Modules.getModules(classLoader)
-            this.registerModules(securityModules)
+            //spring CAS module BUG
+//            val classLoader = JdbcOAuth2AuthorizationService::class.java.classLoader
+//            val securityModules = SecurityJackson2Modules.getModules(classLoader)
+//            this.registerModules(securityModules)
+
             this.registerModule(OAuth2AuthorizationServerJackson2Module())
             this.registerModule(OAuth2JacksonModule())
+
+            //TODO: wait spring fix CAS module
+            //this.activateDefaultTyping(PolymorphicTypeValidator.Validity.ALLOWED, JsonTypeInfo.As.PROPERTY)
+            this.registerModule(JavaTimeModule())
+            this.registerModule(CoreJackson2Module())
+            this.registerModule(WebJackson2Module())
+            this.registerModule(WebServletJackson2Module())
+            this.registerModule(WebServerJackson2Module())
+//            this.registerModule(OAuth2ClientJackson2Module())
+//            this.registerModule(Saml2Jackson2Module())
         }
+
+
 
         val Instance: OAuth2AuthorizationConverter by lazy {
             OAuth2AuthorizationConverter()
@@ -90,7 +114,9 @@ class OAuth2AuthorizationConverter private constructor() {
         }
 
         val authorizationCode = authorization.getToken(OAuth2AuthorizationCode::class.java)
-        plainObject.authorizationCodeToken = parseToken(authorizationCode, TokenPlainObject::class)
+        if(authorizationCode != null) {
+            plainObject.authorizationCodeToken = parseToken(authorizationCode, TokenPlainObject::class)
+        }
 
         val accessToken = authorization.getToken(OAuth2AccessToken::class.java)
         plainObject.accessToken = parseToken(accessToken, AccessTokenPlainObject::class) { t, o ->

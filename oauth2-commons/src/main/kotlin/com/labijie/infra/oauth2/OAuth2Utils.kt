@@ -53,6 +53,10 @@ object OAuth2Utils {
     }
 
     fun getTwoFactorPrincipal(authentication: Authentication): TwoFactorPrincipal {
+        if (!this::principalResolvers.isInitialized) {
+            throw RuntimeException("Spring application context is not ready")
+        }
+
         val r = principalResolvers.firstOrNull { it.support(authentication) }
             ?: throw BadCredentialsException("Current authentication dose not contains any user details")
         return r.resolvePrincipal(authentication)

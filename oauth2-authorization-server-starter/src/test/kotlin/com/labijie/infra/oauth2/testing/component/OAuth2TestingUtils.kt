@@ -10,7 +10,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import kotlin.reflect.KClass
 
 object OAuth2TestingUtils {
-        val passwordEncoder = BCryptPasswordEncoder()
         private val defaultClient = DefaultClient()
 
         const val TestUserNme = "testUser"

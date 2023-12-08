@@ -8,18 +8,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNam
  * @date 2019-02-22
  */
 object OAuth2Constants {
-    const val ENDPOINT_JWK_SET_ENDPOINT = "/oauth2/jwks"
-    const val ENDPOINT_TOKEN_ENDPOINT = "/oauth2/token"
-    const val ENDPOINT_CONSENT_ENDPOINT = "/oauth2/consent"
-    const val ENDPOINT_TOKEN_REVOCATION_ENDPOINT = "/oauth2/revoke"
-    const val ENDPOINT_JWS_INTROSPECT_ENDPOINT ="/oauth2/introspect"
     const val ENDPOINT_CHECK_TOKEN_ENDPOINT ="/oauth2/check_token"
-    const val ENDPOINT_AUTHORIZE_ENDPOINT ="/oauth2/authorize"
-    const val ENDPOINT_DEVICE_AUTHORIZATION_ENDPOINT = "/oauth2/device_authorization"
-    const val ENDPOINT_DEVICE_VERIFICATION_ENDPOINT = "/oauth2/device_verification"
-    const val ENDPOINT_OIDC_CLIENT_REGISTRATION_ENDPOINT = "/connect/register"
-    const val ENDPOINT_OIDC_USER_INFO_ENDPOINT = "/userinfo"
-    const val ENDPOINT_OIDC_LOGOUT_ENDPOINT = "/connect/logout"
 
     const val GRANT_TYPE_PASSWORD = "password"
     const val GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code"

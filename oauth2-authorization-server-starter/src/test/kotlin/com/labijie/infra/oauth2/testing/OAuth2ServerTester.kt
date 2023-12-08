@@ -2,8 +2,6 @@ package com.labijie.infra.oauth2.testing
 
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.OAuth2Constants
-import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_JWK_SET_ENDPOINT
-import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_JWS_INTROSPECT_ENDPOINT
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
@@ -31,12 +29,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
-@ContextConfiguration(classes = [OAuth2TestServerAutoConfiguration::class])
 @WebMvcTest
+@ContextConfiguration(classes = [OAuth2TestServerAutoConfiguration::class])
 @ImportAutoConfiguration(classes =[SecurityFilterAutoConfiguration::class])
 class OAuth2ServerTester : OAuth2Tester() {
     @Autowired
     override lateinit var mockMvc: MockMvc
+
 
 
     @Test
@@ -67,7 +66,7 @@ class OAuth2ServerTester : OAuth2Tester() {
         params.add("grant_type", "refresh_token")
         //params.add("scope", "api")
         params.add("refresh_token", UUID.randomUUID().toString())
-        val result = mockMvc.perform(post(OAuth2Constants.ENDPOINT_TOKEN_ENDPOINT)
+        val result = mockMvc.perform(post(defaultOAuth2ServerSettings.tokenEndpoint)
             .params(params)
             .header(HttpHeaders.AUTHORIZATION,
                 "Basic " + Base64.getEncoder().encodeToString("${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)))
@@ -89,7 +88,7 @@ class OAuth2ServerTester : OAuth2Tester() {
         //params.add("scope", "api")
         params.add("refresh_token", tokenResult["refresh_token"]?.toString())
 
-        val result = mockMvc.perform(post(OAuth2Constants.ENDPOINT_TOKEN_ENDPOINT)
+        val result = mockMvc.perform(post(defaultOAuth2ServerSettings.tokenEndpoint)
                 .params(params)
                 .header(HttpHeaders.AUTHORIZATION,
                         "Basic " + Base64.getEncoder().encodeToString("${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)))
@@ -149,7 +148,7 @@ class OAuth2ServerTester : OAuth2Tester() {
 
         val tokenValue = tokenResult["access_token"]?.toString()
 
-        val result = mockMvc.perform(post(ENDPOINT_JWS_INTROSPECT_ENDPOINT)
+        val result = mockMvc.perform(post(defaultOAuth2ServerSettings.tokenIntrospectionEndpoint)
                 .param("token", tokenValue)
                 .header(HttpHeaders.AUTHORIZATION,
                         "Basic " + Base64.getEncoder().encodeToString("${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)))
@@ -165,7 +164,7 @@ class OAuth2ServerTester : OAuth2Tester() {
 
     @Test
     fun testJwkSetEndpoint(){
-        val result = mockMvc.perform(get(ENDPOINT_JWK_SET_ENDPOINT)
+        val result = mockMvc.perform(get(defaultOAuth2ServerSettings.jwkSetEndpoint)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk)
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))

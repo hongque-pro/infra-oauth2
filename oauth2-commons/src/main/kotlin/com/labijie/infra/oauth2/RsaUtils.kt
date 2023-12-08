@@ -1,11 +1,9 @@
 package com.labijie.infra.oauth2
 
-import org.springframework.util.Base64Utils
+import com.labijie.infra.security.RsaKeyHelper
 import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.KeyPair
-import java.security.PrivateKey
-import java.security.PublicKey
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
@@ -23,10 +21,7 @@ import java.util.*
 object RsaUtils {
 
     fun getPublicKey(key: String): RSAPublicKey {
-        val keyValue = key
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-        val keyBytes: ByteArray = Base64.getMimeDecoder().decode(keyValue)
+        val keyBytes: ByteArray = RsaKeyHelper.extractRsaPem(key)
         val keySpec = X509EncodedKeySpec(keyBytes)
         val keyFactory = KeyFactory.getInstance("RSA")
         return keyFactory.generatePublic(keySpec) as RSAPublicKey
@@ -34,8 +29,7 @@ object RsaUtils {
 
 
     fun getPrivateKey(key: String): RSAPrivateKey {
-        val keyValue = key.replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "")
-        val keyBytes: ByteArray = Base64.getMimeDecoder().decode(keyValue)
+        val keyBytes: ByteArray = RsaKeyHelper.extractRsaPem(key)
         val keySpec = PKCS8EncodedKeySpec(keyBytes)
         val keyFactory = KeyFactory.getInstance("RSA")
         return keyFactory.generatePrivate(keySpec) as RSAPrivateKey

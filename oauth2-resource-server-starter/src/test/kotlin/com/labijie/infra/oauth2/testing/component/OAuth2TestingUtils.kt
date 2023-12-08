@@ -12,12 +12,13 @@ import org.springframework.http.HttpHeaders
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import kotlin.reflect.KClass
 
 object OAuth2TestingUtils {
-    val passwordEncoder = BCryptPasswordEncoder()
+    var passwordEncoder: PasswordEncoder = BCryptPasswordEncoder()
     private val defaultClient = DefaultClient()
 
     const val TestUserNme = "testUser"

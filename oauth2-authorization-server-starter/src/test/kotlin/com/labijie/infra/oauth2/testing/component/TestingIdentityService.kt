@@ -5,18 +5,21 @@ import com.labijie.infra.oauth2.ITwoFactorUserDetails
 import com.labijie.infra.oauth2.SimpleTwoFactorUserDetails
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.crypto.factory.PasswordEncoderFactories
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 
 /**
  * Created with IntelliJ IDEA.
  * @author Anders Xiao
  * @date 2019-02-21
  */
-class TestingIdentityService: IIdentityService {
+class TestingIdentityService(private val passwordEncoder: PasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()): IIdentityService {
 
     override fun getUserByName(userName: String): ITwoFactorUserDetails {
         val obj = object: ITwoFactorUserDetails {
 
-            private val passwordHash = OAuth2TestingUtils.passwordEncoder.encode(OAuth2TestingUtils.TestUserPassword)
+            private val passwordHash = passwordEncoder.encode(OAuth2TestingUtils.TestUserPassword)
 
             override fun getUserId(): String {
                 return "123456789"

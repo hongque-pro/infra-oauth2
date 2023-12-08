@@ -13,11 +13,14 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.*
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.jwt.JwsHeader
@@ -56,7 +59,8 @@ class TwoFactorSignInHelper(
     private lateinit var context: ApplicationContext
 
     private val authenticationManager: AuthenticationManager by lazy {
-        context.getBean(AuthenticationConfiguration::class.java).authenticationManager
+        val config = context.getBean(AuthenticationConfiguration::class.java)
+        config.authenticationManager
     }
     private val authorizationService: OAuth2AuthorizationService by lazy {
         context.getBean(OAuth2AuthorizationService::class.java)
@@ -174,6 +178,21 @@ class TwoFactorSignInHelper(
 
         val auth = createUserAuthenticationToken(username, password)
         return signInCore(client, auth, twoFactorGranted, scopes ?: client.scopes, request)
+    }
+
+    private val daoAuthenticationProvider by lazy {
+        val providerBean = context.getBeanProvider(DaoAuthenticationProvider::class.java).ifAvailable
+
+        if(providerBean != null) {
+            providerBean
+        } else {
+            val passwordEncoder = context.getBean(PasswordEncoder::class.java)
+            val userDetailsService = context.getBean(UserDetailsService::class.java)
+
+            DaoAuthenticationProvider(passwordEncoder).apply {
+                setUserDetailsService(userDetailsService)
+            }
+        }
     }
 
 
@@ -306,6 +325,7 @@ class TwoFactorSignInHelper(
         }
     }
 
+
     private fun createUserAuthenticationToken(
         username: String,
         password: String
@@ -317,7 +337,9 @@ class TwoFactorSignInHelper(
         }
 
         val r = try {
-            authenticationManager.authenticate(usernamePasswordAuthenticationToken)
+            //usernamePasswordAuthenticationToken.isAuthenticated = true
+            //authenticationManager.authenticate(usernamePasswordAuthenticationToken)
+            daoAuthenticationProvider.authenticate(usernamePasswordAuthenticationToken)
         } catch (ex: Exception) {
             processException(ex)
         }

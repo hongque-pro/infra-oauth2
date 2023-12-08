@@ -13,7 +13,6 @@ import com.labijie.infra.oauth2.service.DefaultUserService
 import com.labijie.infra.oauth2.service.OAuth2JdbcDataInitializer
 import com.labijie.infra.utils.logger
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.support.RootBeanDefinition
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.*
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration
@@ -22,13 +21,9 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Role
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
-import org.springframework.security.crypto.password.DelegatingPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
