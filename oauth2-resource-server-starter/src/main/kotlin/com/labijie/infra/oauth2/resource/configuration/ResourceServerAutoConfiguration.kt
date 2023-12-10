@@ -125,11 +125,13 @@ class ResourceServerAutoConfiguration(
 
     @Bean
     @ConditionalOnMissingBean(JwtDecoder::class)
-    fun jwtDecoder(@Autowired(required = false) secretsStore: IResourceServerSecretsStore?): JwtDecoder {
+    fun jwtDecoder(
+        @Autowired(required = false) secretsStore: IResourceServerSecretsStore?,
+        serverProperties: ResourceServerProperties): JwtDecoder {
 
         val decoder = if(secretsStore != null ){
 
-            val pubKey = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey())
+            val pubKey = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey(serverProperties))
             NimbusJwtDecoder.withPublicKey(pubKey)
                 .build()
         } else if (resourceServerProperties.jwt.rsaPubKey.isNotBlank()) {

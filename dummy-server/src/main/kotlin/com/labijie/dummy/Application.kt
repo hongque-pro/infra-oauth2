@@ -29,17 +29,6 @@ class Application{
     fun t2(): String {
         return "permitted"
     }
-
-    class T: IResourceServerSecretsStore, IOAuth2ServerSecretsStore {
-        override fun getRsaPrivateKey(): String {
-            TODO("Not yet implemented")
-        }
-
-        override fun getRsaPublicKey(): String {
-            TODO("Not yet implemented")
-        }
-
-    }
 }
 
 fun main(){

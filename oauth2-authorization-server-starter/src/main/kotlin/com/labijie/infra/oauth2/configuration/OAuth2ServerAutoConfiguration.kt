@@ -64,8 +64,8 @@ class OAuth2ServerAutoConfiguration(
 
     private fun getRsaKey(secretsStore: IOAuth2ServerSecretsStore?): RSAKey {
         val kp = if (secretsStore != null) {
-            val pub = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey())
-            val pri = RsaUtils.getPrivateKey(secretsStore.getRsaPrivateKey())
+            val pub = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey(serverProperties))
+            val pri = RsaUtils.getPrivateKey(secretsStore.getRsaPrivateKey(serverProperties))
             KeyPair(pub, pri)
         } else if (useDefaultRsaKey) {
             serverProperties.token.jwt.rsa.privateKey =
