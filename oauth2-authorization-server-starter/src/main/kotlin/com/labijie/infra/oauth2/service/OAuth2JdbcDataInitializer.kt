@@ -46,26 +46,28 @@ class OAuth2JdbcDataInitializer(
         var scripts = 0;
 
         try {
-            val populator = ResourceDatabasePopulator()
+            if(serverProperties.createJdbcSchema) {
+                val populator = ResourceDatabasePopulator()
 
-            consentService?.let {
-                populator.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
-                scripts++
-            }
-            if(clientRepository is JdbcRegisteredClientRepository) {
-                populator.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
-                scripts++
-            }
-            oauth2AuthorizationService?.let {
-                populator.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
-                scripts++
-            }
-            if(scripts > 0) {
+                consentService?.let {
+                    populator.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
+                    scripts++
+                }
+                if (clientRepository is JdbcRegisteredClientRepository) {
+                    populator.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
+                    scripts++
+                }
+                oauth2AuthorizationService?.let {
+                    populator.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
+                    scripts++
+                }
+                if (scripts > 0) {
 
-                populator.setContinueOnError(false)
-                populator.setSqlScriptEncoding("UTF-8")
+                    populator.setContinueOnError(false)
+                    populator.setSqlScriptEncoding("UTF-8")
 
-                DatabasePopulatorUtils.execute(populator, this.dataSource)
+                    DatabasePopulatorUtils.execute(populator, this.dataSource)
+                }
             }
             if (serverProperties.defaultClient.enabled && serverProperties.defaultClient.clientId.isBlank()) {
                 clientRepository?.let {
@@ -75,7 +77,7 @@ class OAuth2JdbcDataInitializer(
             }
 
         } catch (_: ScriptException) {
-            //logger.warn("Execute oauth2 schema initialization sql failed.")
+            logger.warn("Execute oauth2 schema initialization sql failed.")
         }
         catch (e: Throwable) {
             logger.error(e.toString())

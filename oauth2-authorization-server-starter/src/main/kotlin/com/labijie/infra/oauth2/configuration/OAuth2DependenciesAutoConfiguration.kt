@@ -193,7 +193,6 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
     @Bean
     @ConditionalOnMissingBean(OAuth2JdbcDataInitializer::class)
     @ConditionalOnBean(DataSource::class)
-    @ConditionalOnProperty(prefix = "infra.oauth2", name = ["create-jdbc-schema"], havingValue = "true", matchIfMissing = false)
     fun oauth2JdbcDataInitializer(dataSource: DataSource, properties: OAuth2ServerProperties) : OAuth2JdbcDataInitializer {
         return OAuth2JdbcDataInitializer(dataSource, properties)
     }
