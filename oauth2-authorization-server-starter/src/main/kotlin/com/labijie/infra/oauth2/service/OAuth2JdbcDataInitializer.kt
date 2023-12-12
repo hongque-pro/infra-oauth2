@@ -69,7 +69,7 @@ class OAuth2JdbcDataInitializer(
                     DatabasePopulatorUtils.execute(populator, this.dataSource)
                 }
             }
-            if (serverProperties.defaultClient.enabled && serverProperties.defaultClient.clientId.isBlank()) {
+            if (serverProperties.defaultClient.enabled && serverProperties.defaultClient.clientId.isNotBlank()) {
                 clientRepository?.let {
                     clientRepository.saveDefaultClientRegistrationIfNotExisted(serverProperties)
                     logger.info("Default oauth2 client (id: ${serverProperties.defaultClient.clientId}) added.")
