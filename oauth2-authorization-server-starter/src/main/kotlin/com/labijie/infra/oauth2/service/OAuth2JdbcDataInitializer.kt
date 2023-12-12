@@ -5,7 +5,6 @@ import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.labijie.infra.utils.logger
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.ApplicationContext
@@ -41,7 +40,7 @@ class OAuth2JdbcDataInitializer(
     private lateinit var applicationContext: ApplicationContext
 
     override fun run(args: ApplicationArguments?) {
-        val clientRepository = applicationContext.getBeanProvider(JdbcRegisteredClientRepository::class.java).ifAvailable
+        val clientRepository = applicationContext.getBeanProvider(RegisteredClientRepository::class.java).ifAvailable
         val oauth2AuthorizationService = applicationContext.getBeanProvider(JdbcOAuth2AuthorizationService::class.java).ifAvailable
         val consentService = applicationContext.getBeanProvider(JdbcOAuth2AuthorizationConsentService::class.java).ifAvailable
         var scripts = 0;
@@ -53,7 +52,7 @@ class OAuth2JdbcDataInitializer(
                 populator.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
                 scripts++
             }
-            clientRepository?.let {
+            if(clientRepository is JdbcRegisteredClientRepository) {
                 populator.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
                 scripts++
             }
@@ -67,11 +66,11 @@ class OAuth2JdbcDataInitializer(
                 populator.setSqlScriptEncoding("UTF-8")
 
                 DatabasePopulatorUtils.execute(populator, this.dataSource)
-
-                if (serverProperties.defaultClient.enabled) {
-                    clientRepository?.let {
-                        clientRepository.saveDefaultClientRegistrationIfNotExisted(serverProperties)
-                    }
+            }
+            if (serverProperties.defaultClient.enabled && serverProperties.defaultClient.clientId.isBlank()) {
+                clientRepository?.let {
+                    clientRepository.saveDefaultClientRegistrationIfNotExisted(serverProperties)
+                    logger.info("Default oauth2 client (id: ${serverProperties.defaultClient.clientId}) added.")
                 }
             }
 
