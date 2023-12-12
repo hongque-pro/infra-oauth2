@@ -10,7 +10,7 @@ import com.labijie.infra.oauth2.resolver.PasswordPrincipalResolver
 import com.labijie.infra.oauth2.serialization.kryo.OAuth2KryoCacheDataSerializerCustomizer
 import com.labijie.infra.oauth2.service.CachingOAuth2AuthorizationService
 import com.labijie.infra.oauth2.service.DefaultUserService
-import com.labijie.infra.oauth2.service.OAuth2JdbcDataInitializer
+import com.labijie.infra.oauth2.service.OAuth2Initializer
 import com.labijie.infra.utils.logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -191,10 +191,10 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
 
 
     @Bean
-    @ConditionalOnMissingBean(OAuth2JdbcDataInitializer::class)
+    @ConditionalOnMissingBean(OAuth2Initializer::class)
     @ConditionalOnBean(DataSource::class)
-    fun oauth2JdbcDataInitializer(dataSource: DataSource, properties: OAuth2ServerProperties) : OAuth2JdbcDataInitializer {
-        return OAuth2JdbcDataInitializer(dataSource, properties)
+    fun oauth2Initializer(dataSource: DataSource, properties: OAuth2ServerProperties) : OAuth2Initializer {
+        return OAuth2Initializer(dataSource, properties)
     }
 
     override fun setApplicationContext(applicationContext: ApplicationContext) {

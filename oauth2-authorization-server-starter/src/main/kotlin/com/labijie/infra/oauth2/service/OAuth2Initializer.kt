@@ -25,7 +25,7 @@ import javax.sql.DataSource
  * @author Anders Xiao
  * @date 2023-11-27
  */
-class OAuth2JdbcDataInitializer(
+class OAuth2Initializer(
     private val dataSource: DataSource,
     private val serverProperties: OAuth2ServerProperties
 ) :
@@ -34,7 +34,7 @@ class OAuth2JdbcDataInitializer(
     ApplicationContextAware {
 
     private val logger: Logger by lazy {
-        LoggerFactory.getLogger(OAuth2JdbcDataInitializer::class.java)
+        LoggerFactory.getLogger(OAuth2Initializer::class.java)
     }
     private lateinit var resourceLoader: ResourceLoader
     private lateinit var applicationContext: ApplicationContext
