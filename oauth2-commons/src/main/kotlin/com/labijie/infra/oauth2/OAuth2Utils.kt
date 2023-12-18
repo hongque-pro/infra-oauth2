@@ -40,6 +40,14 @@ object OAuth2Utils {
         }
     }
 
+    fun currentTwoFactorPrincipalOrNull(): TwoFactorPrincipal? {
+        return try {
+            currentTwoFactorPrincipal()
+        }catch (e: BadCredentialsException) {
+            null
+        }
+    }
+
     @Throws(BadCredentialsException::class)
     fun currentTwoFactorPrincipal(): TwoFactorPrincipal {
         if (!this::principalResolvers.isInitialized) {
