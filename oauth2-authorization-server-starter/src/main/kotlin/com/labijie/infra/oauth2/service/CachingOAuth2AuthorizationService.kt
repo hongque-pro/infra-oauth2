@@ -33,7 +33,10 @@ class CachingOAuth2AuthorizationService(
         val expired = mills ?: Duration.ofDays(365).toMillis()
         val tokenId = plainObject.tokenId()
         val cacheKey = getCacheKey(tokenId)
-        cache.set(cacheKey, plainObject, expired)
+
+        val refreshExpires = plainObject.refreshToken?.expiresDurationMills() ?: 0
+
+        cache.set(cacheKey, plainObject, refreshExpires.coerceAtLeast(expired))
         val r = plainObject.refreshToken
         if(r != null){
             //连接一个缓存键
