@@ -91,9 +91,10 @@ application.yml 中加入以下配置:
 ```yaml
 infra:
   oauth2:
-    authorization-service: jdbc
+    authorization-service:
+      provider: jdbc
 ```
-支持三种 OAuth2AuthorizationService
+支持三种 OAuth2AuthorizationService (通过 provider 配置)
 
 - caching（**默认值**）: [**caching-kotlin**](https://github.com/endink/caching-kotlin) 存储 token
 - jdbc: 官方 jdbc 实现

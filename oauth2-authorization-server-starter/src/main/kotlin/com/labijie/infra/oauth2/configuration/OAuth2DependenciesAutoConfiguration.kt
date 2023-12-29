@@ -11,6 +11,7 @@ import com.labijie.infra.oauth2.serialization.kryo.OAuth2KryoCacheDataSerializer
 import com.labijie.infra.oauth2.service.CachingOAuth2AuthorizationService
 import com.labijie.infra.oauth2.service.DefaultUserService
 import com.labijie.infra.oauth2.service.OAuth2Initializer
+import com.labijie.infra.utils.ifNullOrBlank
 import com.labijie.infra.utils.logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -153,17 +154,21 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
     @Bean
     @ConditionalOnMissingBean(OAuth2AuthorizationService::class)
     fun oauth2AuthorizationService(properties: OAuth2ServerProperties) : OAuth2AuthorizationService {
-        val svc = when (properties.authorizationService) {
+        val svc = when (properties.authorizationService.provider) {
             "caching" -> {
                 val cache = springContext.getBeanProvider(ICacheManager::class.java).firstOrNull()
                 if (cache != null) {
+                    logger.info("Caching oauth2 authorization service has been used, cache region: ${properties.authorizationService.cachingRegion.ifNullOrBlank { "default" }}")
                     CachingOAuth2AuthorizationService(cache)
                 } else {
                     val msg = StringBuilder()
-                        .appendLine("OAuth2 authorization service configured as 'caching', but ICacheManager bean missed, add one of follow packages to fix it:")
+                        .appendLine("OAuth2 authorization service configured as 'caching'," +
+                                "but ICacheManager bean missed, add one of follow packages to fix it:")
                         .appendLine("com.labijie:caching-kotlin-core-starter")
                         .appendLine("com.labijie:caching-kotlin-redis-starter")
                         .appendLine("Now, InMemoryOAuth2AuthorizationService will be used.")
+                        .appendLine()
+                        .appendLine("OAuth2 authorization service fallback to in memory provider.")
                         .toString()
                     logger.warn(msg)
                     null
@@ -179,6 +184,8 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
                         .appendLine("OAuth2 authorization service configured as 'jdbc', but JdbcTemplate bean missed, add follow package to fix it:")
                         .appendLine("org.springframework.boot:spring-boot-starter-jdbc")
                         .appendLine("Now, InMemoryOAuth2AuthorizationService will be used.")
+                        .appendLine()
+                        .appendLine("OAuth2 authorization service fallback to in memory provider.")
                         .toString()
                     logger.warn(msg)
                     null

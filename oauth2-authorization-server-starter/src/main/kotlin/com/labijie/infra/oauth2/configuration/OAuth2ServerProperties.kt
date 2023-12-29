@@ -13,9 +13,13 @@ import org.springframework.context.annotation.Role
 @ConfigurationProperties(prefix = "infra.oauth2")
 data class OAuth2ServerProperties(
     var issuer: String = "https://labijie.com",
+
     @NestedConfigurationProperty
     val token: TokenProperties = TokenProperties(),
-    var authorizationService: String = "caching",
+
+    @NestedConfigurationProperty
+    val authorizationService: AuthorizationServiceProperties = AuthorizationServiceProperties(),
+
     var clientRepository: String = "memory",
     val defaultClient: DefaultClient = DefaultClient(),
     var scopeValidationEnabled: Boolean = false,

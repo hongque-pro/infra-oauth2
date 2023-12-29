@@ -6,6 +6,11 @@
       "description": "oauth configuration based on spring cloud oauth2"
     },
     {
+      "name":"infra.oauth2.authorization-service",
+      "type": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties",
+      "description": "oauth configuration based on spring cloud oauth2"
+    },
+    {
       "name":"infra.oauth2.token",
       "type": "com.labijie.infra.oauth2.configuration.TokenSettings",
       "description": "token configuration"
@@ -40,10 +45,15 @@
       "defaultValue": "memory"
     },
     {
-      "name":"infra.oauth2.authorization-service",
+      "name":"infra.oauth2.authorization-service.provider",
       "type": "java.lang.String",
-      "sourceType": "authorization info repository and operation support",
+      "sourceType": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties",
       "defaultValue": "caching"
+    },
+    {
+      "name":"infra.oauth2.authorization-service.caching-region",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties",
     },
     {
       "name":"infra.oauth2.scope-validation-enabled",
@@ -122,7 +132,7 @@
       ]
     },
     {
-      "name": "infra.oauth2.authorization-service",
+      "name": "infra.oauth2.authorization-service.provider",
       "values": [
         {
           "value": "caching",

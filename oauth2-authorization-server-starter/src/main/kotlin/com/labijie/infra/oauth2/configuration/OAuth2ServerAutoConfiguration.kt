@@ -7,6 +7,9 @@ import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthentication
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
 import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
+import com.labijie.infra.oauth2.customizer.IJwtCustomizer
+import com.labijie.infra.oauth2.customizer.InfraClaimsContextCustomizer
+import com.labijie.infra.oauth2.customizer.InfraJwtEncodingContextCustomizer
 import com.labijie.infra.oauth2.mvc.CheckTokenController
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
@@ -62,6 +65,10 @@ class OAuth2ServerAutoConfiguration(
     private val useDefaultRsaKey
         get() = serverProperties.token.jwt.rsa.privateKey.isBlank() || serverProperties.token.jwt.rsa.publicKey.isBlank()
 
+    private val customizer: OAuth2TokenCustomizer<JwtEncodingContext> by lazy {
+        InfraJwtEncodingContextCustomizer(jwtCustomizers)
+    }
+
     private fun getRsaKey(secretsStore: IOAuth2ServerSecretsStore?): RSAKey {
         val kp = if (secretsStore != null) {
             val pub = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey(serverProperties))
@@ -109,6 +116,16 @@ class OAuth2ServerAutoConfiguration(
         return OAuth2ServerTokenIntrospectParser(oauth2ServerJwtCodec)
     }
 
+    @Bean
+    fun infraJwTokenCustomizer(): OAuth2TokenCustomizer<JwtEncodingContext> {
+        return customizer
+    }
+
+    @Bean
+    protected fun infraClaimsContextCustomizer() : InfraClaimsContextCustomizer {
+        return InfraClaimsContextCustomizer();
+    }
+
 
     @Bean
     fun twoFactorSignInHelper(
@@ -128,13 +145,8 @@ class OAuth2ServerAutoConfiguration(
     }
 
 
-    private val customizer: OAuth2TokenCustomizer<JwtEncodingContext> by lazy {
-        OAuth2TokenCustomizer { context: JwtEncodingContext ->
-            jwtCustomizers.orderedStream().forEach {
-                it.customizeToken(context)
-            }
-        }
-    }
+
+
 
     @Configuration(proxyBeanMethods = false)
     protected class SecurityFilterChainConfiguration : ApplicationContextAware {

@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2
 
+import com.labijie.infra.oauth2.customizer.IJwtCustomizer
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 
@@ -13,7 +14,9 @@ class TwoFactorJwtCustomizer : IJwtCustomizer {
            }
            if(details.isTwoFactorEnabled()){
                val granted = context.get<Boolean>(OAuth2Constants.CLAIM_TWO_FACTOR)
-               context.claims.claim(OAuth2Constants.CLAIM_TWO_FACTOR, granted)
+               if(granted != null) {
+                   context.claims.claim(OAuth2Constants.CLAIM_TWO_FACTOR, granted)
+               }
            }
             context.claims.claim(OAuth2Constants.CLAIM_USER_ID, details.getUserId())
             context.claims.claim(OAuth2Constants.CLAIM_USER_NAME, details.username)
