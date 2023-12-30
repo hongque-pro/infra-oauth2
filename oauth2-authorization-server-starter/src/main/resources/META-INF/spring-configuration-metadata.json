@@ -53,7 +53,7 @@
     {
       "name":"infra.oauth2.authorization-service.caching-region",
       "type": "java.lang.String",
-      "sourceType": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties",
+      "sourceType": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties"
     },
     {
       "name":"infra.oauth2.scope-validation-enabled",
