@@ -117,7 +117,7 @@ class OAuth2ServerTester : OAuth2Tester() {
 
     private fun doCheckToken(tokenValue: String?): Map<String, Any> {
         val result = mockMvc.perform(
-            post(OAuth2Constants.ENDPOINT_CHECK_TOKEN_ENDPOINT)
+            post(OAuth2Constants.ENDPOINT_CHECK_TOKEN)
                 .param("token", tokenValue)
                 .accept(MediaType.APPLICATION_JSON)
         )
@@ -131,7 +131,7 @@ class OAuth2ServerTester : OAuth2Tester() {
 
     @Test
     fun testCheckBadToken(){
-        val result = mockMvc.perform(post(OAuth2Constants.ENDPOINT_CHECK_TOKEN_ENDPOINT)
+        val result = mockMvc.perform(post(OAuth2Constants.ENDPOINT_CHECK_TOKEN)
                 .param("token", ShortId.newId())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().`is`(200))

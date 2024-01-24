@@ -10,7 +10,7 @@ import java.time.Instant
 class CheckTokenController(
     private val jwtCodec: IOAuth2ServerJwtCodec
 ) {
-    @RequestMapping(OAuth2Constants.ENDPOINT_CHECK_TOKEN_ENDPOINT, method = [RequestMethod.GET, RequestMethod.POST])
+    @RequestMapping(OAuth2Constants.ENDPOINT_CHECK_TOKEN, method = [RequestMethod.GET, RequestMethod.POST])
     @ResponseBody
     fun check(@RequestParam("token", required = true) token: String): CheckTokenResult {
         return try {

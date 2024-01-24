@@ -1,7 +1,8 @@
 package com.labijie.infra.oauth2.configuration
 
 import com.labijie.infra.oauth2.*
-import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN_ENDPOINT
+import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
+import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_INTROSPECT
 import com.labijie.infra.oauth2.OAuth2Utils.loadContent
 import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
@@ -220,7 +221,7 @@ class OAuth2ServerAutoConfiguration(
         @Order(Ordered.HIGHEST_PRECEDENCE + 1)
         fun checkTokenFilterChain(http: HttpSecurity): SecurityFilterChain {
 
-            return http.securityMatcher(ENDPOINT_CHECK_TOKEN_ENDPOINT)
+            return http.securityMatcher(ENDPOINT_CHECK_TOKEN, ENDPOINT_INTROSPECT)
                 .authorizeHttpRequests {
                     it.anyRequest().permitAll()
                 }
@@ -267,7 +268,7 @@ class OAuth2ServerAutoConfiguration(
                 information.appendLine("The following endpoints are already active:")
                 information.appendLine(settings.jwkSetEndpoint)
                 information.appendLine(settings.tokenEndpoint)
-                information.appendLine(ENDPOINT_CHECK_TOKEN_ENDPOINT)
+                information.appendLine(ENDPOINT_CHECK_TOKEN)
                 information.appendLine(settings.tokenRevocationEndpoint)
                 information.appendLine(settings.authorizationEndpoint)
 
