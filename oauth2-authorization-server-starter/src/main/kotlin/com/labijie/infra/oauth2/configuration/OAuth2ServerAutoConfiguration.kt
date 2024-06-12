@@ -3,17 +3,16 @@ package com.labijie.infra.oauth2.configuration
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
 import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_INTROSPECT
-import com.labijie.infra.oauth2.OAuth2Utils.loadContent
 import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
+import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
 import com.labijie.infra.oauth2.customizer.IJwtCustomizer
 import com.labijie.infra.oauth2.customizer.InfraClaimsContextCustomizer
 import com.labijie.infra.oauth2.customizer.InfraJwtEncodingContextCustomizer
 import com.labijie.infra.oauth2.mvc.CheckTokenController
 import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import org.slf4j.Logger
@@ -42,10 +41,6 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.web.SecurityFilterChain
-import java.security.KeyPair
-import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
-import java.util.*
 
 
 @Configuration(proxyBeanMethods = false)
@@ -63,43 +58,19 @@ class OAuth2ServerAutoConfiguration(
 
     }
 
-    private val useDefaultRsaKey
-        get() = serverProperties.token.jwt.rsa.privateKey.isBlank() || serverProperties.token.jwt.rsa.publicKey.isBlank()
-
     private val customizer: OAuth2TokenCustomizer<JwtEncodingContext> by lazy {
         InfraJwtEncodingContextCustomizer(jwtCustomizers)
     }
 
-    private fun getRsaKey(secretsStore: IOAuth2ServerSecretsStore?): RSAKey {
-        val kp = if (secretsStore != null) {
-            val pub = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey(serverProperties))
-            val pri = RsaUtils.getPrivateKey(secretsStore.getRsaPrivateKey(serverProperties))
-            KeyPair(pub, pri)
-        } else if (useDefaultRsaKey) {
-            serverProperties.token.jwt.rsa.privateKey =
-                Base64.getEncoder().encodeToString(RsaUtils.defaultKeyPair.private.encoded)
-            serverProperties.token.jwt.rsa.publicKey =
-                Base64.getEncoder().encodeToString(RsaUtils.defaultKeyPair.public.encoded)
-            RsaUtils.defaultKeyPair
-        } else {
-            val privateKey = loadContent(serverProperties.token.jwt.rsa.privateKey, RsaUtils::getPrivateKey)
-                ?: throw IllegalArgumentException("${OAuth2ServerProperties.PRIVATE_KEY_PROPERTY_PATH} is an invalid")
-            val publicKey = loadContent(serverProperties.token.jwt.rsa.publicKey, RsaUtils::getPublicKey)
-                ?: throw IllegalArgumentException("${OAuth2ServerProperties.PUBLIC_KEY_PROPERTY_PATH} is an invalid")
-            KeyPair(publicKey, privateKey)
-        }
-        val publicKey: RSAPublicKey = kp.public as RSAPublicKey
-        val privateKey: RSAPrivateKey = kp.private as RSAPrivateKey
 
-        return RSAKey.Builder(publicKey)
-            .privateKey(privateKey)
-            .keyID(UUID.randomUUID().toString())
-            .build()
+    @Bean
+    fun oauth2ServerRSAKeyPair(@Autowired(required = false) secretsStore: IOAuth2ServerSecretsStore?): IOAuth2ServerRSAKeyPair {
+        return OAuth2ServerRSAKeyPair(serverProperties, secretsStore)
     }
 
     @Bean
-    fun jwkSource(@Autowired(required = false) secretsStore: IOAuth2ServerSecretsStore?): JWKSource<SecurityContext> {
-        val rsaKey = getRsaKey(secretsStore)
+    fun jwkSource(keyGetter: IOAuth2ServerRSAKeyPair): JWKSource<SecurityContext> {
+        val rsaKey = keyGetter.get()
         val jwkSet = JWKSet(rsaKey)
         return JWKSource<SecurityContext> { jwkSelector, _ -> jwkSelector.select(jwkSet) }
     }
@@ -237,9 +208,10 @@ class OAuth2ServerAutoConfiguration(
 
         return object : CommandLineRunner {
             val settings = applicationContext.getBean(AuthorizationServerSettings::class.java)
+            val keyGetter = applicationContext.getBean(IOAuth2ServerRSAKeyPair::class.java)
 
             override fun run(vararg args: String?) {
-                if (useDefaultRsaKey) {
+                if (keyGetter.isDefaultKeys()) {
                     val warn = StringBuilder()
                         .appendLine("The oauth2 authorization server uses a built-in rsa key, which can be a security issue.")
                         .appendLine("Configure following properties can be fix this warning:")
