@@ -146,6 +146,7 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
     }
 
     @Bean
+    @ConditionalOnMissingBean(AuthorizationServerSettings::class)
     fun authorizationServerSettings(): AuthorizationServerSettings {
         return AuthorizationServerSettings.builder().build()
     }
