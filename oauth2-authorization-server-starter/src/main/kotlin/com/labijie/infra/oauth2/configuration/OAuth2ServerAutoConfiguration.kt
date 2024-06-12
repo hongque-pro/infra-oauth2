@@ -182,6 +182,9 @@ class OAuth2ServerAutoConfiguration(
                 }.with(authorizationServerConfigurer) {
 
                 }
+                .sessionManagement {
+                    it.disable()
+                }
 
 
             return http.formLogin(Customizer.withDefaults()).build()

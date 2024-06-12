@@ -172,6 +172,10 @@ class ResourceServerAutoConfiguration(
             http.csrf {
                 it.disable()
             }
+            http.httpBasic {
+                it.disable()
+            }
+
             http.sessionManagement {
                 it.disable()
             }
