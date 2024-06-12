@@ -5,6 +5,7 @@ import com.labijie.infra.oauth2.resource.ActuatorAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
 import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
+import com.labijie.infra.oauth2.resource.component.IOAuth2LoginCustomizer
 import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
@@ -158,6 +159,7 @@ class ResourceServerAutoConfiguration(
 
     @Configuration(proxyBeanMethods = false)
     class ResourceServerSecurityFilterChainConfiguration(
+        private val customizers: ObjectProvider<IOAuth2LoginCustomizer>,
         private val jwtDecoder: JwtDecoder,
         private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>
     ) {
@@ -189,6 +191,11 @@ class ResourceServerAutoConfiguration(
             }
             settings.exceptionHandling {
                 it.accessDeniedHandler(OAuth2ExceptionHandler.INSTANCE)
+            }
+            settings.oauth2Login {
+                customizers.orderedStream().forEach {
+                    c->c.customize(it)
+                }
             }
             return settings.build()
         }

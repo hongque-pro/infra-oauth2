@@ -145,10 +145,6 @@ class OAuth2ServerAutoConfiguration(
         )
     }
 
-
-
-
-
     @Configuration(proxyBeanMethods = false)
     protected class SecurityFilterChainConfiguration : ApplicationContextAware {
 
@@ -194,15 +190,18 @@ class OAuth2ServerAutoConfiguration(
                     it.accessTokenRequestConverter(resourceOwnerPasswordAuthenticationConverter)
                     it.authenticationProvider(resourceOwnerPasswordAuthenticationProvider)
                 }
-
                 .oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
 
+
             val endpointsMatcher = authorizationServerConfigurer.endpointsMatcher
+
+
 
 
             http.securityMatcher(endpointsMatcher)
                 .authorizeHttpRequests {
                     it.requestMatchers(HttpMethod.OPTIONS).permitAll()
+                    it.requestMatchers(ENDPOINT_CHECK_TOKEN).permitAll()
                     it.anyRequest().authenticated()
                 }
                 .csrf {
@@ -217,19 +216,7 @@ class OAuth2ServerAutoConfiguration(
             return http.formLogin(Customizer.withDefaults()).build()
         }
 
-        @Bean
-        @Order(Ordered.HIGHEST_PRECEDENCE + 1)
-        fun checkTokenFilterChain(http: HttpSecurity): SecurityFilterChain {
 
-            return http.securityMatcher(ENDPOINT_CHECK_TOKEN, ENDPOINT_INTROSPECT)
-                .authorizeHttpRequests {
-                    it.anyRequest().permitAll()
-                }
-                .csrf {
-                    it.disable()
-                }
-                .build()
-        }
 
         override fun setApplicationContext(applicationContext: ApplicationContext) {
             springContext = applicationContext
@@ -269,6 +256,7 @@ class OAuth2ServerAutoConfiguration(
                 information.appendLine(settings.jwkSetEndpoint)
                 information.appendLine(settings.tokenEndpoint)
                 information.appendLine(ENDPOINT_CHECK_TOKEN)
+                information.appendLine(ENDPOINT_INTROSPECT)
                 information.appendLine(settings.tokenRevocationEndpoint)
                 information.appendLine(settings.authorizationEndpoint)
 

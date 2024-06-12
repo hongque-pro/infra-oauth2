@@ -2,6 +2,7 @@ package com.labijie.infra.oauth2.testing
 
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.OAuth2Constants
+import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
@@ -31,11 +32,10 @@ import kotlin.test.assertEquals
 
 @WebMvcTest
 @ContextConfiguration(classes = [OAuth2TestServerAutoConfiguration::class])
-@ImportAutoConfiguration(classes =[SecurityFilterAutoConfiguration::class])
+@ImportAutoConfiguration(classes = [SecurityFilterAutoConfiguration::class])
 class OAuth2ServerTester : OAuth2Tester() {
     @Autowired
     override lateinit var mockMvc: MockMvc
-
 
 
     @Test
@@ -61,16 +61,22 @@ class OAuth2ServerTester : OAuth2Tester() {
 
 
     @Test
-    fun testBadRefreshToken(){
+    fun testBadRefreshToken() {
         val params: MultiValueMap<String, String> = LinkedMultiValueMap()
         params.add("grant_type", "refresh_token")
         //params.add("scope", "api")
         params.add("refresh_token", UUID.randomUUID().toString())
-        val result = mockMvc.perform(post(defaultOAuth2ServerSettings.tokenEndpoint)
-            .params(params)
-            .header(HttpHeaders.AUTHORIZATION,
-                "Basic " + Base64.getEncoder().encodeToString("${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)))
-            .accept(MediaType.APPLICATION_JSON))
+        val result = mockMvc.perform(
+            post(defaultOAuth2ServerSettings.tokenEndpoint)
+                .params(params)
+                .header(
+                    HttpHeaders.AUTHORIZATION,
+                    "Basic " + Base64.getEncoder().encodeToString(
+                        "${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)
+                    )
+                )
+                .accept(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().is4xxClientError)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 
@@ -80,7 +86,7 @@ class OAuth2ServerTester : OAuth2Tester() {
     }
 
     @Test
-    fun testRefreshToken(){
+    fun testRefreshToken() {
         val tokenResult = this.performTokenAction().readToMap()
         Assertions.assertTrue(tokenResult.containsKey("refresh_token"))
         val params: MultiValueMap<String, String> = LinkedMultiValueMap()
@@ -88,13 +94,19 @@ class OAuth2ServerTester : OAuth2Tester() {
         //params.add("scope", "api")
         params.add("refresh_token", tokenResult["refresh_token"]?.toString())
 
-        val result = mockMvc.perform(post(defaultOAuth2ServerSettings.tokenEndpoint)
+        val result = mockMvc.perform(
+            post(defaultOAuth2ServerSettings.tokenEndpoint)
                 .params(params)
-                .header(HttpHeaders.AUTHORIZATION,
-                        "Basic " + Base64.getEncoder().encodeToString("${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)))
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk)
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .header(
+                    HttpHeaders.AUTHORIZATION,
+                    "Basic " + Base64.getEncoder().encodeToString(
+                        "${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)
+                    )
+                )
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 
         val map = result.readToMap()
         val refreshedToken = map["access_token"]?.toString()
@@ -104,7 +116,7 @@ class OAuth2ServerTester : OAuth2Tester() {
     }
 
     @Test
-    fun testCheckToken(){
+    fun testCheckToken() {
         val tokenResult = this.performTokenAction().readToMap()
         Assertions.assertTrue(tokenResult.containsKey("access_token"))
 
@@ -113,6 +125,35 @@ class OAuth2ServerTester : OAuth2Tester() {
         val map = doCheckToken(tokenValue)
 
         logger.debug(JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
+    }
+
+    @Test
+    fun introspectTest() {
+        val tokenResult = this.performTokenAction().readToMap()
+        Assertions.assertTrue(tokenResult.containsKey("access_token"))
+
+        val tokenValue = tokenResult["access_token"]?.toString()
+
+        val params: MultiValueMap<String, String> = LinkedMultiValueMap()
+        params.add("token", tokenValue)
+        params.add("token_type_hint", "Bearer")
+
+        val result = mockMvc.perform(
+            post(OAuth2Constants.ENDPOINT_INTROSPECT)
+                .params(params)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(
+                    HttpHeaders.AUTHORIZATION,
+                    "Basic " + Base64.getEncoder().encodeToString(
+                        "${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)
+                    )
+                )
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+        val map = result.readToMap()
+        Assertions.assertEquals(map["active"]?.toString(), "true")
     }
 
     private fun doCheckToken(tokenValue: String?): Map<String, Any> {
@@ -130,31 +171,39 @@ class OAuth2ServerTester : OAuth2Tester() {
     }
 
     @Test
-    fun testCheckBadToken(){
-        val result = mockMvc.perform(post(OAuth2Constants.ENDPOINT_CHECK_TOKEN)
+    fun testCheckBadToken() {
+        val result = mockMvc.perform(
+            post(OAuth2Constants.ENDPOINT_CHECK_TOKEN)
                 .param("token", ShortId.newId())
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().`is`(200))
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().`is`(200))
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 
         val map = result.readToMap()
         Assertions.assertEquals(map["active"]?.toString(), "false")
     }
 
     @Test
-    fun testIntrospectEndpoint(){
+    fun testIntrospectEndpoint() {
         val tokenResult = this.performTokenAction().readToMap()
         Assertions.assertTrue(tokenResult.containsKey("access_token"))
 
         val tokenValue = tokenResult["access_token"]?.toString()
 
-        val result = mockMvc.perform(post(defaultOAuth2ServerSettings.tokenIntrospectionEndpoint)
+        val result = mockMvc.perform(
+            post(defaultOAuth2ServerSettings.tokenIntrospectionEndpoint)
                 .param("token", tokenValue)
-                .header(HttpHeaders.AUTHORIZATION,
-                        "Basic " + Base64.getEncoder().encodeToString("${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)))
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk)
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .header(
+                    HttpHeaders.AUTHORIZATION,
+                    "Basic " + Base64.getEncoder().encodeToString(
+                        "${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)
+                    )
+                )
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 
         val map = result.readToMap()
         //Assertions.assertEquals(map["active"]?.toString(), "true")
@@ -163,11 +212,16 @@ class OAuth2ServerTester : OAuth2Tester() {
     }
 
     @Test
-    fun testJwkSetEndpoint(){
-        val result = mockMvc.perform(get(defaultOAuth2ServerSettings.jwkSetEndpoint)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk)
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+    fun testJwkSetEndpoint() {
+        val result = mockMvc.perform(
+            get(defaultOAuth2ServerSettings.jwkSetEndpoint)
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+
+        logger.debug(RsaUtils.defaultKeyPair.public.toString())
 
         val map = result.readToMap()
         //Assertions.assertEquals(map["active"]?.toString(), "true")

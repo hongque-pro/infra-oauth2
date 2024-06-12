@@ -9,4 +9,5 @@ class ResourceServerProperties {
     }
 
     var jwt: ResourceJwtSettings = ResourceJwtSettings()
+
 }
