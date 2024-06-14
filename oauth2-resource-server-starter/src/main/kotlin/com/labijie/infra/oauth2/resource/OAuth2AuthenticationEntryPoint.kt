@@ -6,6 +6,7 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthen
 import org.springframework.security.web.AuthenticationEntryPoint
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.context.ApplicationContext
 
 /**
  *
@@ -13,14 +14,14 @@ import jakarta.servlet.http.HttpServletResponse
  * @Date: 2021/12/23
  * @Description:
  */
-class OAuth2AuthenticationEntryPoint : AuthenticationEntryPoint {
+class OAuth2AuthenticationEntryPoint(private val applicationContext: ApplicationContext) : AuthenticationEntryPoint {
     private val bearerTokenAuthenticationEntryPoint = BearerTokenAuthenticationEntryPoint()
 
     override fun commence(
         request: HttpServletRequest, response: HttpServletResponse,
         authException: AuthenticationException
     ) {
-        OAuth2ExceptionHandler.INSTANCE.onAuthenticationFailure(request, response, authException)
+        OAuth2ExceptionHandler.getInstance(applicationContext).onAuthenticationFailure(request, response, authException)
         bearerTokenAuthenticationEntryPoint.commence(request, response, authException)
     }
 }

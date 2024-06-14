@@ -17,6 +17,8 @@ import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.context.ApplicationContext
+import org.springframework.http.ResponseEntity
 
 /**
  *
@@ -28,17 +30,37 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
     companion object {
 
         @JvmStatic
-        val INSTANCE : OAuth2ExceptionHandler by lazy {
-            OAuth2ExceptionHandler()
+        private var instance: OAuth2ExceptionHandler? = null
+
+        @JvmStatic
+        private val LOCK = Any()
+
+        @JvmStatic
+        fun getInstance(applicationContext: ApplicationContext?): OAuth2ExceptionHandler
+        {
+            if(instance == null) {
+                synchronized(LOCK) {
+                    if(instance == null) {
+                        instance = OAuth2ExceptionHandler()
+                    }
+                }
+            }
+            val i = instance!!
+            if(applicationContext != null && applicationContext != i.applicationContext) {
+                i.applicationContext = applicationContext
+            }
+            return i
         }
     }
+
+    private var applicationContext: ApplicationContext? = null
 
     override fun onAuthenticationFailure(
         request: HttpServletRequest,
         response: HttpServletResponse,
         exception: AuthenticationException
     ) {
-        writeError(response, exception)
+        writeError(request, response, exception)
     }
 
     override fun handle(
@@ -46,26 +68,41 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
         response: HttpServletResponse,
         accessDeniedException: AccessDeniedException
     ) {
-        writeError(response, accessDeniedException)
+        writeError(request, response, accessDeniedException)
     }
 
-    private fun writeError(response: HttpServletResponse, ex: Exception) {
+    private val errorWriter by lazy {
+        applicationContext?.getBeansOfType(IOAuthErrorWriter::class.java)?.values?.firstOrNull()
+    }
+
+    private fun writeError(request: HttpServletRequest,response: HttpServletResponse, ex: Exception) {
         val (error, status) = when (ex) {
             is BadCredentialsException -> {
-                Pair(OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null), HttpStatus.UNAUTHORIZED)
+                Pair(
+                    OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null),
+                    HttpStatus.UNAUTHORIZED
+                )
             }
+
             is OAuth2AuthenticationException -> {
                 Pair(ex.error, HttpStatus.UNAUTHORIZED)
             }
+
             is InsufficientAuthenticationException -> {
                 Pair(OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, ex.message, null), HttpStatus.UNAUTHORIZED)
             }
+
             is AuthenticationException -> {
                 Pair(OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, ex.message, null), HttpStatus.UNAUTHORIZED)
             }
+
             is AccessDeniedException -> {
-                Pair(OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, ex.message.ifNullOrBlank { "Access denied." }, null), HttpStatus.UNAUTHORIZED)
+                Pair(
+                    OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, ex.message.ifNullOrBlank { "Access denied." }, null),
+                    HttpStatus.UNAUTHORIZED
+                )
             }
+
             else -> {
                 logger.error("Unhandled error has occurred in AuthenticationFailureHandler", ex)
                 val err = OAuth2Error(
@@ -77,11 +114,18 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
             }
         }
 
+        val writer = errorWriter
+        if(writer != null) {
+            writer.writeErrorResponse(request, response, error)
+            response.status = status.value()
+            return
+        }
+
         val errorMessage = mutableMapOf(
             "error" to error.errorCode,
             "error_description" to error.description.ifNullOrBlank { "Authenticate failed." }
         )
-        if(!error.uri.isNullOrBlank()){
+        if (!error.uri.isNullOrBlank()) {
             errorMessage["error_uri"] = error.uri
         }
 

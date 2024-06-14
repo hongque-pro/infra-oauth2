@@ -18,6 +18,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.security.SecurityProperties
 import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -165,8 +167,9 @@ class ResourceServerAutoConfiguration(
         private val customizers: ObjectProvider<IOAuth2LoginCustomizer>,
         private val jwtDecoder: JwtDecoder,
         private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>
-    ) {
+    ): ApplicationContextAware {
 
+        private lateinit var applicationContext: ApplicationContext
 
         @Bean
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 10)
@@ -195,13 +198,13 @@ class ResourceServerAutoConfiguration(
                 obj.jwt {
                     applyJwtConfiguration(it)
                 }
-                obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint())
+                obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint(applicationContext))
             }
             settings.authorizeHttpRequests {
 
             }
             settings.exceptionHandling {
-                it.accessDeniedHandler(OAuth2ExceptionHandler.INSTANCE)
+                it.accessDeniedHandler(OAuth2ExceptionHandler.getInstance(this.applicationContext))
             }
             if(clientRegistrationRepository != null) {
                 settings.oauth2Login {
@@ -222,6 +225,10 @@ class ResourceServerAutoConfiguration(
             configurer.decoder(jwtDecoder)
 
             return configurer
+        }
+
+        override fun setApplicationContext(applicationContext: ApplicationContext) {
+            this.applicationContext = applicationContext
         }
     }
 
