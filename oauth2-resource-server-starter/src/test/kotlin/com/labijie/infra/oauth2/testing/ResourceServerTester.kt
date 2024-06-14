@@ -150,7 +150,7 @@ class ResourceServerTester : OAuth2Tester() {
             }
         }
 
-        Assertions.assertEquals(tokenMap.size, twoFacTokenMap.size, "two factor has more fields")
+        Assertions.assertEquals(tokenMap.size + 1, twoFacTokenMap.size, "Two factor fields changed !")
 
         val twoFactorTokenValue = twoFactorToken.readTokenValue()
         performGet(twoFactorTokenValue, "/test/2fac").andExpect {

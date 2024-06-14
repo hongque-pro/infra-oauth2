@@ -1,10 +1,7 @@
 package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.*
-import com.labijie.infra.oauth2.resource.ActuatorAuthorizationConfigurer
-import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
-import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
-import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
+import com.labijie.infra.oauth2.resource.*
 import com.labijie.infra.oauth2.resource.component.IOAuth2LoginCustomizer
 import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
@@ -23,6 +20,7 @@ import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.O
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.ImportRuntimeHints
 import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
@@ -31,6 +29,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2TokenValidator
 import org.springframework.security.oauth2.core.converter.ClaimConversionService
@@ -38,6 +37,7 @@ import org.springframework.security.oauth2.jwt.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.stereotype.Repository
 import java.io.IOException
 import java.security.interfaces.RSAPublicKey
 
@@ -47,6 +47,7 @@ import java.security.interfaces.RSAPublicKey
 @EnableConfigurationProperties(ResourceServerProperties::class)
 @AutoConfigureAfter(OAuth2ResourceServerAutoConfiguration::class)
 @ImportRuntimeHints(OAuth2SecurityRuntimeHints::class)
+@Import(UnauthorizedController::class)
 class ResourceServerAutoConfiguration(
     private val resourceServerProperties: ResourceServerProperties,
 ) {
@@ -159,6 +160,8 @@ class ResourceServerAutoConfiguration(
 
     @Configuration(proxyBeanMethods = false)
     class ResourceServerSecurityFilterChainConfiguration(
+        @param: Autowired(required = false)
+        private val clientRegistrationRepository: ClientRegistrationRepository?,
         private val customizers: ObjectProvider<IOAuth2LoginCustomizer>,
         private val jwtDecoder: JwtDecoder,
         private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>
@@ -182,6 +185,7 @@ class ResourceServerAutoConfiguration(
             val settings = http
                 .authorizeHttpRequests { authorize ->
                     authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
+                    authorize.requestMatchers("/oauth2/unauthorized", "/oauth2/check_token").permitAll()
                     resourceConfigurers.orderedStream().forEach {
                         it.configure(authorize)
                     }
@@ -193,15 +197,23 @@ class ResourceServerAutoConfiguration(
                 }
                 obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint())
             }
+            settings.authorizeHttpRequests {
+
+            }
             settings.exceptionHandling {
                 it.accessDeniedHandler(OAuth2ExceptionHandler.INSTANCE)
             }
-            settings.oauth2Login {
-                customizers.orderedStream().forEach {
-                    c->c.customize(it)
+            if(clientRegistrationRepository != null) {
+                settings.oauth2Login {
+                    customizers.orderedStream().forEach { c ->
+                        c.customize(it)
+                    }
+                    it.loginPage("/oauth2/unauthorized")
                 }
             }
-            return settings.build()
+
+
+            return settings.formLogin { it.disable() }.build()
         }
 
         fun applyJwtConfiguration(

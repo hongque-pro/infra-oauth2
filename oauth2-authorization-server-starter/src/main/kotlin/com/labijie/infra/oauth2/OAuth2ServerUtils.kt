@@ -44,7 +44,7 @@ object OAuth2ServerUtils {
     }
 
     fun Long?.toInstant(unit: TimeUnit = TimeUnit.SECONDS): Instant? {
-        if (this == null){
+        if (this == null) {
             return null
         }
         val seconds = unit.toSeconds(this)
@@ -53,7 +53,7 @@ object OAuth2ServerUtils {
 
     fun ByteArray.toHexString() = joinToString("") { "%02x".format(it) }
 
-    fun String.md5Hex(): String{
+    fun String.md5Hex(): String {
         val md = MessageDigest.getInstance("md5");
         return md.digest(this.toByteArray(Charsets.UTF_8)).toHexString()
     }
@@ -64,7 +64,61 @@ object OAuth2ServerUtils {
         return OAuth2RefreshToken(UUID.randomUUID().toString(), issuedAt, expiresAt)
     }
 
-    fun OAuth2AccessTokenAuthenticationToken.toResponse(): Map<String, Any> {
+    fun OAuth2AccessTokenAuthenticationToken.toAccessToken(): AccessToken {
+        val accessToken = AccessToken().also { it ->
+            it.accessToken = accessToken.tokenValue
+            it.tokenType = this.accessToken.tokenType.value
+            it.expiresIn = accessToken.getExpiresInSeconds()
+            if (this.accessToken.scopes.isNotEmpty()) {
+                it.scope = StringUtils.collectionToDelimitedString(this.accessToken.scopes, " ")
+            }
+            if (this.refreshToken != null) {
+                it.refreshToken = this.refreshToken!!.tokenValue
+            }
+
+            if (this.additionalParameters.isNotEmpty()) {
+                for (parameter in this.additionalParameters) {
+                    when (parameter.key) {
+                        OAuth2Constants.CLAIM_AUTHORITIES-> {
+                            val list = additionalParameters[OAuth2Constants.CLAIM_AUTHORITIES] as? List<*>
+                            if(list != null){
+                                it.authorities.addAll(list.map { g-> g.toString() })
+                            }
+                        }
+                        OAuth2Constants.CLAIM_USER_NAME -> {
+                            it.username = parameter.value.toString()
+                        }
+
+                        OAuth2Constants.CLAIM_USER_ID -> {
+                            it.userId = parameter.value.toString()
+                        }
+
+                        OAuth2Constants.CLAIM_TWO_FACTOR -> {
+                            it.twoFactorGranted = parameter.value.toString().toBooleanStrict()
+                        }
+                        OAuth2ParameterNames.ACCESS_TOKEN,
+                        OAuth2ParameterNames.TOKEN_TYPE,
+                        OAuth2ParameterNames.EXPIRES_IN,
+                        OAuth2ParameterNames.SCOPE,
+                        OAuth2ParameterNames.REFRESH_TOKEN -> continue
+                        else -> {
+                            it.details.putIfAbsent(parameter.key, parameter.value)
+                        }
+                    }
+                }
+            }
+
+        }
+        return accessToken
+    }
+
+    fun OAuth2AccessToken.getExpiresInSeconds(): Long {
+        return if (this.expiresAt != null) {
+            ChronoUnit.SECONDS.between(Instant.now(), this.expiresAt)
+        } else -1
+    }
+
+    fun OAuth2AccessTokenAuthenticationToken.toMap(): Map<String, Any> {
 
         val parameters: MutableMap<String, Any> = HashMap()
         parameters[OAuth2ParameterNames.ACCESS_TOKEN] = accessToken.tokenValue
@@ -96,17 +150,17 @@ object OAuth2ServerUtils {
     fun OAuth2Authorization.tokenId(): String {
         val authorization = this
         val accessToken = authorization.getToken(OAuth2AccessToken::class.java)?.token?.tokenValue
-        if(!accessToken.isNullOrBlank()){
+        if (!accessToken.isNullOrBlank()) {
             return accessToken.md5Hex()
         }
 
         val authorizationCode = authorization.getToken(OAuth2AuthorizationCode::class.java)?.token?.tokenValue
-        if(!authorizationCode.isNullOrBlank()){
+        if (!authorizationCode.isNullOrBlank()) {
             return authorizationCode.md5Hex()
         }
 
         val oidcIdToken = authorization.getToken(OidcIdToken::class.java)?.token?.tokenValue
-        if(!oidcIdToken.isNullOrBlank()){
+        if (!oidcIdToken.isNullOrBlank()) {
             return oidcIdToken.md5Hex()
         }
 
@@ -114,17 +168,17 @@ object OAuth2ServerUtils {
     }
 
     val Jwt.isExpired
-    get() = this.expiresAt != null && this.expiresAt!!.epochSecond <= Instant.now().epochSecond
+        get() = this.expiresAt != null && this.expiresAt!!.epochSecond <= Instant.now().epochSecond
 
-    private fun Map<String, *>.getScopes(): Set<String>{
+    private fun Map<String, *>.getScopes(): Set<String> {
         val scope = this.getOrDefault(OAuth2ParameterNames.SCOPE, null) ?: return hashSetOf()
-        if(scope is String){
+        if (scope is String) {
             return StringUtils.commaDelimitedListToSet(scope)
         }
-        if(scope is Collection<*>){
+        if (scope is Collection<*>) {
             val set = hashSetOf<String>()
             scope.forEach {
-                if(it != null){
+                if (it != null) {
                     set.add(it.toString())
                 }
             }

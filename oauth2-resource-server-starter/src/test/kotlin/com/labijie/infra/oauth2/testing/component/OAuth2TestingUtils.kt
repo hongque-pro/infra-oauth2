@@ -2,10 +2,7 @@ package com.labijie.infra.oauth2.testing.component
 
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.ITwoFactorUserDetails
-import com.labijie.infra.oauth2.configuration.DefaultClient
-import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readAs
-import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
-import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToObject
+import com.labijie.infra.oauth2.configuration.DefaultClientProperties
 import com.labijie.infra.utils.logger
 import org.junit.jupiter.api.Assertions
 import org.springframework.http.HttpHeaders
@@ -19,7 +16,7 @@ import kotlin.reflect.KClass
 
 object OAuth2TestingUtils {
     var passwordEncoder: PasswordEncoder = BCryptPasswordEncoder()
-    private val defaultClient = DefaultClient()
+    private val defaultClient = DefaultClientProperties()
 
     const val TestUserNme = "testUser"
     const val TestUserPassword = "pass0rd"

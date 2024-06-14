@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.testing
 
-import com.labijie.infra.oauth2.OAuth2ServerUtils.toResponse
+import com.labijie.infra.oauth2.AccessToken
+import com.labijie.infra.oauth2.OAuth2ServerUtils.toAccessToken
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
@@ -17,8 +18,9 @@ class ResourceTestController {
     private lateinit var signInHelper: TwoFactorSignInHelper
     
     @PostMapping("/sign-2f")
-    fun twoFacSignIn(): Map<String, Any> {
-        return signInHelper.signInTwoFactor().toResponse()
+    fun twoFacSignIn(): AccessToken {
+        val token = signInHelper.signInTwoFactor().toAccessToken()
+        return token
     }
 
     @GetMapping("/permitAll")

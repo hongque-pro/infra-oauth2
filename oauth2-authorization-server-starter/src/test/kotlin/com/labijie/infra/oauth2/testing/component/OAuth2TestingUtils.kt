@@ -1,16 +1,15 @@
 package com.labijie.infra.oauth2.testing.component
 
 import com.labijie.infra.json.JacksonHelper
-import com.labijie.infra.oauth2.configuration.DefaultClient
+import com.labijie.infra.oauth2.configuration.DefaultClientProperties
 import com.labijie.infra.utils.logger
 import org.springframework.http.HttpHeaders
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import kotlin.reflect.KClass
 
 object OAuth2TestingUtils {
-        private val defaultClient = DefaultClient()
+        private val defaultClient = DefaultClientProperties()
 
         const val TestUserNme = "testUser"
         const val TestUserPassword = "pass0rd"

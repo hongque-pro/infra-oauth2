@@ -32,7 +32,7 @@ class AuthorizationPlainObject {
     }
 
     fun token(): TokenPlainObject? {
-        return accessToken ?: authorizationCodeToken ?: accessToken ?: oidcIdToken
+        return accessToken ?: authorizationCodeToken ?: oidcIdToken
     }
 
     fun tokenId(): String {
@@ -40,10 +40,10 @@ class AuthorizationPlainObject {
             return accessToken!!.tokenId()
         }
         if(authorizationCodeToken != null){
-            return accessToken!!.tokenId()
+            return authorizationCodeToken!!.tokenId()
         }
         if(oidcIdToken != null){
-            return accessToken!!.tokenId()
+            return oidcIdToken!!.tokenId()
         }
         return id
     }

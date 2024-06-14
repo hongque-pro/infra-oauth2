@@ -101,19 +101,19 @@
     {
       "name":"infra.oauth2.default-client.client-id",
       "type": "java.lang.String",
-      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClient",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
       "defaultValue": "app"
     },
     {
       "name":"infra.oauth2.default-client.secret",
       "type": "java.lang.String",
-      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClient",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
       "defaultValue": "!QAZ@WSX"
     },
     {
       "name":"infra.oauth2.default-client.enabled",
       "type": "java.lang.Boolean",
-      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClient",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
       "defaultValue": true
     }
   ],

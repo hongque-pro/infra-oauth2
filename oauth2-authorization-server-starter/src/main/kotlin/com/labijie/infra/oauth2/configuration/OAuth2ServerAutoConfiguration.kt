@@ -1,5 +1,7 @@
 package com.labijie.infra.oauth2.configuration
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
 import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_INTROSPECT
@@ -8,10 +10,13 @@ import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticati
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
 import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
+import com.labijie.infra.oauth2.component.OAuth2ObjectMapperProcessor
 import com.labijie.infra.oauth2.customizer.IJwtCustomizer
 import com.labijie.infra.oauth2.customizer.InfraClaimsContextCustomizer
 import com.labijie.infra.oauth2.customizer.InfraJwtEncodingContextCustomizer
 import com.labijie.infra.oauth2.mvc.CheckTokenController
+import com.labijie.infra.oauth2.serialization.jackson.AccessTokenJacksonModule
+import com.labijie.infra.oauth2.serialization.jackson.OAuth2JacksonModule
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
@@ -28,6 +33,7 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
@@ -45,6 +51,7 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(OAuth2DependenciesAutoConfiguration::class)
+@Import(OAuth2ObjectMapperProcessor::class)
 class OAuth2ServerAutoConfiguration(
     private val serverProperties: OAuth2ServerProperties,
     private val jwtCustomizers: ObjectProvider<IJwtCustomizer>
@@ -185,9 +192,14 @@ class OAuth2ServerAutoConfiguration(
                 .sessionManagement {
                     it.disable()
                 }
+                .exceptionHandling {
+                    it.accessDeniedHandler(OAuth2ExceptionHandler.INSTANCE)
+                }
 
 
-            return http.formLogin(Customizer.withDefaults()).build()
+            return http.formLogin{
+                it.disable()
+            }.build()
         }
 
 
@@ -213,7 +225,11 @@ class OAuth2ServerAutoConfiguration(
             val settings = applicationContext.getBean(AuthorizationServerSettings::class.java)
             val keyGetter = applicationContext.getBean(IOAuth2ServerRSAKeyPair::class.java)
 
+
             override fun run(vararg args: String?) {
+                JacksonHelper.defaultObjectMapper.registerModules(AccessTokenJacksonModule())
+                JacksonHelper.webCompatibilityMapper.registerModules(AccessTokenJacksonModule())
+
                 if (keyGetter.isDefaultKeys()) {
                     val warn = StringBuilder()
                         .appendLine("The oauth2 authorization server uses a built-in rsa key, which can be a security issue.")
