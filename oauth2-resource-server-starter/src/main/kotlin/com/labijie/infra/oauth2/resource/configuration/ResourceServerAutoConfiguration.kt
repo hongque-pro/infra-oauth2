@@ -2,6 +2,7 @@ package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.resource.*
+import com.labijie.infra.oauth2.resource.component.HttpCookieOAuth2AuthorizationRequestRepository
 import com.labijie.infra.oauth2.resource.component.IOAuth2LoginCustomizer
 import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
@@ -33,9 +34,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2TokenValidator
 import org.springframework.security.oauth2.core.converter.ClaimConversionService
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest
 import org.springframework.security.oauth2.jwt.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector
@@ -54,7 +57,6 @@ import java.security.interfaces.RSAPublicKey
 class ResourceServerAutoConfiguration(
     private val resourceServerProperties: ResourceServerProperties,
 ) {
-
 
     companion object {
         private val OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Any::class.java)
@@ -172,6 +174,9 @@ class ResourceServerAutoConfiguration(
 
         private lateinit var applicationContext: ApplicationContext
 
+        @Autowired(required = false)
+        private var oauth2AuthorizationRequestRepository: AuthorizationRequestRepository<OAuth2AuthorizationRequest>? = null
+
         @Bean
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 10)
         fun resourceServerSecurityChain(http: HttpSecurity): SecurityFilterChain {
@@ -208,8 +213,15 @@ class ResourceServerAutoConfiguration(
             settings.exceptionHandling {
                 it.accessDeniedHandler(OAuth2ExceptionHandler.getInstance(this.applicationContext))
             }
+
+
             if(clientRegistrationRepository != null) {
+                val requestRepository = oauth2AuthorizationRequestRepository ?: HttpCookieOAuth2AuthorizationRequestRepository()
                 settings.oauth2Login {
+                    it.authorizationEndpoint {
+                        endpoint->
+                        endpoint.authorizationRequestRepository(requestRepository)
+                    }
                     customizers.orderedStream().forEach { c ->
                         c.customize(it)
                     }

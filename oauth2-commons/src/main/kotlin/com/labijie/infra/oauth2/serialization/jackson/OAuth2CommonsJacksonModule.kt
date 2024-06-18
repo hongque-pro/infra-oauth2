@@ -1,0 +1,24 @@
+/**
+ * @author Anders Xiao
+ * @date 2024-06-14
+ */
+package com.labijie.infra.oauth2.serialization.jackson
+
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.labijie.infra.oauth2.AccessToken
+import org.springframework.security.oauth2.core.AuthorizationGrantType
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType
+
+
+class OAuth2CommonsJacksonModule : SimpleModule("infra.oauth2.commons") {
+    init {
+        this.addSerializer(AccessToken::class.java, AccessTokenSerializer())
+        this.addDeserializer(AccessToken::class.java, AccessTokenDeserializer())
+
+        this.addSerializer(OAuth2AuthorizationResponseType::class.java, OAuth2AuthorizationResponseTypeSerializer())
+        this.addDeserializer(OAuth2AuthorizationResponseType::class.java, OAuth2AuthorizationResponseTypeDeserializer())
+
+        this.addSerializer(AuthorizationGrantType::class.java, AuthorizationGrantTypeSerializer())
+        this.addDeserializer(AuthorizationGrantType::class.java, AuthorizationGrantTypeDeserializer())
+    }
+}

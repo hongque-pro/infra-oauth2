@@ -14,7 +14,7 @@ import com.labijie.infra.oauth2.customizer.IJwtCustomizer
 import com.labijie.infra.oauth2.customizer.InfraClaimsContextCustomizer
 import com.labijie.infra.oauth2.customizer.InfraJwtEncodingContextCustomizer
 import com.labijie.infra.oauth2.mvc.CheckTokenController
-import com.labijie.infra.oauth2.serialization.jackson.AccessTokenJacksonModule
+import com.labijie.infra.oauth2.serialization.jackson.OAuth2CommonsJacksonModule
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
@@ -225,8 +225,8 @@ class OAuth2ServerAutoConfiguration(
 
 
             override fun run(vararg args: String?) {
-                JacksonHelper.defaultObjectMapper.registerModules(AccessTokenJacksonModule())
-                JacksonHelper.webCompatibilityMapper.registerModules(AccessTokenJacksonModule())
+                JacksonHelper.defaultObjectMapper.registerModules(OAuth2CommonsJacksonModule())
+                JacksonHelper.webCompatibilityMapper.registerModules(OAuth2CommonsJacksonModule())
 
                 if (keyGetter.isDefaultKeys()) {
                     val warn = StringBuilder()
