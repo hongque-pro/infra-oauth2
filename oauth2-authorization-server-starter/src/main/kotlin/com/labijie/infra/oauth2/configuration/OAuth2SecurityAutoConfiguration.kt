@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Role
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.transaction.annotation.EnableTransactionManagement
 
@@ -33,6 +34,7 @@ class OAuth2SecurityAutoConfiguration {
 
             http.securityMatcher(EndpointRequest.toAnyEndpoint())
                 .sessionManagement {
+                    it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                     it.disable()
                 }
                 .csrf {

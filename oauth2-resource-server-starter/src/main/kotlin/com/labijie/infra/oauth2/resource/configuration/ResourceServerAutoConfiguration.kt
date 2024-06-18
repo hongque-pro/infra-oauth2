@@ -31,6 +31,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2TokenValidator
@@ -183,6 +184,7 @@ class ResourceServerAutoConfiguration(
             }
 
             http.sessionManagement {
+                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 it.disable()
             }
             val settings = http
