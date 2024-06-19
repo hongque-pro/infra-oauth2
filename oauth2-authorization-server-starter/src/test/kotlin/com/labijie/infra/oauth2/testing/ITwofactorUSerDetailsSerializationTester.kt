@@ -23,7 +23,7 @@ class ITwofactorUSerDetailsSerializationTester {
 
     private fun writeMap(data: Map<String, Any>): String {
         return try {
-            OAuth2AuthorizationConverter.objectMapper.writeValueAsString(data)
+            OAuth2AuthorizationConverter.Instance.objectMapper.writeValueAsString(data)
         } catch (ex: Exception) {
             throw IllegalArgumentException(ex.message, ex)
         }
@@ -34,7 +34,7 @@ class ITwofactorUSerDetailsSerializationTester {
             return mapOf()
         }
         return try {
-            OAuth2AuthorizationConverter.objectMapper.readValue(data, object : TypeReference<Map<String, Any>>() {})
+            OAuth2AuthorizationConverter.Instance.objectMapper.readValue(data, object : TypeReference<Map<String, Any>>() {})
         } catch (ex: Exception) {
             throw IllegalArgumentException(ex.message, ex)
         }
@@ -47,17 +47,17 @@ class ITwofactorUSerDetailsSerializationTester {
             "b" to 123456,
             "c" to testUer
         )
-        val json = OAuth2AuthorizationConverter.objectMapper.writeValueAsString(testData)
+        val json = OAuth2AuthorizationConverter.Instance.objectMapper.writeValueAsBytes(testData)
     }
 
     @Test
     fun deserializeMap(){
         val principal = UsernamePasswordAuthenticationToken(testUer, "PROTE")
-        val json = OAuth2AuthorizationConverter.objectMapper.writeValueAsString(principal)
+        val json = OAuth2AuthorizationConverter.Instance.objectMapper.writeValueAsBytes(principal)
 //        val file = this.javaClass.getResourceAsStream("/test.json")
 //        val json = file.readBytes().toString(Charsets.UTF_8)
 //        val map = readMap(json)
-        val v = OAuth2AuthorizationConverter.objectMapper.readValue(json, UsernamePasswordAuthenticationToken::class.java)
+        val v = OAuth2AuthorizationConverter.Instance.objectMapper.readValue(json, UsernamePasswordAuthenticationToken::class.java)
         assertEquals(principal.principal::class.java, v.principal::class.java)
         assertEquals(principal.credentials, principal.credentials)
     }

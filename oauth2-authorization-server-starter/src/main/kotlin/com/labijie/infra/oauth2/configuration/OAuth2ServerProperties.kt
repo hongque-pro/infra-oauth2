@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
  * @author Anders Xiao
  * @date 2019-02-23
  */
-@ConfigurationProperties(prefix = "infra.oauth2")
+@ConfigurationProperties(prefix = "infra.oauth2.authorization-server")
 data class OAuth2ServerProperties(
     var issuer: String = "https://labijie.com",
 

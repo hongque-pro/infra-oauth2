@@ -10,7 +10,7 @@ class AuthorizationPlainObject {
     var clientId: String = ""
     var principalName: String = ""
     var grantType: String = ""
-    var attributes: String = ""
+    var attributes: ByteArray? = null
     var state: String? = null
     var authorizationCodeToken: TokenPlainObject? = null
     var accessToken: AccessTokenPlainObject? = null
@@ -63,7 +63,7 @@ open class TokenPlainObject {
     var tokenValue: String = ""
     var issuedAtEpochSecond: Long? = null
     var expiresAtEpochSecond: Long? = null
-    var metadata: String = ""
+    var metadata: ByteArray? = null
 }
 
 class AccessTokenPlainObject : TokenPlainObject() {

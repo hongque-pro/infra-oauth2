@@ -67,6 +67,10 @@ class CachingOAuth2AuthorizationService(
                 val k = auth.refreshToken!!.getCacheKey()
                 cache.remove(k, region = this.cachingRegion)
             }
+            if(!auth.state.isNullOrBlank()){
+                val key = getSateCacheKey(auth.state!!)
+                cache.remove(key, region = this.cachingRegion)
+            }
         }
     }
 

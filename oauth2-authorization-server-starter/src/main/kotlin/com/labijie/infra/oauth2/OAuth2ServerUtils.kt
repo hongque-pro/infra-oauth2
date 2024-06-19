@@ -20,17 +20,15 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 object OAuth2ServerUtils {
-    private fun buildTokenSettings(properties: OAuth2ServerProperties): TokenSettings {
-
-        val tokenSettingsBuilder: TokenSettings.Builder =
-            TokenSettings.builder().accessTokenTimeToLive(properties.token.accessTokenExpiration)
-                .refreshTokenTimeToLive(properties.token.refreshTokenExpiration)
-                .reuseRefreshTokens(properties.token.reuseRefreshToken)
-        return tokenSettingsBuilder.build()
-    }
 
     fun createDefaultClientRegistration(properties: OAuth2ServerProperties): RegisteredClient {
-        val tokenSetting = buildTokenSettings(properties)
+
+        val tokenSettings = TokenSettings.builder().accessTokenTimeToLive(properties.defaultClient.accessTokenExpiration)
+            .refreshTokenTimeToLive(properties.defaultClient.refreshTokenExpiration)
+            .reuseRefreshTokens(properties.defaultClient.reuseRefreshToken)
+            .build()
+
+
         return RegisteredClient.withId(properties.defaultClient.clientId)
             .clientId(properties.defaultClient.clientId)
             .clientName("infra_default")
@@ -39,7 +37,7 @@ object OAuth2ServerUtils {
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-            .tokenSettings(tokenSetting)
+            .tokenSettings(tokenSettings)
             .build()
     }
 

@@ -2,9 +2,7 @@ package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.resource.*
-import com.labijie.infra.oauth2.resource.component.HttpCookieOAuth2AuthorizationRequestRepository
-import com.labijie.infra.oauth2.resource.component.IOAuth2LoginCustomizer
-import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
+import com.labijie.infra.oauth2.resource.component.*
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import com.labijie.infra.oauth2.resource.token.DefaultJwtAuthenticationConverter
@@ -167,6 +165,9 @@ class ResourceServerAutoConfiguration(
     class ResourceServerSecurityFilterChainConfiguration(
         @param: Autowired(required = false)
         private val clientRegistrationRepository: ClientRegistrationRepository?,
+        @param: Autowired(required = false)
+        private val cookieDecoder: IOAuth2TokenCookieDecoder?,
+        private val resourceServerProperties: ResourceServerProperties,
         private val customizers: ObjectProvider<IOAuth2LoginCustomizer>,
         private val jwtDecoder: JwtDecoder,
         private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>
@@ -205,6 +206,11 @@ class ResourceServerAutoConfiguration(
                 obj.jwt {
                     applyJwtConfiguration(it)
                 }
+                obj.bearerTokenResolver(CookieSupportedBearerTokenResolver(cookieDecoder).apply {
+                    this.setBearerTokenFromCookieName(resourceServerProperties.bearerTokenResolver.allowCookieName)
+                    this.setAllowUriQueryParameter(resourceServerProperties.bearerTokenResolver.allowUriQueryParameter)
+                    this.setAllowFormEncodedBodyParameter(resourceServerProperties.bearerTokenResolver.allowFormEncodedBodyParameter)
+                })
                 obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint(applicationContext))
             }
             settings.authorizeHttpRequests {

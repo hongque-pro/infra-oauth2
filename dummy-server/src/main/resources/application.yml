@@ -1,6 +1,5 @@
 infra:
   oauth2:
-    create-jdbc-schema: true
 server:
   port: 8088
 

@@ -54,7 +54,7 @@ class OAuth2ServerTokenIntrospectParser(
         }
 
         if (jwt.isExpired) {
-            return TokenIntrospectionErrorResponse(BearerTokenError.INVALID_TOKEN)
+            return TokenIntrospectionSuccessResponse.Builder(false).build()
         }
 
         return TokenIntrospectionSuccessResponse.Builder(true)

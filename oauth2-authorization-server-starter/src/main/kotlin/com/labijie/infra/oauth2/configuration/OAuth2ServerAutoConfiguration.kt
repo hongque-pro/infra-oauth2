@@ -39,6 +39,7 @@ import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
@@ -170,9 +171,6 @@ class OAuth2ServerAutoConfiguration(
 
 
             val endpointsMatcher = authorizationServerConfigurer.endpointsMatcher
-
-
-
 
             http.securityMatcher(endpointsMatcher)
                 .authorizeHttpRequests {

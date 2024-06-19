@@ -1,125 +1,126 @@
 {
   "group":[
     {
-      "name":"infra.oauth2",
+      "name":"infra.oauth2.authorization-server",
       "type": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
       "description": "oauth configuration based on spring cloud oauth2"
     },
     {
-      "name":"infra.oauth2.authorization-service",
+      "name":"infra.oauth2.authorization-server.authorization-service",
       "type": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties",
       "description": "oauth configuration based on spring cloud oauth2"
     },
     {
-      "name":"infra.oauth2.token",
+      "name":"infra.oauth2.authorization-server.token",
       "type": "com.labijie.infra.oauth2.configuration.TokenSettings",
       "description": "token configuration"
     },
     {
-      "name":"infra.oauth2.token.jwt",
+      "name":"infra.oauth2.authorization-server.token.jwt",
       "type": "com.labijie.infra.oauth2.configuration.JwtSettings",
       "description": "oauth jwt token configuration"
     },
     {
-      "name":"infra.oauth2.token.jwt.rsa",
+      "name":"infra.oauth2.authorization-server.token.jwt.rsa",
       "type": "com.labijie.infra.oauth2.configuration.RSASettings",
       "description": "oauth jwt rsa key configuration"
     },
     {
-      "name":"infra.oauth2.default-client",
+      "name":"infra.oauth2.authorization-server.default-client",
       "type": "com.labijie.infra.oauth2.configuration.DefaultClient",
       "description": "default oauth2 client"
     }
   ],
   "properties":[
     {
-      "name":"infra.oauth2.issuer",
+      "name":"infra.oauth2.authorization-server.issuer",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
       "defaultValue": "https://labijie.com"
     },
     {
-      "name":"infra.oauth2.client-repository",
+      "name":"infra.oauth2.authorization-server.client-repository",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
       "defaultValue": "memory"
     },
     {
-      "name":"infra.oauth2.authorization-service.provider",
+      "name":"infra.oauth2.authorization-server.authorization-service.provider",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties",
       "defaultValue": "caching"
     },
     {
-      "name":"infra.oauth2.authorization-service.caching-region",
+      "name":"infra.oauth2.authorization-server.authorization-service.caching-region",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties"
     },
     {
-      "name":"infra.oauth2.scope-validation-enabled",
+      "name":"infra.oauth2.authorization-server.scope-validation-enabled",
       "type": "java.lang.Boolean",
       "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
       "defaultValue": false
     },
     {
-      "name":"infra.oauth2.create-jdbc-schema",
+      "name":"infra.oauth2.authorization-server.create-jdbc-schema",
       "type": "java.lang.Boolean",
       "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
       "defaultValue": false
     },
     {
-      "name":"infra.oauth2.token.jwt.rsa.private-key",
+      "name":"infra.oauth2.authorization-server.token.jwt.rsa.private-key",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.RSASettings",
       "defaultValue": ""
     },
     {
-      "name":"infra.oauth2.token.jwt.rsa.public-key",
+      "name":"infra.oauth2.authorization-server.token.jwt.rsa.public-key",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.RSASettings",
       "defaultValue": ""
-    },
-    {
-      "name":"infra.oauth2.token.reuse-refresh-tokens",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.labijie.infra.oauth2.configuration.TokenProperties",
-      "defaultValue": true
-    },
-    {
-      "name":"infra.oauth2.token.access-token-expiration",
-      "type": "java.time.Duration",
-      "sourceType": "com.labijie.infra.oauth2.configuration.TokenProperties",
-      "defaultValue": "1h"
-    },
-    {
-      "name":"infra.oauth2.token.refresh-token-expiration",
-      "type": "java.time.Duration",
-      "sourceType": "com.labijie.infra.oauth2.configuration.TokenProperties",
-      "defaultValue": "1d"
     },
 
+
     {
-      "name":"infra.oauth2.default-client.client-id",
+      "name":"infra.oauth2.authorization-server.default-client.client-id",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
       "defaultValue": "app"
     },
     {
-      "name":"infra.oauth2.default-client.secret",
+      "name":"infra.oauth2.authorization-server.default-client.secret",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
       "defaultValue": "!QAZ@WSX"
     },
     {
-      "name":"infra.oauth2.default-client.enabled",
+      "name":"infra.oauth2.authorization-server.default-client.enabled",
       "type": "java.lang.Boolean",
       "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
       "defaultValue": true
+    },
+    {
+      "name":"infra.oauth2.authorization-server.default-client.reuse-refresh-tokens",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "defaultValue": true
+    },
+    {
+      "name":"infra.oauth2.authorization-server.default-client.access-token-expiration",
+      "type": "java.time.Duration",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "defaultValue": "5m"
+    },
+    {
+      "name":"infra.oauth2.authorization-server.default-client.refresh-token-expiration",
+      "type": "java.time.Duration",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "defaultValue": "7d"
     }
   ],
   "hints": [
     {
-      "name": "infra.oauth2.client-repository",
+      "name": "infra.oauth2.authorization-server.client-repository",
       "values": [
         {
           "value": "jdbc",
@@ -132,7 +133,7 @@
       ]
     },
     {
-      "name": "infra.oauth2.authorization-service.provider",
+      "name": "infra.oauth2.authorization-server.authorization-service.provider",
       "values": [
         {
           "value": "caching",

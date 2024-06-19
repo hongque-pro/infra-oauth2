@@ -2,16 +2,42 @@
   "group":[
     {
       "name":"infra.oauth2.resource-server",
-      "type": "com.labijie.infra.oauth2.resource.config.ResourceServerProperties",
+      "type": "com.labijie.infra.oauth2.configuration.ResourceServerProperties",
       "description": "oauth resource server config"
     },
     {
       "name":"infra.oauth2.resource-server.jwt",
-      "type": "infra.oauth2.resource-serve.ResourceJwtSettings",
+      "type": "com.labijie.infra.oauth2.configuration.ResourceJwtSettings",
+      "description": "jwt configuration for a resource server"
+    },
+    {
+      "name":"infra.oauth2.resource-server.bearer-token-resolver",
+      "type": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
       "description": "jwt configuration for a resource server"
     }
   ],
   "properties":[
+    {
+      "name":"infra.oauth2.resource-server.bearer-token-resolver.allow-cookie-name",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
+      "description": "If not null allow resole bearer token from a cookie.",
+      "defaultValue": null
+    },
+    {
+      "name":"infra.oauth2.resource-server.bearer-token-resolver.allow-form-encoded-body-parameter",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
+      "description": "Allow resole bearer token from a form data.",
+      "defaultValue": false
+    },
+    {
+      "name":"infra.oauth2.resource-server.bearer-token-resolver.allow-uri-query-parameter",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
+      "description": "Allow resole bearer token from request uri.",
+      "defaultValue": false
+    },
     {
       "name":"infra.oauth2.resource-server.jwt.rsa-pub-key",
       "type": "java.lang.String",

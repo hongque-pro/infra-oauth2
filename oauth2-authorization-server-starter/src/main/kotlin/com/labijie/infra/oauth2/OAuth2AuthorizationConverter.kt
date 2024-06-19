@@ -1,11 +1,17 @@
 package com.labijie.infra.oauth2
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.dataformat.smile.databind.SmileMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.OAuth2ServerUtils.toInstant
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2JacksonModule
+import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper
 import org.springframework.security.jackson2.CoreJackson2Module
 import org.springframework.security.oauth2.core.AbstractOAuth2Token
 import org.springframework.security.oauth2.core.AuthorizationGrantType
@@ -27,45 +33,53 @@ import kotlin.reflect.full.createInstance
 class OAuth2AuthorizationConverter private constructor() {
 
     companion object {
-        val objectMapper: ObjectMapper by lazy {
-            JacksonHelper.defaultObjectMapper.copy().apply {
-            //spring CAS module BUG
-//            val classLoader = JdbcOAuth2AuthorizationService::class.java.classLoader
-//            val securityModules = SecurityJackson2Modules.getModules(classLoader)
-//            this.registerModules(securityModules)
-            this.deactivateDefaultTyping()
-            this.registerModule(OAuth2AuthorizationServerJackson2Module())
-            this.registerModule(OAuth2JacksonModule())
-
-            //TODO: wait spring fix CAS module
-            //this.activateDefaultTyping(PolymorphicTypeValidator.Validity.ALLOWED, JsonTypeInfo.As.PROPERTY)
-            this.registerModule(JavaTimeModule())
-            this.registerModule(CoreJackson2Module())
-            this.registerModule(WebJackson2Module())
-            this.registerModule(WebServletJackson2Module())
-            this.registerModule(WebServerJackson2Module())
-//            this.registerModule(OAuth2ClientJackson2Module())
-//            this.registerModule(Saml2Jackson2Module())
-            }
-        }
-
-
         val Instance: OAuth2AuthorizationConverter by lazy {
             OAuth2AuthorizationConverter()
         }
     }
 
+    val objectMapper: ObjectMapper by lazy {
+        SmileMapper.builder()
+            .configure(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN, true)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(SerializationFeature.WRITE_ENUMS_USING_INDEX, true)
+            //.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .build()
+            .apply {
+                //spring CAS module BUG
+//            val classLoader = JdbcOAuth2AuthorizationService::class.java.classLoader
+//            val securityModules = SecurityJackson2Modules.getModules(classLoader)
+//            this.registerModules(securityModules)
+                this.deactivateDefaultTyping()
+                this.registerModule(OAuth2AuthorizationServerJackson2Module())
+                this.registerModule(OAuth2JacksonModule())
 
-    private fun writeMap(data: Map<String, Any>): String {
-        return try {
-            objectMapper.writeValueAsString(data)
-        } catch (ex: Exception) {
-            throw IllegalArgumentException(ex.message, ex)
-        }
+                //TODO: wait spring fix CAS module
+                //this.activateDefaultTyping(PolymorphicTypeValidator.Validity.ALLOWED, JsonTypeInfo.As.PROPERTY)
+                this.registerModule(JavaTimeModule())
+                this.registerModule(CoreJackson2Module())
+                this.registerModule(WebJackson2Module())
+                this.registerModule(WebServletJackson2Module())
+                this.registerModule(WebServerJackson2Module())
+//            this.registerModule(OAuth2ClientJackson2Module())
+//            this.registerModule(Saml2Jackson2Module())
+            }
     }
 
-    private fun readMap(data: String): Map<String, Any> {
-        if (data.isBlank()) {
+
+    private fun writeMap(data: Map<String, Any>): ByteArray? {
+        if(data.isNotEmpty()) {
+            return try {
+                objectMapper.writeValueAsBytes(data)
+            } catch (ex: Exception) {
+                throw IllegalArgumentException(ex.message, ex)
+            }
+        }
+        return null
+    }
+
+    private fun readMap(data: ByteArray?): Map<String, Any> {
+        if (data == null) {
             return mapOf()
         }
         return try {
@@ -103,7 +117,7 @@ class OAuth2AuthorizationConverter private constructor() {
         plainObject.principalName = authorization.principalName
         plainObject.grantType = authorization.authorizationGrantType.value
 
-        val attributes: String = writeMap(authorization.attributes)
+        val attributes = writeMap(authorization.attributes)
         plainObject.attributes = attributes
 
         val authorizationState = authorization.getAttribute<String>(OAuth2ParameterNames.STATE)

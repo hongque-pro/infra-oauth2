@@ -8,8 +8,5 @@ import java.time.Duration
  * @date 2019-02-23
  */
 class TokenProperties(
-        var reuseRefreshToken:Boolean = true,
-        var accessTokenExpiration:Duration = Duration.ofHours(1),
-        var refreshTokenExpiration:Duration = Duration.ofDays(1),
         var jwt:JwtSettings = JwtSettings()
 )

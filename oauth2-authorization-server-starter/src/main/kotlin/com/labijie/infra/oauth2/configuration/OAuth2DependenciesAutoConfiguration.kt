@@ -2,6 +2,7 @@ package com.labijie.infra.oauth2.configuration
 
 import com.labijie.caching.ICacheManager
 import com.labijie.infra.oauth2.IIdentityService
+import com.labijie.infra.oauth2.OAuth2ServerUtils
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorJwtCustomizer
 import com.labijie.infra.oauth2.filter.ClientDetailsArgumentResolver
@@ -74,31 +75,8 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
         @ConditionalOnMissingBean(RegisteredClientRepository::class)
         @ConditionalOnProperty(prefix = "infra.oauth2", name = ["client-repository"], havingValue = "memory", matchIfMissing = true)
         fun inMemoryClientRepository(): InMemoryRegisteredClientRepository {
-            val client = passwordClientRegistration(properties)
+            val client = OAuth2ServerUtils.createDefaultClientRegistration(properties)
             return InMemoryRegisteredClientRepository(client)
-        }
-
-        private fun getTokenSettings(properties: OAuth2ServerProperties): TokenSettings {
-
-            val tokenSettingsBuilder: TokenSettings.Builder =
-                TokenSettings.builder().accessTokenTimeToLive(properties.token.accessTokenExpiration)
-                    .refreshTokenTimeToLive(properties.token.refreshTokenExpiration)
-                    .reuseRefreshTokens(properties.token.reuseRefreshToken)
-            return tokenSettingsBuilder.build()
-        }
-
-        private fun passwordClientRegistration(properties: OAuth2ServerProperties): RegisteredClient {
-            val tokenSetting = getTokenSettings(properties)
-            return RegisteredClient.withId(properties.defaultClient.clientId)
-                .clientId(properties.defaultClient.clientId)
-                .clientName("infra_default")
-                .clientSecret(properties.defaultClient.secret)
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
-                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .tokenSettings(tokenSetting)
-                .build()
         }
     }
 

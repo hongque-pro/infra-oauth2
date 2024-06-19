@@ -10,4 +10,5 @@ dependencies {
     api("org.springframework.security:spring-security-oauth2-core")
     compileOnly("org.springframework.security:spring-security-web")
     api("com.nimbusds:oauth2-oidc-sdk:${Versions.oauth2OidcSdk}")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-smile")
 }
