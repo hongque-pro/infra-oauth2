@@ -138,7 +138,7 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
                 val cache = springContext.getBeanProvider(ICacheManager::class.java).firstOrNull()
                 if (cache != null) {
                     logger.info("Caching oauth2 authorization service has been used, cache region: ${properties.authorizationService.cachingRegion.ifNullOrBlank { "default" }}")
-                    CachingOAuth2AuthorizationService(cache)
+                    CachingOAuth2AuthorizationService(cache, properties.authorizationService.cachingRegion)
                 } else {
                     val msg = StringBuilder()
                         .appendLine("OAuth2 authorization service configured as 'caching'," +

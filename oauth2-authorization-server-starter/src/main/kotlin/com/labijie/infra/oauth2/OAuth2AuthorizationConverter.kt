@@ -1,6 +1,5 @@
 package com.labijie.infra.oauth2
 
-import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -8,10 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.dataformat.smile.databind.SmileMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.OAuth2ServerUtils.toInstant
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2JacksonModule
-import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper
 import org.springframework.security.jackson2.CoreJackson2Module
 import org.springframework.security.oauth2.core.AbstractOAuth2Token
 import org.springframework.security.oauth2.core.AuthorizationGrantType
@@ -26,6 +23,10 @@ import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2A
 import org.springframework.security.web.jackson2.WebJackson2Module
 import org.springframework.security.web.jackson2.WebServletJackson2Module
 import org.springframework.security.web.server.jackson2.WebServerJackson2Module
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 
@@ -35,6 +36,36 @@ class OAuth2AuthorizationConverter private constructor() {
     companion object {
         val Instance: OAuth2AuthorizationConverter by lazy {
             OAuth2AuthorizationConverter()
+        }
+    }
+
+
+    fun compress(data: ByteArray): ByteArray? {
+        if (data.isEmpty()) {
+            return data
+        }
+        val out = ByteArrayOutputStream()
+        GZIPOutputStream(out).use {
+            it.write(data)
+        }
+
+        return out.toByteArray()
+    }
+
+    fun uncompress(bytes: ByteArray): ByteArray? {
+        if (bytes.isEmpty()) {
+            return bytes
+        }
+        val out = ByteArrayOutputStream()
+        val `in` = ByteArrayInputStream(bytes)
+        GZIPInputStream(`in`).use {
+            stream->
+            val buffer = ByteArray(256)
+            var n: Int
+            while ((stream.read(buffer).also { n = it }) >= 0) {
+                out.write(buffer, 0, n)
+            }
+            return out.toByteArray()
         }
     }
 
