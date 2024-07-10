@@ -194,7 +194,7 @@ class ResourceServerAutoConfiguration(
                 it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 it.disable()
             }
-            http.cors(Customizer.withDefaults())
+            //http.cors(Customizer.withDefaults())
             val settings = http
                 .authorizeHttpRequests { authorize ->
                     authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
