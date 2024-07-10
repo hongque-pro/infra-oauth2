@@ -17,7 +17,7 @@ import org.springframework.util.StringUtils
 class DefaultJwtGrantedAuthoritiesConverter : Converter<Jwt, MutableCollection<GrantedAuthority>> {
     private val innerConverter = JwtGrantedAuthoritiesConverter()
 
-    override fun convert(source: Jwt): MutableCollection<GrantedAuthority>? {
+    override fun convert(source: Jwt): MutableCollection<GrantedAuthority> {
         //SCOPE
         val collection = innerConverter.convert(source) ?: mutableListOf()
         //ROLE
