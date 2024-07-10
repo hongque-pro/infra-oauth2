@@ -27,6 +27,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
+import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
@@ -193,6 +194,7 @@ class ResourceServerAutoConfiguration(
                 it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 it.disable()
             }
+            http.cors(Customizer.withDefaults())
             val settings = http
                 .authorizeHttpRequests { authorize ->
                     authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
