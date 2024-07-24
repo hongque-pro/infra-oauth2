@@ -1,21 +1,13 @@
 package com.labijie.infra.oauth2.testing
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.OAuth2AuthorizationConverter
-import com.labijie.infra.oauth2.serialization.jackson.OAuth2JacksonModule
 import com.labijie.infra.oauth2.testing.component.TestingIdentityService
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.jackson2.CoreJackson2Module
-import org.springframework.security.jackson2.SecurityJackson2Modules
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService
-import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ITwofactorUSerDetailsSerializationTester {
+class TwofactorUserDetailsSerializationTester {
 
 
     val testUer = TestingIdentityService().getUserByName("SerTester")
