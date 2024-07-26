@@ -12,6 +12,8 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import java.io.File
+import java.net.URL
+import java.util.*
 import java.util.stream.Collectors
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
@@ -29,6 +31,26 @@ object OAuth2Utils {
 
     val PASSWORD_GRANT_TYPE = AuthorizationGrantType("password")
 
+    fun getInfraOAuth2GitProperties(): Properties {
+        val systemResources: Enumeration<URL> =
+            (OAuth2Utils::class.java.classLoader ?: ClassLoader.getSystemClassLoader()).getResources("git-info/git.properties")
+        while (systemResources.hasMoreElements()) {
+            systemResources.nextElement().openStream().use { stream ->
+                val properties = Properties().apply {
+                    this.load(stream)
+                }.let {
+                    if (it.getProperty("project.group") == "com.labijie.infra" &&
+                        it.getProperty("project.name") == "oauth2-commons") {
+                        it
+                    } else null
+                }
+                if(properties != null) {
+                    return properties
+                }
+            }
+        }
+        return Properties()
+    }
 
 
     internal fun setApplicationContext(applicationContext: ApplicationContext?) {
