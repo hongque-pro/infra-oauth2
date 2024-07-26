@@ -5,18 +5,26 @@
 package com.labijie.infra.oauth2.resource.component
 
 import jakarta.servlet.http.HttpServletRequest
+import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import java.util.Base64
 
-class CookieSupportedBearerTokenResolver(cookieDecoder: IOAuth2TokenCookieDecoder?) : BearerTokenResolver {
+class CookieSupportedBearerTokenResolver(
+    cookieDecoder: IOAuth2TokenCookieDecoder?,
+    private val jwtDecoder: JwtDecoder) : BearerTokenResolver {
     private val defaultResolver = DefaultBearerTokenResolver()
 
     private val cookieDecoder = cookieDecoder ?: PlainTextCookieDecoder()
 
     private var cookieName: String? = null
     override fun resolve(request: HttpServletRequest): String? {
+        if(RequestMatcherPostProcessor.isPermitAll(request)) {
+            return null
+        }
+
         var token = defaultResolver.resolve(request)
+
         if (token.isNullOrBlank() && !cookieName.isNullOrBlank()) {
             val cookie = request.cookies?.firstOrNull { c -> c.name.equals(cookieName, ignoreCase = true) }
             token = cookieDecoder.decode(cookie?.value)

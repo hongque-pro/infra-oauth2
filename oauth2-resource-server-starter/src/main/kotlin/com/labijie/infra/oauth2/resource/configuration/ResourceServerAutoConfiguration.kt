@@ -27,7 +27,6 @@ import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
-import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
@@ -42,7 +41,6 @@ import org.springframework.security.oauth2.jwt.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.stereotype.Repository
 import java.io.IOException
 import java.security.interfaces.RSAPublicKey
 
@@ -71,6 +69,12 @@ class ResourceServerAutoConfiguration(
                     ClaimConversionService.getSharedInstance().convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor)
             }
         }
+
+//        private fun HttpSecurity.getAuthorizeHttpRequestsConfigurer(): AuthorizeHttpRequestsConfigurer<HttpSecurity>? {
+//            val context: ApplicationContext = getSharedObject(ApplicationContext::class.java)
+//            val c = AuthorizeHttpRequestsConfigurer<HttpSecurity>(context)
+//            return getConfigurer(c::class.java)
+//        }
     }
 
     private var defaultPubKeyUsed = false
@@ -162,6 +166,8 @@ class ResourceServerAutoConfiguration(
     }
 
 
+
+
     @Configuration(proxyBeanMethods = false)
     class ResourceServerSecurityFilterChainConfiguration(
         @param: Autowired(required = false)
@@ -197,6 +203,7 @@ class ResourceServerAutoConfiguration(
             //http.cors(Customizer.withDefaults())
             val settings = http
                 .authorizeHttpRequests { authorize ->
+                    authorize.withObjectPostProcessor(RequestMatcherPostProcessor)
                     authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
                     authorize.requestMatchers("/oauth2/unauthorized", "/oauth2/check_token").permitAll()
                     resourceConfigurers.orderedStream().forEach {
@@ -208,7 +215,7 @@ class ResourceServerAutoConfiguration(
                 obj.jwt {
                     applyJwtConfiguration(it)
                 }
-                obj.bearerTokenResolver(CookieSupportedBearerTokenResolver(cookieDecoder).apply {
+                obj.bearerTokenResolver(CookieSupportedBearerTokenResolver(cookieDecoder, jwtDecoder).apply {
                     this.setBearerTokenFromCookieName(resourceServerProperties.bearerTokenResolver.allowCookieName)
                     this.setAllowUriQueryParameter(resourceServerProperties.bearerTokenResolver.allowUriQueryParameter)
                     this.setAllowFormEncodedBodyParameter(resourceServerProperties.bearerTokenResolver.allowFormEncodedBodyParameter)
