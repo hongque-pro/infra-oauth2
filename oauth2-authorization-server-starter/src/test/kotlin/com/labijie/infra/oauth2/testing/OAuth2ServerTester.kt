@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.testing
 
 import com.labijie.infra.json.JacksonHelper
+import com.labijie.infra.oauth2.IOAuth2ServerJwtCodec
 import com.labijie.infra.oauth2.OAuth2Constants
 import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
@@ -17,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes
+import org.springframework.security.oauth2.jwt.JwtClaimNames
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -28,6 +30,8 @@ import org.springframework.util.MultiValueMap
 import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 
 @WebMvcTest
@@ -37,6 +41,8 @@ class OAuth2ServerTester : OAuth2Tester() {
     @Autowired
     override lateinit var mockMvc: MockMvc
 
+    @Autowired
+    private lateinit var jwtDecoder: IOAuth2ServerJwtCodec
 
     @Test
     fun testCorrectPasswordLogin() {
@@ -87,7 +93,12 @@ class OAuth2ServerTester : OAuth2Tester() {
 
     @Test
     fun testRefreshToken() {
-        val tokenResult = this.performTokenAction().readToMap()
+        val tokenResult = this.performTokenAction().readToMap(action = "Request Token")
+
+        assertNotNull(tokenResult["access_token"])
+
+        val accessToken = tokenResult["access_token"].toString()
+
         Assertions.assertTrue(tokenResult.containsKey("refresh_token"))
         val params: MultiValueMap<String, String> = LinkedMultiValueMap()
         params.add("grant_type", "refresh_token")
@@ -108,11 +119,33 @@ class OAuth2ServerTester : OAuth2Tester() {
             .andExpect(status().isOk)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 
-        val map = result.readToMap()
+        val map = result.readToMap(action = "Refresh Token")
         val refreshedToken = map["access_token"]?.toString()
-        Assertions.assertFalse(refreshedToken.isNullOrBlank())
-
+        assertNotNull(refreshedToken)
         doCheckToken(map["access_token"]!!.toString())
+
+        assetTokenEquals(accessToken, refreshedToken)
+    }
+
+    private fun assetTokenEquals(
+        originToken: String,
+        refreshedToken: String,
+    ) {
+
+        val at = jwtDecoder.decode(originToken)
+        val newAt = jwtDecoder.decode(refreshedToken)
+        assertEquals(at.claims.size, newAt.claims.size)
+
+        //不相同的比进行比较
+        val diffClaims = arrayOf(JwtClaimNames.JTI, JwtClaimNames.NBF, JwtClaimNames.EXP, JwtClaimNames.IAT)
+
+        at.claims.forEach { (key, _) ->
+            if (!diffClaims.contains(key)) {
+                assertEquals(at.claims[key], newAt.claims[key], "Claim '${key}' is not equals after refresh token")
+            } else {
+                assertTrue(newAt.claims.containsKey(key), "'${key}' is missed while token refreshed.")
+            }
+        }
     }
 
     @Test

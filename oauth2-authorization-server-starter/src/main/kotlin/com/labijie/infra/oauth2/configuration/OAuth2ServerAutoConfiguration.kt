@@ -10,9 +10,8 @@ import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticati
 import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
 import com.labijie.infra.oauth2.component.OAuth2ObjectMapperProcessor
-import com.labijie.infra.oauth2.customizer.IJwtCustomizer
 import com.labijie.infra.oauth2.customizer.InfraClaimsContextCustomizer
-import com.labijie.infra.oauth2.customizer.InfraJwtEncodingContextCustomizer
+import com.labijie.infra.oauth2.customizer.InfraOAuth2JwtTokenCustomizer
 import com.labijie.infra.oauth2.mvc.CheckTokenController
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2CommonsJacksonModule
 import com.nimbusds.jose.jwk.JWKSet
@@ -20,12 +19,13 @@ import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
+import org.springframework.boot.autoconfigure.web.ServerProperties
+import org.springframework.boot.autoconfigure.web.WebProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationEventPublisher
@@ -39,11 +39,12 @@ import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2RefreshTokenAuthenticationProvider
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
+import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.web.SecurityFilterChain
 
@@ -52,22 +53,13 @@ import org.springframework.security.web.SecurityFilterChain
 @AutoConfigureAfter(OAuth2DependenciesAutoConfiguration::class)
 @Import(OAuth2ObjectMapperProcessor::class)
 class OAuth2ServerAutoConfiguration(
-    private val serverProperties: OAuth2ServerProperties,
-    private val jwtCustomizers: ObjectProvider<IJwtCustomizer>
+    private val serverProperties: OAuth2ServerProperties
 ) {
-
     companion object {
-
         private val LOGGER: Logger by lazy {
             LoggerFactory.getLogger(OAuth2ServerAutoConfiguration::class.java)
         }
-
     }
-
-    private val customizer: OAuth2TokenCustomizer<JwtEncodingContext> by lazy {
-        InfraJwtEncodingContextCustomizer(jwtCustomizers)
-    }
-
 
     @Bean
     fun oauth2ServerRSAKeyPair(@Autowired(required = false) secretsStore: IOAuth2ServerSecretsStore?): IOAuth2ServerRSAKeyPair {
@@ -84,7 +76,7 @@ class OAuth2ServerAutoConfiguration(
     //包装一下 , 避免和资源服务器的 bean 冲突
     @ConditionalOnMissingBean(IOAuth2ServerJwtCodec::class)
     @Bean
-    fun oauth2ServerJwtCodec(jwkSource: JWKSource<SecurityContext>): IOAuth2ServerJwtCodec {
+    fun oauth2ServerJwtCodec(jwkSource: JWKSource<SecurityContext>): OAuth2ServerJwtCodec {
         return OAuth2ServerJwtCodec(jwkSource)
     }
 
@@ -95,29 +87,44 @@ class OAuth2ServerAutoConfiguration(
     }
 
     @Bean
-    fun infraJwTokenCustomizer(): OAuth2TokenCustomizer<JwtEncodingContext> {
-        return customizer
+    fun infraJwTokenCustomizer(): InfraOAuth2JwtTokenCustomizer {
+        //See:
+        // Only for self-contained token format
+        return InfraOAuth2JwtTokenCustomizer()
     }
 
     @Bean
-    protected fun infraClaimsContextCustomizer() : InfraClaimsContextCustomizer {
-        return InfraClaimsContextCustomizer();
+    protected fun infraClaimsContextCustomizer(): InfraClaimsContextCustomizer {
+        // Only for reference token format
+        return InfraClaimsContextCustomizer()
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(OAuth2AccessTokenGenerator::class)
+    fun jwtGenerator(
+        jwtCodec: OAuth2ServerJwtCodec,
+        customizer: InfraOAuth2JwtTokenCustomizer
+    ): JwtGenerator {
+        return JwtGenerator(jwtCodec.jwtEncoder()).apply {
+            this.setJwtCustomizer(customizer)
+        }
     }
 
 
     @Bean
     fun twoFactorSignInHelper(
+        jwtGenerator: JwtGenerator,
+        serverCodec: IOAuth2ServerJwtCodec,
         clientRepository: RegisteredClientRepository,
         eventPublisher: ApplicationEventPublisher,
         identityService: IIdentityService,
-        jwtDecoder: IOAuth2ServerJwtCodec
+        jwtDecoder: IOAuth2ServerJwtCodec,
     ): TwoFactorSignInHelper {
         return TwoFactorSignInHelper(
+            jwtGenerator,
+            serverCodec,
             clientRepository,
-            serverProperties,
             eventPublisher,
-            jwtDecoder,
-            customizer,
             identityService
         )
     }
@@ -193,11 +200,10 @@ class OAuth2ServerAutoConfiguration(
                 }
 
 
-            return http.formLogin{
+            return http.formLogin {
                 it.disable()
             }.build()
         }
-
 
 
         override fun setApplicationContext(applicationContext: ApplicationContext) {
@@ -220,6 +226,7 @@ class OAuth2ServerAutoConfiguration(
         return object : CommandLineRunner {
             val settings = applicationContext.getBean(AuthorizationServerSettings::class.java)
             val keyGetter = applicationContext.getBean(IOAuth2ServerRSAKeyPair::class.java)
+            val serverProperties = applicationContext.getBean(ServerProperties::class.java)
 
 
             override fun run(vararg args: String?) {
@@ -239,6 +246,10 @@ class OAuth2ServerAutoConfiguration(
                 }
 
                 val information = StringBuilder()
+                information.appendLine("OAuth2 authorization server started.")
+                information.appendLine()
+                information.appendLine("issuer: ${settings.issuer}")
+                information.appendLine()
                 information.appendLine("The following endpoints are already active:")
                 information.appendLine(settings.jwkSetEndpoint)
                 information.appendLine(settings.tokenEndpoint)
@@ -246,6 +257,17 @@ class OAuth2ServerAutoConfiguration(
                 information.appendLine(ENDPOINT_INTROSPECT)
                 information.appendLine(settings.tokenRevocationEndpoint)
                 information.appendLine(settings.authorizationEndpoint)
+                information.appendLine(settings.authorizationEndpoint)
+                information.appendLine("Use the configuration below to configure your resource server:")
+                information.appendLine("""
+                    spring:
+                      security:
+                        oauth2:
+                          resourceserver:
+                            jwt:
+                              issuer-uri: ${settings.issuer}
+                              jwk-set-uri: "http://localhost:${serverProperties.port ?: 8080}${settings.jwkSetEndpoint}"
+                """.trimIndent())
 
                 LOGGER.info(information.toString())
             }

@@ -10,8 +10,6 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
  */
 @ConfigurationProperties(prefix = "infra.oauth2.authorization-server")
 data class OAuth2ServerProperties(
-    var issuer: String = "https://labijie.com",
-
     @NestedConfigurationProperty
     val token: TokenProperties = TokenProperties(),
 

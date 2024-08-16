@@ -5,6 +5,7 @@
 package com.labijie.infra.oauth2
 
 
+
 class AccessToken {
     var accessToken: String = ""
 

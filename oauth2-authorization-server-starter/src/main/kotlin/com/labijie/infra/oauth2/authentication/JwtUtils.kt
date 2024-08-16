@@ -19,7 +19,6 @@ object JwtUtils {
 
     fun accessTokenClaims(
         registeredClient: RegisteredClient,
-        issuer: String?,
         subject: String?,
         authorizedScopes: Set<String>?
     ): JwtClaimsSet.Builder {
@@ -28,9 +27,9 @@ object JwtUtils {
 
         // @formatter:off
         val claimsBuilder = JwtClaimsSet.builder()
-        if (StringUtils.hasText(issuer)) {
-            claimsBuilder.issuer(issuer)
-        }
+//        if (StringUtils.hasText(issuer)) {
+//            claimsBuilder.issuer(issuer)
+//        }
         claimsBuilder
             .subject(subject)
             .audience(Collections.singletonList(registeredClient.clientId))

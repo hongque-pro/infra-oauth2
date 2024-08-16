@@ -2,7 +2,7 @@ package com.labijie.infra.oauth2
 
 import com.labijie.infra.oauth2.OAuth2ServerUtils.getScopes
 import com.labijie.infra.oauth2.authentication.JwtUtils
-import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
+import com.labijie.infra.oauth2.customizer.TwoFactorGrantedAuthentication
 import com.labijie.infra.oauth2.events.UserSignedInEvent
 import com.labijie.infra.utils.ifNullOrBlank
 import jakarta.servlet.http.HttpServletRequest
@@ -32,10 +32,15 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
+import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
+import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
+import org.springframework.web.util.UriComponentsBuilder
 import java.security.Principal
 
 /**
@@ -44,11 +49,10 @@ import java.security.Principal
  * @date 2019-02-21
  */
 class TwoFactorSignInHelper(
-    private val clientRepository: RegisteredClientRepository,
-    private val serverProperties: OAuth2ServerProperties,
-    private val eventPublisher: ApplicationEventPublisher,
+    private val jwtGenerator: JwtGenerator,
     private val jwtCodec: IOAuth2ServerJwtCodec,
-    private val jwtCustomizer: OAuth2TokenCustomizer<JwtEncodingContext>,
+    private val clientRepository: RegisteredClientRepository,
+    private val eventPublisher: ApplicationEventPublisher,
     private val identityService: IIdentityService,
 ) : ApplicationContextAware {
 
@@ -58,12 +62,48 @@ class TwoFactorSignInHelper(
 
     private lateinit var context: ApplicationContext
 
-    private val authenticationManager: AuthenticationManager by lazy {
-        val config = context.getBean(AuthenticationConfiguration::class.java)
-        config.authenticationManager
-    }
+
     private val authorizationService: OAuth2AuthorizationService by lazy {
         context.getBean(OAuth2AuthorizationService::class.java)
+    }
+
+    private val authorizationServerSettings: AuthorizationServerSettings by lazy {
+        context.getBean(AuthorizationServerSettings::class.java)
+    }
+
+    protected class DefaultAuthorizationServerContext(
+        private val authorizationServerSettings: AuthorizationServerSettings,
+        private val request: HttpServletRequest? = null
+    ) : AuthorizationServerContext {
+
+        @Suppress("VulnerableCodeUsages")
+        private fun getContextPath(request: HttpServletRequest): String {
+            // @formatter:off
+            return UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
+                .replacePath(request.contextPath)
+                .replaceQuery(null)
+                .fragment(null)
+                .build()
+                .toUriString()
+            // @formatter:on
+        }
+        override fun getIssuer(): String {
+            if (!authorizationServerSettings.issuer.isNullOrBlank()) return authorizationServerSettings.issuer
+            if(request != null) {
+                return getContextPath(
+                    request
+                )
+            }
+            return "http://localhost"
+        }
+
+        override fun getAuthorizationServerSettings(): AuthorizationServerSettings {
+            return this.authorizationServerSettings
+        }
+    }
+
+    private val defaultContext by lazy {
+
     }
 
 
@@ -148,8 +188,8 @@ class TwoFactorSignInHelper(
             throw IllegalArgumentException("SignIn user isTwoFactorEnabled = false, but twoFactorGranted be set to true.")
         }
         val u = user.withoutPassword()
-        val aut = UsernamePasswordAuthenticationToken(u, null)
-        return signInCore(client, aut, twoFactorGranted, scopes ?: client.scopes, request)
+        val aut = if (twoFactorGranted) TwoFactorGrantedAuthentication(u) else UsernamePasswordAuthenticationToken(u, null)
+        return signInCore(client, aut, scopes ?: client.scopes, request)
     }
 
     fun signIn(
@@ -176,14 +216,14 @@ class TwoFactorSignInHelper(
         request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
 
-        val auth = createUserAuthenticationToken(username, password)
-        return signInCore(client, auth, twoFactorGranted, scopes ?: client.scopes, request)
+        val auth = createUserAuthenticationToken(username, password, twoFactorGranted)
+        return signInCore(client, auth, scopes ?: client.scopes, request)
     }
 
     private val daoAuthenticationProvider by lazy {
         val providerBean = context.getBeanProvider(DaoAuthenticationProvider::class.java).ifAvailable
 
-        if(providerBean != null) {
+        if (providerBean != null) {
             providerBean
         } else {
             val passwordEncoder = context.getBean(PasswordEncoder::class.java)
@@ -199,7 +239,6 @@ class TwoFactorSignInHelper(
     private fun signInCore(
         registeredClient: RegisteredClient,
         userAuthentication: Authentication,
-        twoFactorGranted: Boolean = false,
         scopes: Set<String> = hashSetOf(),
         request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {
@@ -214,30 +253,31 @@ class TwoFactorSignInHelper(
                 }
                 authorizedScopes = scopes
             }
-            val issuer = serverProperties.issuer
+
+
+            val serverCtx = AuthorizationServerContextHolder.getContext() ?: DefaultAuthorizationServerContext(authorizationServerSettings, request)
 
             val headersBuilder: JwsHeader.Builder = JwtUtils.headers()
             val claimsBuilder: JwtClaimsSet.Builder = JwtUtils.accessTokenClaims(
-                registeredClient, issuer, registeredClient.clientId, authorizedScopes
+                registeredClient, registeredClient.clientId, authorizedScopes
             )
             val context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
                 .registeredClient(registeredClient)
+                .authorizationServerContext(serverCtx)
                 .principal(userAuthentication)
                 .authorizedScopes(authorizedScopes)
                 .tokenType(OAuth2TokenType.ACCESS_TOKEN)
                 .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
-                .put(OAuth2Constants.CLAIM_TWO_FACTOR, twoFactorGranted)
                 //.authorizationGrant(resourceOwnerPasswordAuthentication)
                 .build()
-            jwtCustomizer.customize(context)
 
 
-            val headers = context.jwsHeader.build()
-            val claims = context.claims.build()
-            val jwtAccessToken = jwtCodec.encode(headers, claims)
-
+            val jwtAccessToken =
+                jwtGenerator.generate(context) ?: throw IllegalStateException("NULL generated by Jwt generator.")
+            val claims = jwtAccessToken.claims
             // Use the scopes after customizing the token
-            authorizedScopes = claims.getScopes()
+            authorizedScopes = jwtAccessToken.getScopes()
+
             val accessToken = OAuth2AccessToken(
                 OAuth2AccessToken.TokenType.BEARER,
                 jwtAccessToken.tokenValue,
@@ -268,8 +308,9 @@ class TwoFactorSignInHelper(
             if (LOGGER.isDebugEnabled) {
                 LOGGER.debug("OAuth2Authorization saved successfully")
             }
+
             val tokenAdditionalParameters: MutableMap<String, Any> = HashMap()
-            claims.claims.forEach { (key: String, value: Any) ->
+            claims.forEach { (key: String, value: Any) ->
                 if (key != OAuth2ParameterNames.SCOPE &&
                     key != JwtClaimNames.IAT &&
                     key != JwtClaimNames.EXP &&
@@ -305,13 +346,16 @@ class TwoFactorSignInHelper(
                 val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null)
                 throw OAuth2AuthenticationException(error, ex)
             }
+
             is OAuth2AuthenticationException -> {
                 throw ex
             }
+
             is AuthenticationException -> {
                 val error = OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, ex.message, null)
                 throw OAuth2AuthenticationException(error, ex)
             }
+
             else -> {
                 LOGGER.error("problem in sign in", ex)
                 throw OAuth2AuthenticationException(
@@ -326,9 +370,11 @@ class TwoFactorSignInHelper(
     }
 
 
+
     private fun createUserAuthenticationToken(
         username: String,
-        password: String
+        password: String,
+        twoFactorGranted: Boolean,
     ): Authentication {
 
         val usernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(username, password)
@@ -345,10 +391,14 @@ class TwoFactorSignInHelper(
         }
         val principal = (r.principal as? ITwoFactorUserDetails)?.withoutPassword()
         return if (principal != null) {
-            //尽量移除密码信息
-            UsernamePasswordAuthenticationToken(principal, null)
+            if(twoFactorGranted) {
+                TwoFactorGrantedAuthentication(principal)
+            }else {
+                //尽量移除密码信息
+                UsernamePasswordAuthenticationToken(principal, null)
+            }
         } else {
-            r
+            UsernamePasswordAuthenticationToken(r.principal, null)
         }
     }
 
@@ -359,10 +409,13 @@ class TwoFactorSignInHelper(
         }
         val value = OAuth2Utils.getTokenValue(au) ?: throw OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN)
         val token = jwtCodec.decode(value)
-        val client = token.claims[JwtClaimNames.SUB]?.toString() ?: ""
+        val aud = token.claims[OAuth2Constants.CLAIM_AUD]
+        val clientId = if (aud != null && aud is Collection<*>) {
+            aud.firstOrNull()?.toString() ?: ""
+        } else ""
         val scopeNames = token.getScopes()
         val username = (token.claims[OAuth2Constants.CLAIM_USER_NAME]?.toString() ?: "")
-        return signIn(client, username, true, scopeNames)
+        return signIn(clientId, username, true, scopeNames)
     }
 
 //    fun signInTwoFactorAsync(): Mono<OAuth2AccessToken> {

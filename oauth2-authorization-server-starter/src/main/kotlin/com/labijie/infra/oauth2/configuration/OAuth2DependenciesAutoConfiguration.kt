@@ -3,8 +3,7 @@ package com.labijie.infra.oauth2.configuration
 import com.labijie.caching.ICacheManager
 import com.labijie.infra.oauth2.IIdentityService
 import com.labijie.infra.oauth2.OAuth2ServerUtils
-import com.labijie.infra.oauth2.OAuth2Utils
-import com.labijie.infra.oauth2.TwoFactorJwtCustomizer
+import com.labijie.infra.oauth2.customizer.TwoFactorJwtCustomizer
 import com.labijie.infra.oauth2.filter.ClientDetailsArgumentResolver
 import com.labijie.infra.oauth2.filter.ClientDetailsInterceptorAdapter
 import com.labijie.infra.oauth2.resolver.PasswordPrincipalResolver
@@ -23,21 +22,18 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.oauth2.core.AuthorizationGrantType
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
-import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
@@ -81,7 +77,7 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
     }
 
     @Bean
-    fun twoFactorJwtCustomizer(): TwoFactorJwtCustomizer{
+    fun twoFactorJwtCustomizer(): TwoFactorJwtCustomizer {
         return TwoFactorJwtCustomizer()
     }
 
@@ -125,8 +121,17 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
 
     @Bean
     @ConditionalOnMissingBean(AuthorizationServerSettings::class)
-    fun authorizationServerSettings(): AuthorizationServerSettings {
-        return AuthorizationServerSettings.builder().build()
+    fun authorizationServerSettings(properties: OAuth2ServerProperties, environment: Environment): AuthorizationServerSettings {
+
+        val issuser = environment.getProperty("spring.security.oauth2.authorizationserver.issuer")
+
+        return AuthorizationServerSettings.builder().let {
+            builder->
+            issuser?.let {
+                builder.issuer(it)
+            } ?: builder
+        }
+        .build()
     }
 
 

@@ -156,7 +156,6 @@ class ResourceServerTester : OAuth2Tester() {
         performGet(twoFactorTokenValue, "/test/2fac").andExpect {
             status().isOk
         }
-
     }
 
     @Test

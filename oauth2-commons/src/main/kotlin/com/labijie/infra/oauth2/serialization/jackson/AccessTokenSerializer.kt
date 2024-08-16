@@ -19,12 +19,20 @@ class AccessTokenSerializer : JsonSerializer<AccessToken>() {
         serializers.defaultSerializeField(OAuth2ParameterNames.ACCESS_TOKEN, value.accessToken, gen)
         serializers.defaultSerializeField(OAuth2ParameterNames.EXPIRES_IN, value.expiresIn, gen)
         serializers.defaultSerializeField(OAuth2ParameterNames.TOKEN_TYPE, value.tokenType, gen)
-        serializers.defaultSerializeField(OAuth2ParameterNames.SCOPE, value.scope, gen)
-        serializers.defaultSerializeField(OAuth2Constants.CLAIM_TWO_FACTOR, value.twoFactorGranted, gen)
+        if(value.scope != null) {
+            serializers.defaultSerializeField(OAuth2ParameterNames.SCOPE, value.scope, gen)
+        }
+        if(value.twoFactorGranted == true) {
+            serializers.defaultSerializeField(OAuth2Constants.CLAIM_TWO_FACTOR, value.twoFactorGranted, gen)
+        }
         serializers.defaultSerializeField(OAuth2Constants.CLAIM_USER_ID, value.userId, gen)
         serializers.defaultSerializeField(OAuth2Constants.CLAIM_USER_NAME, value.username, gen)
-        serializers.defaultSerializeField(OAuth2ParameterNames.REFRESH_TOKEN, value.refreshToken, gen)
-        serializers.defaultSerializeField(OAuth2Constants.CLAIM_AUTHORITIES, value.authorities, gen)
+        if(!value.refreshToken.isNullOrBlank()) {
+            serializers.defaultSerializeField(OAuth2ParameterNames.REFRESH_TOKEN, value.refreshToken, gen)
+        }
+        if(value.authorities.isNotEmpty()) {
+            serializers.defaultSerializeField(OAuth2Constants.CLAIM_AUTHORITIES, value.authorities, gen)
+        }
 
         value.details.forEach {
             serializers.defaultSerializeField(it.key, it.value, gen)
