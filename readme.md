@@ -4,30 +4,8 @@
 ![workflow status](https://img.shields.io/github/actions/workflow/status/hongque-pro/infra-oauth2/build.yml?branch=main)
 ![license](https://img.shields.io/github/license/hongque-pro/infra-oauth2?style=flat-square)
 
-## 1.2.x Break Changes 
-
-- 移除 Spring Security OAuth 2。
-- 移除 Spring Cloud OAuth2 。
-- 不再支持 TOKEN STORE 配置 token 存储， 仅支持 JWT 。
-- 不再依赖 Spring Data Redis ， 默认使用 [**caching-kotlin**](https://github.com/endink/caching-kotlin) 存储 token。
-- 集成 [**Spring-Authorization-Server**](https://github.com/spring-projects/spring-authorization-server) 。
-- 兼容原有的 Password Grant Type。
-- 不再需要 IClientDetailsServiceFactory 实现。
-- 包名由 oauth2-auth-server-starter 变更为 **oauth2-authorization-server-starter**
-
-> **spring-authorization-server** 原生不支持 password GrantType，该授权方式已经在 Oauth2.1 被移除，官方暂无支持计划，具体请看:   
-> https://github.com/spring-projects/spring-authorization-server/issues/349   
-> *该项目通过扩展 spring-authorization-server 已经实现，完全兼容原有的 password 模式*。
-
-**Spring Security 5.4.6** 已经**弃用**spring cloud oauth2 和以前的 spring security oauth2, 具体对比参考这个文档:   
-https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Features-Matrix
-
-
-Spring 官方迁移说明：   
-https://github.com/spring-projects/spring-security/wiki/OAuth-2.0-Migration-Guide
-
-新版 Spring Security Resource Server 文档:   
-https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/index.html
+基于 [**Spring-Authorization-Server**](https://github.com/spring-projects/spring-authorization-server)  的 OAuth2 服务器扩展。 
+频闭 Spring Security 和 Spring Authorization Server 复杂性，专注于业务。
 
 > 注意，该项目仅支持 servlet 应用，webflux 不提供支持
 
@@ -59,27 +37,54 @@ infra:
     compile "com.labijie.infra:oauth2-resource-server-starter:<your version>"
 ```
 
-#### 资源服务器可以通过三种方式配置和授权服务器协作的公钥（当前暂未实现 token 自省）：
+资源服务器的本质就是验证由授权服务器颁发的 token，来确定是否响应用户请求，有两种方式验证 jwt token:
 
-【1】 配置 RSA 公钥：
+**A. [JWT](https://datatracker.ietf.org/doc/html/rfc7519), 即使用一个 RSA 公钥验证 token**   
+通过公钥来验证 jwt token, 有三种方式配置公钥:
+
+【1】 直接配置一个 RSA 公钥：
 ```yaml
 infra.oauth2.resource-server.jwt.rsa-pub-key=<RSA_PUBLICK_KEY>
 ```
-其中 **RSA_PUBLICK_KEY** 可以是 PEM 文件内容、CLASSPATH 资源文件路径或者磁盘上的文件路径。   
+或者
+```kotlin
+spring.security.oauth2.resourceserver.jwt.public-key-location=<public-key>
+```
+使用 `infra.oauth2.resource-server.jwt.rsa-pub-key`  的好处是同时支持本地文件路径、公钥内容和资源文件路径。
 
-【2】 配置授权服务器暴露的 JWK 端点：
+【2】 从授权服务器获取公开的 RSA 公钥：   
+这种方式，资源服务器无需关心 RSA 公钥，公钥从授权服务器获取。
 ```yaml
 spring.security.oauth2.resourceserver.jwt.jwk-set-uri=<JWK_URI>
 ```
-其中 **JWK_URI** 是授权服务器暴露的 JWK 终结点，默认为 **/oauth/.well-known/jwks.json**。    
+其中 **JWK_URI** 是授权服务器暴露的 JWK 终结点，默认为 `/oauth2/jwks`。  
 
+:bell:如果以上三项配置均未找到，将使用默认内置的 RSA 公钥，生产环境请自行配置，否则可能造成安全隐患。  
 
-【3】 通过 Spring-Authorization-Server 原生配置配置公钥资源文件：
+**B. [自省 Token 端点](https://datatracker.ietf.org/doc/html/rfc7662)**   
+通常，大多数服务器都使用 JWT （即 RSA 公钥验证）来验证请求的 token， 也有一些服务器使用 `opaque token` , 这些 token 对 resource server 不透明，只
+能通过授权服务器自省， **自省**,本质上就是拿着 token 调用一个授权服务器的接口来验证 token 有效性。    
+   
+Spring Auth Server 同时支持 JWK 和 自省，可以根据需求进行选择。
+> - 自省无需在资源服务器上分发 RSA 公钥， 但是，授权服务器需要接受来自资源服务器的验证请求，这将增加授权服务器的压力。   
+> - 出于性能考虑，还是推荐分发公钥到资源服务器来分摊 token 验证压力。   
+> - 自省要求资源服务器提供 OAuth2 client 的 client id 和 client secret。
+
+通过 Spring 提供的配置来配置自省：
+
 ```yaml
-spring.security.oauth2.resourceserver.jwt.public-key-location=<public-key>
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        opaquetoken:
+          client-id: <client id>
+          client-secret: <client secret>
+          introspection-uri: http://your-auth-server/oauth2/introspect
 ```
 
-:bell:如果以上三项均未找到，将使用默认内置的 RSA 公钥，生产环境请自行配置，否则可能造成安全隐患。
+授权服务器默认暴露的自省终结点为： `/oauth2/introspect`
+
 
 > 注意，不论是授权服务器还是资源服务器，都需要自己注解 **EnableWebSecurity** 到你的工程。
 
@@ -126,6 +131,15 @@ class ResourceServerConfigurer : IResourceAuthorizationConfigurer {
 > 使用 **IResourceAuthorizationConfigurer** 接口可以避免 SecurityFilterChain 顺序问题。
 
 ## 更多能力
+- Cookie 支持 （支持通过一个自定义 token 携带 Bearer Token）
+```yaml
+infra:
+  oauth2:
+    resource-server:
+      bearer-token-resolver:
+        allow-cookie-name: "OAuth2Token"
+```
+> 当 `allow-cookie-name` 为空（默认）时，表示不支持 cookie 授权。
 
 - 实现 Token 中插入自定义字段，直接通过 token 访问该字段以减少数据库查询：
 ```kotlin
@@ -133,8 +147,8 @@ interface IIdentityService {
     fun getUserByName(userName: String): ITwoFactorUserDetails
 }
 ```   
-上面的 **IIdentityService** 接口中 getUserByName 实现的返回值为 **ITwoFactorUserDetails**,
-ITwoFactorUserDetails 的 getTokenAttributes 返回的 Map 对象会放入 Token 中。
+上面的 `IIdentityService` 接口中 `getUserByName` 实现的返回值为 **ITwoFactorUserDetails**,
+`ITwoFactorUserDetails` 的 `getTokenAttributes` 返回的 Map 对象会放入 Token 中。
 
 *字符串的自定义字段还支持 spring security 验证*
 
