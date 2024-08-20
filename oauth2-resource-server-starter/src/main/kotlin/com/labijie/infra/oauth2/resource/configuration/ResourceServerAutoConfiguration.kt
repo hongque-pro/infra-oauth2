@@ -240,7 +240,7 @@ class ResourceServerAutoConfiguration(
                     customizers.orderedStream().forEach { c ->
                         c.customize(it)
                     }
-                    it.loginPage("/oauth2/unauthorized")
+                    it.loginPage(resourceServerProperties.loginUrl)
                 }
             }
 

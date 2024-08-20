@@ -50,6 +50,13 @@
       "sourceType": "com.labijie.infra.oauth2.configuration.RSASettings",
       "description": "verify a jwt's validity window (prevent server clock drift )",
       "defaultValue": "1m"
+    },
+    {
+      "name":"infra.oauth2.resource-server.login-url",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
+      "description": "Login or unauthorized response url",
+      "defaultValue": "/oauth2/unauthorized"
     }
   ]
 }
