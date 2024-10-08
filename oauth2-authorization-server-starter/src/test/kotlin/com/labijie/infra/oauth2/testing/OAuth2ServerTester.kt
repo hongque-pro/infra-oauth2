@@ -161,6 +161,32 @@ class OAuth2ServerTester : OAuth2Tester() {
     }
 
     @Test
+    fun testRevocation() {
+        val tokenResult = this.performTokenAction().readToMap()
+        Assertions.assertTrue(tokenResult.containsKey("access_token"))
+
+        val tokenValue = tokenResult["access_token"]?.toString()
+        val params: MultiValueMap<String, String> = LinkedMultiValueMap()
+        params.add("token", tokenValue)
+        params.add("token_type_hint", "Bearer")
+
+        val r = mockMvc.perform(
+            post("/oauth2/revoke")
+                .params(params)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(
+                    HttpHeaders.AUTHORIZATION,
+                    "Basic " + Base64.getEncoder().encodeToString(
+                        "${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)
+                    )
+                )
+        )
+        .andExpect(status().isOk)
+
+        r.readToMap()
+    }
+
+    @Test
     fun introspectTest() {
         val tokenResult = this.performTokenAction().readToMap()
         Assertions.assertTrue(tokenResult.containsKey("access_token"))
