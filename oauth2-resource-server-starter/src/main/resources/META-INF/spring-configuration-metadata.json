@@ -2,17 +2,17 @@
   "group":[
     {
       "name":"infra.oauth2.resource-server",
-      "type": "com.labijie.infra.oauth2.configuration.ResourceServerProperties",
+      "type": "com.labijie.infra.oauth2.resource.configuration.ResourceServerProperties",
       "description": "oauth resource server config"
     },
     {
       "name":"infra.oauth2.resource-server.jwt",
-      "type": "com.labijie.infra.oauth2.configuration.ResourceJwtSettings",
+      "type": "com.labijie.infra.oauth2.resource.configuration.ResourceJwtSettings",
       "description": "jwt configuration for a resource server"
     },
     {
       "name":"infra.oauth2.resource-server.bearer-token-resolver",
-      "type": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
+      "type": "com.labijie.infra.oauth2.resource.configuration.BearerTokenResolverSettings",
       "description": "jwt configuration for a resource server"
     }
   ],
@@ -20,28 +20,28 @@
     {
       "name":"infra.oauth2.resource-server.bearer-token-resolver.allow-cookie-name",
       "type": "java.lang.String",
-      "sourceType": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
+      "sourceType": "com.labijie.infra.oauth2.resource.configuration.BearerTokenResolverSettings",
       "description": "If not null allow resole bearer token from a cookie.",
       "defaultValue": null
     },
     {
       "name":"infra.oauth2.resource-server.bearer-token-resolver.allow-form-encoded-body-parameter",
       "type": "java.lang.Boolean",
-      "sourceType": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
+      "sourceType": "com.labijie.infra.oauth2.resource.configuration.BearerTokenResolverSettings",
       "description": "Allow resole bearer token from a form data.",
       "defaultValue": false
     },
     {
       "name":"infra.oauth2.resource-server.bearer-token-resolver.allow-uri-query-parameter",
       "type": "java.lang.Boolean",
-      "sourceType": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
+      "sourceType": "com.labijie.infra.oauth2.resource.configuration.BearerTokenResolverSettings",
       "description": "Allow resole bearer token from request uri.",
       "defaultValue": false
     },
     {
       "name":"infra.oauth2.resource-server.jwt.rsa-pub-key",
       "type": "java.lang.String",
-      "sourceType": "infra.oauth2.resource-serve.ResourceJwtSettings",
+      "sourceType": "com.labijie.infra.oauth2.resource.configuration.ResourceJwtSettings",
       "description": "rsa public key for jws"
     },
     {
@@ -54,9 +54,9 @@
     {
       "name":"infra.oauth2.resource-server.base-url",
       "type": "java.lang.String",
-      "sourceType": "com.labijie.infra.oauth2.configuration.ResourceServerProperties",
+      "sourceType": "com.labijie.infra.oauth2.resource.configuration.ResourceServerProperties",
       "description": "Server base url",
-      "defaultValue": "/oauth2/unauthorized"
+      "defaultValue": ""
     }
   ]
 }
