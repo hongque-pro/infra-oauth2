@@ -240,7 +240,7 @@ class ResourceServerAutoConfiguration(
                     customizers.orderedStream().forEach { c ->
                         c.customize(it)
                     }
-                    it.loginPage(resourceServerProperties.loginUrl)
+                    it.loginPage(resourceServerProperties.loginPage)
                 }
             }
 

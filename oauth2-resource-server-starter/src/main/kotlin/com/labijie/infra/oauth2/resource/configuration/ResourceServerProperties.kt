@@ -10,6 +10,6 @@ class ResourceServerProperties {
 
     var jwt: ResourceJwtSettings = ResourceJwtSettings()
     var bearerTokenResolver = BearerTokenResolverSettings()
-    var loginUrl: String = "/oauth2/unauthorized"
+    var loginPage: String = "/oauth2/unauthorized"
 
 }

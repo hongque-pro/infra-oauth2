@@ -52,9 +52,9 @@
       "defaultValue": "1m"
     },
     {
-      "name":"infra.oauth2.resource-server.login-url",
+      "name":"infra.oauth2.resource-server.login-page",
       "type": "java.lang.String",
-      "sourceType": "com.labijie.infra.oauth2.configuration.BearerTokenResolverSettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.ResourceServerProperties",
       "description": "Login or unauthorized response url",
       "defaultValue": "/oauth2/unauthorized"
     }
