@@ -237,10 +237,11 @@ class ResourceServerAutoConfiguration(
                         endpoint->
                         endpoint.authorizationRequestRepository(requestRepository)
                     }
+                    it.loginPage(resourceServerProperties.loginPage)
                     customizers.orderedStream().forEach { c ->
                         c.customize(it)
                     }
-                    it.loginPage(resourceServerProperties.loginPage)
+
                 }
             }
 
