@@ -229,6 +229,7 @@ class ResourceServerAutoConfiguration(
                 it.accessDeniedHandler(OAuth2ExceptionHandler.getInstance(this.applicationContext))
             }
 
+            val baseUrl = resourceServerProperties.baseUrl.removeSuffix("/")
 
             if(clientRegistrationRepository != null) {
                 val requestRepository = oauth2AuthorizationRequestRepository ?: HttpCookieOAuth2AuthorizationRequestRepository()
@@ -237,11 +238,10 @@ class ResourceServerAutoConfiguration(
                         endpoint->
                         endpoint.authorizationRequestRepository(requestRepository)
                     }
-                    it.loginPage(resourceServerProperties.loginPage)
+                    it.loginPage("${baseUrl}/oauth2/unauthorized")
                     customizers.orderedStream().forEach { c ->
-                        c.customize(it)
+                        c.customize(resourceServerProperties, it)
                     }
-
                 }
             }
 
