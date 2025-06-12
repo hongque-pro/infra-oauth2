@@ -28,7 +28,9 @@ class AuthorizationPlainObject {
             return null
         }
 
-        fun TokenPlainObject.tokenId(): String = this.tokenValue.md5Hex()
+        fun tokenValueToId(tokenValue: String) = tokenValue.md5Hex()
+
+        fun TokenPlainObject.tokenId(): String = tokenValueToId(this.tokenValue)
     }
 
     fun token(): TokenPlainObject? {
