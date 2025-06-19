@@ -1,5 +1,11 @@
 infra:
   oauth2:
+  caching:
+    provider: redis
+    redis:
+      regions:
+        default:
+          url: redis://localhost:6379/1
 server:
   port: 8088
 

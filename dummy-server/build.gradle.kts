@@ -19,4 +19,5 @@ dependencies {
     implementation(project(":oauth2-resource-server-starter"))
     implementation("com.h2database:h2")
     implementation(project(":dummy-auth-server-starter"))
+    implementation("com.labijie:caching-kotlin-redis-starter:${Versions.infraCaching}")
 }
