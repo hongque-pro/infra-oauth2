@@ -13,7 +13,6 @@ allprojects {
             infraBomVersion = Versions.infraBom
             kotlinVersion = Versions.kotlin
             useMavenProxy = false
-            jvmVersion = "17"
         }
     }
 }

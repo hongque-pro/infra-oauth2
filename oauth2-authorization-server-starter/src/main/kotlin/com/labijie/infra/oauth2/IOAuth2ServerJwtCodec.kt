@@ -9,4 +9,7 @@ interface IOAuth2ServerJwtCodec {
 
     @Throws(JwtEncodingException::class)
     fun encode(headers: JwsHeader, claims: JwtClaimsSet): Jwt
+
+    fun jwtDecoder(): JwtDecoder
+    fun jwtEncoder(): JwtEncoder
 }

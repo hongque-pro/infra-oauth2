@@ -7,6 +7,7 @@ import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
+import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.withBearerToken
 import com.labijie.infra.oauth2.testing.configuration.OAuth2TestServerAutoConfiguration
 import com.labijie.infra.utils.ShortId
 import com.labijie.infra.utils.logger
@@ -89,6 +90,53 @@ class OAuth2ServerTester : OAuth2Tester() {
         val map = result.readToMap()
         val errorCode = map["error"]?.toString()
         Assertions.assertEquals(OAuth2ErrorCodes.INVALID_GRANT, errorCode)
+    }
+
+    @Test
+    fun testSignInHelper() {
+
+        mockMvc.perform(
+            get("/access")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().is4xxClientError)
+
+        val result = mockMvc.perform(
+            post("/fake-login")
+            .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
+        val map = result.readToMap()
+        assert(map.containsKey("access_token"))
+        assert(map.containsKey("refresh_token"))
+
+        mockMvc.perform(
+            get("/access").withBearerToken(map["access_token"]!!.toString())
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isOk)
+
+        val params: MultiValueMap<String, String> = LinkedMultiValueMap()
+        params.add("grant_type", "refresh_token")
+        //params.add("scope", "api")
+        params.add("refresh_token", map["refresh_token"]?.toString())
+
+        mockMvc.perform(
+            post(defaultOAuth2ServerSettings.tokenEndpoint)
+                .params(params)
+                .header(
+                    HttpHeaders.AUTHORIZATION,
+                    "Basic " + Base64.getEncoder().encodeToString(
+                        "${OAuth2TestingUtils.TestClientId}:${OAuth2TestingUtils.TestClientSecret}".toByteArray(Charsets.UTF_8)
+                    )
+                )
+                .accept(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+
     }
 
     @Test

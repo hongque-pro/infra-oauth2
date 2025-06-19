@@ -11,8 +11,7 @@ import org.springframework.security.oauth2.server.resource.web.DefaultBearerToke
 import java.util.Base64
 
 class CookieSupportedBearerTokenResolver(
-    cookieDecoder: IOAuth2TokenCookieDecoder?,
-    private val jwtDecoder: JwtDecoder) : BearerTokenResolver {
+    cookieDecoder: IOAuth2TokenCookieDecoder?) : BearerTokenResolver {
     private val defaultResolver = DefaultBearerTokenResolver()
 
     private val cookieDecoder = cookieDecoder ?: PlainTextCookieDecoder()

@@ -20,6 +20,6 @@ class OAuth2ServerJwtCodec(jwkSource: JWKSource<SecurityContext>) : IOAuth2Serve
         return encoder.encode(JwtEncoderParameters.from(headers, claims))
     }
 
-    fun jwtDecoder(): JwtDecoder = decoder
-    fun jwtEncoder(): JwtEncoder = encoder
+    override fun jwtDecoder(): JwtDecoder = decoder
+    override fun jwtEncoder(): JwtEncoder = encoder
 }

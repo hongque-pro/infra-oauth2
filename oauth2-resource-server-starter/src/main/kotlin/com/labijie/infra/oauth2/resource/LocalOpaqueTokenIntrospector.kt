@@ -7,6 +7,8 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNames
 import org.springframework.security.oauth2.server.resource.introspection.*
+import java.net.URI
+import java.net.URISyntaxException
 import java.net.URL
 import java.util.*
 
@@ -18,18 +20,18 @@ import java.util.*
  */
 
 class LocalOpaqueTokenIntrospector(
-        private val tokenParser: ITokenIntrospectParser
+    private val tokenParser: ITokenIntrospectParser
 ) : OpaqueTokenIntrospector {
 
-    companion object{
+    companion object {
         @JvmStatic
         val logger = LoggerFactory.getLogger(LocalOpaqueTokenIntrospector::class.java)
     }
 
     override fun introspect(token: String): OAuth2AuthenticatedPrincipal {
         val response = tokenParser.parse(token) as? TokenIntrospectionSuccessResponse
-        if (response != null && response.isActive){
-            return  convertClaimsSet(response)
+        if (response != null && response.isActive) {
+            return convertClaimsSet(response)
         }
         logger.trace("Did not validate token since it is inactive")
         throw BadOpaqueTokenException("Provided token isn't active")
@@ -74,12 +76,17 @@ class LocalOpaqueTokenIntrospector(
         return OAuth2IntrospectionAuthenticatedPrincipal(claims, authorities)
     }
 
-    private fun issuer(uri: String): URL {
+    private fun issuer(uri: String): String {
         return try {
-            URL(uri)
-        } catch (ex: Exception) {
+            val uri = URI(uri)
+            if(!uri.isAbsolute) {
+                throw OAuth2IntrospectionException("Invalid ${OAuth2TokenIntrospectionClaimNames.ISS}, uri must be a absolute uri.\nvalue: $uri")
+            }
+            uri.toString()
+        } catch (_: URISyntaxException) {
             throw OAuth2IntrospectionException(
-                    "Invalid " + OAuth2TokenIntrospectionClaimNames.ISS + " value: " + uri)
+                "Invalid " + OAuth2TokenIntrospectionClaimNames.ISS + " value: " + uri
+            )
         }
     }
 }

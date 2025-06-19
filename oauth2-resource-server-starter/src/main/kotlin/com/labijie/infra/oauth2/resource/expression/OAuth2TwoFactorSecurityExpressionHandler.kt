@@ -37,7 +37,7 @@ class OAuth2TwoFactorSecurityExpressionHandler : DefaultHttpSecurityExpressionHa
     ): EvaluationContext {
         val root = createSecurityExpressionRoot(authentication, context)
         val ctx = StandardEvaluationContext(root)
-        ctx.setBeanResolver(beanResolver)
+        ctx.beanResolver = this.beanResolver
         context.variables.forEach { (name: String?, value: String?) ->
             ctx.setVariable(
                 name,

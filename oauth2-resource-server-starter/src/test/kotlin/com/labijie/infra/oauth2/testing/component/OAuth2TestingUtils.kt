@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.testing.component
 
+import com.labijie.dummy.auth.DummyConstants
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.ITwoFactorUserDetails
 import com.labijie.infra.oauth2.configuration.DefaultClientProperties
@@ -18,16 +19,10 @@ object OAuth2TestingUtils {
     var passwordEncoder: PasswordEncoder = BCryptPasswordEncoder()
     private val defaultClient = DefaultClientProperties()
 
-    const val TestUserNme = "testUser"
-    const val TestUserPassword = "pass0rd"
-    val TestClientId = defaultClient.clientId
-    val TestClientSecret = defaultClient.secret
-    const val ResourceId = "test-resources"
-    const val Scope = "test-scope"
 
     val TestUser: ITwoFactorUserDetails = object: ITwoFactorUserDetails {
 
-        private val passwordHash = passwordEncoder.encode(TestUserPassword)
+        private val passwordHash = passwordEncoder.encode(DummyConstants.userPassword)
 
         override fun getUserId(): String {
             return "123456789"
@@ -39,7 +34,7 @@ object OAuth2TestingUtils {
 
         override fun isEnabled(): Boolean = true
 
-        override fun getUsername(): String = TestUserNme
+        override fun getUsername(): String = DummyConstants.username
 
         override fun isCredentialsNonExpired(): Boolean = true
 

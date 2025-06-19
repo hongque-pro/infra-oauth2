@@ -72,7 +72,7 @@ class OAuth2Initializer(
             if (serverProperties.defaultClient.enabled && serverProperties.defaultClient.clientId.isNotBlank()) {
                 clientRepository?.let {
                     clientRepository.saveDefaultClientRegistrationIfNotExisted(serverProperties)
-                    logger.info("Default oauth2 client (id: ${serverProperties.defaultClient.clientId}) added.")
+                    logger.info("Default oauth2 client (id: ${serverProperties.defaultClient.clientId}, secret: ${serverProperties.defaultClient.secret}) added.")
                 }
             }
 
@@ -90,24 +90,21 @@ class OAuth2Initializer(
 
     private fun RegisteredClientRepository.saveDefaultClientRegistrationIfNotExisted(
         properties: OAuth2ServerProperties
-    ) {
+    ): Boolean {
         if (properties.defaultClient.enabled) {
-            val passwordRegisteredClient = OAuth2ServerUtils.createDefaultClientRegistration(properties)
-            val registeredClients = mutableListOf<RegisteredClient>()
-            registeredClients.add(passwordRegisteredClient)
+            val registeredClient = OAuth2ServerUtils.createDefaultClientRegistration(properties)
+            val id = registeredClient.id
+            val clientId = registeredClient.clientId
+            val dbRegisteredClient = this.findById(id) ?: this.findByClientId(clientId)
+            if (dbRegisteredClient == null) {
+                this.save(registeredClient)
 
-            registeredClients.forEach { registeredClient: RegisteredClient ->
-                val id = registeredClient.id
-                val clientId = registeredClient.clientId
-                val dbRegisteredClient = this.findById(id) ?: this.findByClientId(clientId)
-                if (dbRegisteredClient == null) {
-                    this.save(registeredClient)
-
-                    logger.info("Default client with client id '${properties.defaultClient.clientId}', secret '${properties.defaultClient.secret}' has been created.")
-                }
+                logger.info("Default client with client id '${properties.defaultClient.clientId}', secret '${properties.defaultClient.secret}' has been created.")
+                return true
             }
 
         }
+        return false
     }
 
     override fun setResourceLoader(resourceLoader: ResourceLoader) {

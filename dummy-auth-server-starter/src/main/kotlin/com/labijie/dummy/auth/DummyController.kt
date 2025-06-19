@@ -1,4 +1,4 @@
-package com.labijie.infra.oauth2.testing
+package com.labijie.dummy.auth
 
 import com.labijie.infra.oauth2.AccessToken
 import com.labijie.infra.oauth2.OAuth2ServerUtils.toAccessToken
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/test")
-class ResourceTestController {
+class DummyController {
     @Autowired
     private lateinit var signInHelper: TwoFactorSignInHelper
     

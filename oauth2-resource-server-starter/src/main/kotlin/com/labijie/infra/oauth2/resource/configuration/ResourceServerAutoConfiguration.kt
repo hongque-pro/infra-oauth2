@@ -1,11 +1,13 @@
 package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.*
+import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
 import com.labijie.infra.oauth2.resource.*
 import com.labijie.infra.oauth2.resource.component.*
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import com.labijie.infra.oauth2.resource.token.DefaultJwtAuthenticationConverter
+import jakarta.annotation.security.PermitAll
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
@@ -41,15 +43,17 @@ import org.springframework.security.oauth2.jwt.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 import java.io.IOException
 import java.security.interfaces.RSAPublicKey
+import kotlin.collections.component1
+import kotlin.collections.component2
 
 
 @EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(ResourceServerProperties::class)
 @AutoConfigureAfter(OAuth2ResourceServerAutoConfiguration::class)
-@ImportRuntimeHints(OAuth2SecurityRuntimeHints::class)
 @Import(UnauthorizedController::class)
 class ResourceServerAutoConfiguration(
     private val resourceServerProperties: ResourceServerProperties,
@@ -185,9 +189,28 @@ class ResourceServerAutoConfiguration(
         @Autowired(required = false)
         private var oauth2AuthorizationRequestRepository: AuthorizationRequestRepository<OAuth2AuthorizationRequest>? = null
 
+
+        private fun getPermitAllUrlsFromController(): Array<String> {
+            val requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping::class.java)
+            val handlerMethodMap = requestMappingHandlerMapping.handlerMethods
+            val urlList = mutableSetOf<String>()
+            handlerMethodMap.forEach { (key, value) ->
+                value.method.getDeclaredAnnotation(PermitAll::class.java)?.let { permitAll ->
+                    key.pathPatternsCondition?.patterns?.let { urls ->
+                        urls.forEach {
+                            urlList.add(it.patternString)
+                        }
+                    }
+                }
+            }
+            return urlList.toTypedArray()
+        }
+
         @Bean
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 10)
         fun resourceServerSecurityChain(http: HttpSecurity): SecurityFilterChain {
+
+            val baseUrl = resourceServerProperties.baseUrl.removeSuffix("/")
 
             http.csrf {
                 it.disable()
@@ -203,9 +226,10 @@ class ResourceServerAutoConfiguration(
             //http.cors(Customizer.withDefaults())
             val settings = http
                 .authorizeHttpRequests { authorize ->
+                    authorize.requestMatchers(*getPermitAllUrlsFromController()).permitAll()
                     authorize.withObjectPostProcessor(RequestMatcherPostProcessor)
                     authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                    authorize.requestMatchers("/oauth2/unauthorized", "/oauth2/check_token").permitAll()
+                    authorize.requestMatchers("${baseUrl}/oauth2/unauthorized", ENDPOINT_CHECK_TOKEN).permitAll()
                     resourceConfigurers.orderedStream().forEach {
                         it.configure(authorize)
                     }
@@ -215,7 +239,7 @@ class ResourceServerAutoConfiguration(
                 obj.jwt {
                     applyJwtConfiguration(it)
                 }
-                obj.bearerTokenResolver(CookieSupportedBearerTokenResolver(cookieDecoder, jwtDecoder).apply {
+                obj.bearerTokenResolver(CookieSupportedBearerTokenResolver(cookieDecoder).apply {
                     this.setBearerTokenFromCookieName(resourceServerProperties.bearerTokenResolver.allowCookieName)
                     this.setAllowUriQueryParameter(resourceServerProperties.bearerTokenResolver.allowUriQueryParameter)
                     this.setAllowFormEncodedBodyParameter(resourceServerProperties.bearerTokenResolver.allowFormEncodedBodyParameter)
@@ -228,8 +252,6 @@ class ResourceServerAutoConfiguration(
             settings.exceptionHandling {
                 it.accessDeniedHandler(OAuth2ExceptionHandler.getInstance(this.applicationContext))
             }
-
-            val baseUrl = resourceServerProperties.baseUrl.removeSuffix("/")
 
             if(clientRegistrationRepository != null) {
                 val requestRepository = oauth2AuthorizationRequestRepository ?: HttpCookieOAuth2AuthorizationRequestRepository()
@@ -244,7 +266,6 @@ class ResourceServerAutoConfiguration(
                     }
                 }
             }
-
 
             return settings.formLogin { it.disable() }.build()
         }

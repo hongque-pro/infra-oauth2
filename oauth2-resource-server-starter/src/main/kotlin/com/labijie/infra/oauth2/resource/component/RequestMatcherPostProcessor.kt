@@ -5,10 +5,8 @@
 package com.labijie.infra.oauth2.resource.component
 
 import jakarta.servlet.http.HttpServletRequest
-import org.springframework.security.authorization.AuthorizationManager
-import org.springframework.security.config.annotation.ObjectPostProcessor
-import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer
-import org.springframework.security.web.access.intercept.RequestAuthorizationContext
+import org.springframework.security.authorization.SingleResultAuthorizationManager
+import org.springframework.security.config.ObjectPostProcessor
 import org.springframework.security.web.access.intercept.RequestMatcherDelegatingAuthorizationManager
 import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.security.web.util.matcher.RequestMatcherEntry
@@ -16,18 +14,8 @@ import org.springframework.security.web.util.matcher.RequestMatcherEntry
 
 object RequestMatcherPostProcessor : ObjectPostProcessor<RequestMatcherDelegatingAuthorizationManager> {
 
-    private val permitAllAuthorizationManager = getPermitAllAuthorizationManager()
-
     private var foundMatchers: List<RequestMatcher> = listOf()
 
-
-    private fun getPermitAllAuthorizationManager(): AuthorizationManager<RequestAuthorizationContext> {
-        val field = AuthorizeHttpRequestsConfigurer::class.java.getDeclaredField("permitAllAuthorizationManager")
-        field.isAccessible = true
-
-        @Suppress("UNCHECKED_CAST")
-        return field.get(null) as AuthorizationManager<RequestAuthorizationContext>
-    }
 
     @Suppress("unused")
     val publicMatchers = foundMatchers
@@ -47,7 +35,7 @@ object RequestMatcherPostProcessor : ObjectPostProcessor<RequestMatcherDelegatin
         if (mappings is List<*>) {
             foundMatchers = mappings.filterIsInstance<RequestMatcherEntry<*>>()
                 .filter {
-                    it.entry == permitAllAuthorizationManager
+                    it.entry == SingleResultAuthorizationManager.permitAll<T>()
                 }.map { it.requestMatcher }
 
         }

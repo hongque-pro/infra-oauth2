@@ -10,11 +10,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.context.SecurityContextHolder
@@ -58,6 +56,16 @@ class TwoFactorSignInHelper(
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(TwoFactorSignInHelper::class.java)
+
+        private fun HttpServletRequest.getCleanRequestUrl(): String {
+            val schema = this.getHeader("X-Forwarded-Proto").ifNullOrBlank { this.scheme }
+
+            val host = this.getHeader("X-Forwarded-Host").ifNullOrBlank { this.serverName }
+
+            val port = if(this.getHeader("X-Forwarded-Proto").isNullOrBlank()) this.serverPort else (if(schema.equals("https", ignoreCase = true)) 443 else 80)
+
+            return UrlUtils.buildFullRequestUrl(schema, host, port, this.requestURI, null)
+        }
     }
 
     private lateinit var context: ApplicationContext
@@ -71,39 +79,39 @@ class TwoFactorSignInHelper(
         context.getBean(AuthorizationServerSettings::class.java)
     }
 
+
+
     protected class DefaultAuthorizationServerContext(
         private val authorizationServerSettings: AuthorizationServerSettings,
         private val request: HttpServletRequest? = null
     ) : AuthorizationServerContext {
 
-        @Suppress("VulnerableCodeUsages")
-        private fun getContextPath(request: HttpServletRequest): String {
-            // @formatter:off
-            return UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
-                .replacePath(request.contextPath)
-                .replaceQuery(null)
-                .fragment(null)
-                .build()
-                .toUriString()
-            // @formatter:on
+        private fun getIssuer(request: HttpServletRequest): String {
+            val iss = authorizationServerSettings.issuer
+            if(iss.isNullOrBlank()) {
+                val cleanUrl = request.getCleanRequestUrl()
+                // @formatter:off
+                return UriComponentsBuilder.fromUriString(cleanUrl)
+                    .replacePath(request.contextPath)
+                    .fragment(null)
+                    .build()
+                    .toUriString()
+            }
+            return iss
         }
+
+
         override fun getIssuer(): String {
             if (!authorizationServerSettings.issuer.isNullOrBlank()) return authorizationServerSettings.issuer
-            if(request != null) {
-                return getContextPath(
-                    request
-                )
-            }
-            return "http://localhost"
+
+            val req = request ?: (RequestContextHolder.currentRequestAttributes() as? ServletRequestAttributes)?.request
+
+            return req?.let { getIssuer(it) } ?: "http://localhost"
         }
 
         override fun getAuthorizationServerSettings(): AuthorizationServerSettings {
             return this.authorizationServerSettings
         }
-    }
-
-    private val defaultContext by lazy {
-
     }
 
 
@@ -226,11 +234,12 @@ class TwoFactorSignInHelper(
         if (providerBean != null) {
             providerBean
         } else {
+
             val passwordEncoder = context.getBean(PasswordEncoder::class.java)
             val userDetailsService = context.getBean(UserDetailsService::class.java)
 
-            DaoAuthenticationProvider(passwordEncoder).apply {
-                setUserDetailsService(userDetailsService)
+            DaoAuthenticationProvider(userDetailsService).apply {
+                setPasswordEncoder(passwordEncoder)
             }
         }
     }
@@ -253,7 +262,6 @@ class TwoFactorSignInHelper(
                 }
                 authorizedScopes = scopes
             }
-
 
             val serverCtx = AuthorizationServerContextHolder.getContext() ?: DefaultAuthorizationServerContext(authorizationServerSettings, request)
 

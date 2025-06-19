@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.testing
 
+import com.labijie.dummy.auth.DummyServerAutoConfiguration
 import com.labijie.infra.oauth2.OAuth2Constants
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
@@ -28,6 +29,7 @@ import kotlin.test.assertEquals
 
 @ContextConfiguration(
     classes = [
+        DummyServerAutoConfiguration::class,
         ResourceServerTestingConfiguration::class,
     ]
 )

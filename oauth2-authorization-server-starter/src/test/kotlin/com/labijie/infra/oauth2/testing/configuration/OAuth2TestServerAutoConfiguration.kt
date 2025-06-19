@@ -11,8 +11,13 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.SecurityFilterChain
 
 @EnableWebSecurity
 @Configuration
@@ -29,6 +34,9 @@ class OAuth2TestServerAutoConfiguration {
 //    }
 
     @Bean
+    fun testController() = TestController()
+
+    @Bean
     fun testingIdentityService(passwordEncoder: PasswordEncoder): TestingIdentityService {
         return TestingIdentityService(passwordEncoder)
     }
@@ -42,4 +50,16 @@ class OAuth2TestServerAutoConfiguration {
     fun oauth2SignInTestingListener(): OAuth2SignInTestingListener {
         return OAuth2SignInTestingListener()
     }
+
+//    @Bean
+//    @Order(Ordered.LOWEST_PRECEDENCE)
+//    fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain? {
+//
+//        http.authorizeHttpRequests {
+//            it.requestMatchers("/fake-login").permitAll()
+//            it.anyRequest().authenticated()
+//        }
+//        return http.build()
+//    }
+
 }

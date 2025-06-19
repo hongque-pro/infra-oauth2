@@ -37,18 +37,26 @@ class CachingOAuth2AuthorizationService(
 
         val maxCacheExpired = refreshExpires.coerceAtLeast(expired)
 
-        cache.set(cacheKey, plainObject, maxCacheExpired, region = this.cachingRegion)
+        val map = mutableMapOf<String, Any>()
+        map.put(cacheKey, plainObject)
+
+        //cache.set(cacheKey, plainObject, maxCacheExpired, region = this.cachingRegion)
         val r = plainObject.refreshToken
         if(r != null){
             //连接一个缓存键
             val rk = r.getRefreshTokenCacheKey()
             val exp = r.expiresDurationMills() ?: maxCacheExpired
-            cache.set(rk, tokenId, exp, region = this.cachingRegion)
+            //cache.set(rk, tokenId, exp, region = this.cachingRegion)
+
+            map.put(rk, tokenId)
         }
         if(!plainObject.state.isNullOrBlank()){
             val key = getSateCacheKey(plainObject.state!!)
-            cache.set(key, tokenId, region = this.cachingRegion)
+            //cache.set(key, tokenId, region = this.cachingRegion)
+
+            map.put(key, tokenId)
         }
+        cache.setMulti(map, maxCacheExpired, region = this.cachingRegion)
     }
 
     private fun TokenPlainObject.getRefreshTokenCacheKey(): String {
@@ -60,16 +68,21 @@ class CachingOAuth2AuthorizationService(
         val tid = authorization.tokenId()
         val auth = cache.get(tid, AuthorizationPlainObject::class, region = this.cachingRegion)
         if(auth != null){
-            cache.remove(tid, region = this.cachingRegion)
+            val keys = mutableSetOf<String>()
+            keys.add((tid))
+            //cache.remove(tid, region = this.cachingRegion)
             //如果有 refresh token, 同时删除一下
             if(auth.refreshToken != null){
                 val k = auth.refreshToken!!.getRefreshTokenCacheKey()
-                cache.remove(k, region = this.cachingRegion)
+                //cache.remove(k, region = this.cachingRegion)
+                keys.add((k))
             }
             if(!auth.state.isNullOrBlank()){
                 val key = getSateCacheKey(auth.state!!)
-                cache.remove(key, region = this.cachingRegion)
+                //cache.remove(key, region = this.cachingRegion)
+                keys.add((key))
             }
+            cache.removeMulti(keys)
         }
     }
 

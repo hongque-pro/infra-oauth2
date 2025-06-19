@@ -25,7 +25,6 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.boot.autoconfigure.web.ServerProperties
-import org.springframework.boot.autoconfigure.web.WebProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationEventPublisher
@@ -37,15 +36,14 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
-import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.web.SecurityFilterChain
 
 
@@ -80,6 +78,12 @@ class OAuth2ServerAutoConfiguration(
         return OAuth2ServerJwtCodec(jwkSource)
     }
 
+    @Bean
+    @ConditionalOnMissingBean(JwtDecoder::class)
+    fun jwtDecoder(serverJwtCodec: IOAuth2ServerJwtCodec) : JwtDecoder {
+        return serverJwtCodec.jwtDecoder()
+    }
+
     @ConditionalOnMissingBean(ITokenIntrospectParser::class)
     @Bean
     fun oauth2ServerTokenIntrospectParser(oauth2ServerJwtCodec: IOAuth2ServerJwtCodec): ITokenIntrospectParser {
@@ -102,7 +106,7 @@ class OAuth2ServerAutoConfiguration(
     @Bean
     @ConditionalOnMissingBean(OAuth2AccessTokenGenerator::class)
     fun jwtGenerator(
-        jwtCodec: OAuth2ServerJwtCodec,
+        jwtCodec: IOAuth2ServerJwtCodec,
         customizer: InfraOAuth2JwtTokenCustomizer
     ): JwtGenerator {
         return JwtGenerator(jwtCodec.jwtEncoder()).apply {
@@ -118,7 +122,6 @@ class OAuth2ServerAutoConfiguration(
         clientRepository: RegisteredClientRepository,
         eventPublisher: ApplicationEventPublisher,
         identityService: IIdentityService,
-        jwtDecoder: IOAuth2ServerJwtCodec,
     ): TwoFactorSignInHelper {
         return TwoFactorSignInHelper(
             jwtGenerator,
@@ -142,7 +145,7 @@ class OAuth2ServerAutoConfiguration(
             clientRepository: RegisteredClientRepository,
             authorizationService: OAuth2AuthorizationService,
             authorizationServerSettings: AuthorizationServerSettings
-        ): SecurityFilterChain? {
+        ): SecurityFilterChain {
 
 
             val sh = springContext.getBean(TwoFactorSignInHelper::class.java)
@@ -152,7 +155,7 @@ class OAuth2ServerAutoConfiguration(
             val resourceOwnerPasswordAuthenticationProvider =
                 ResourceOwnerPasswordAuthenticationProvider(sh, authorizationService, clientRepository)
 
-            val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
+            val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer.authorizationServer()
 
 
             authorizationServerConfigurer
@@ -174,12 +177,10 @@ class OAuth2ServerAutoConfiguration(
                     it.accessTokenRequestConverter(resourceOwnerPasswordAuthenticationConverter)
                     it.authenticationProvider(resourceOwnerPasswordAuthenticationProvider)
                 }
-                .oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
+             // Enable OpenID Connect 1.0
 
 
-            val endpointsMatcher = authorizationServerConfigurer.endpointsMatcher
-
-            http.securityMatcher(endpointsMatcher)
+            http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
                 .authorizeHttpRequests {
                     it.requestMatchers(HttpMethod.OPTIONS).permitAll()
                     it.requestMatchers(ENDPOINT_CHECK_TOKEN).permitAll()
@@ -189,8 +190,9 @@ class OAuth2ServerAutoConfiguration(
                     it.disable()
                 }
                 .cors {
-                }.with(authorizationServerConfigurer) {
 
+                }.with(authorizationServerConfigurer) {
+                    configurer -> configurer.oidc(Customizer.withDefaults())
                 }
                 .sessionManagement {
                     it.disable()

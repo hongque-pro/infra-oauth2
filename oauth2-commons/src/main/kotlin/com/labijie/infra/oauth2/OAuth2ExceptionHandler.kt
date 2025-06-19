@@ -60,7 +60,7 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
         response: HttpServletResponse,
         exception: AuthenticationException
     ) {
-        writeError(request, response, exception)
+        writeError(request, response, exception, HttpStatus.UNAUTHORIZED)
     }
 
     override fun handle(
@@ -68,38 +68,39 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
         response: HttpServletResponse,
         accessDeniedException: AccessDeniedException
     ) {
-        writeError(request, response, accessDeniedException)
+        //Access Denied
+        writeError(request, response, accessDeniedException, HttpStatus.FORBIDDEN)
     }
 
     private val errorWriter by lazy {
         applicationContext?.getBeansOfType(IOAuthErrorWriter::class.java)?.values?.firstOrNull()
     }
 
-    private fun writeError(request: HttpServletRequest,response: HttpServletResponse, ex: Exception) {
+    private fun writeError(request: HttpServletRequest,response: HttpServletResponse, ex: Exception, httpStatus: HttpStatus) {
         val (error, status) = when (ex) {
             is BadCredentialsException -> {
                 Pair(
                     OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null),
-                    HttpStatus.UNAUTHORIZED
+                    httpStatus
                 )
             }
 
             is OAuth2AuthenticationException -> {
-                Pair(ex.error, HttpStatus.UNAUTHORIZED)
+                Pair(ex.error, httpStatus)
             }
 
             is InsufficientAuthenticationException -> {
-                Pair(OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, ex.message, null), HttpStatus.UNAUTHORIZED)
+                Pair(OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, ex.message, null), httpStatus)
             }
 
             is AuthenticationException -> {
-                Pair(OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, ex.message, null), HttpStatus.UNAUTHORIZED)
+                Pair(OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, ex.message, null), httpStatus)
             }
 
             is AccessDeniedException -> {
                 Pair(
                     OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, ex.message.ifNullOrBlank { "Access denied." }, null),
-                    HttpStatus.UNAUTHORIZED
+                    httpStatus
                 )
             }
 

@@ -1,13 +1,18 @@
-package com.labijie.infra.oauth2.testing.component
+package com.labijie.dummy.auth
 
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.hasTokenAttributeValue
 import com.labijie.infra.oauth2.resource.twoFactorRequired
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer
-import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer
 
-class TestingResourceConfigurer : IResourceAuthorizationConfigurer {
+/**
+ *
+ * @Author: Anders Xiao
+ * @Date: 2025/6/19
+ *
+ */
+class DummyResourceConfigurer : IResourceAuthorizationConfigurer {
 
     override fun configure(registry: AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry) {
         registry.requestMatchers("/test/2fac").twoFactorRequired()

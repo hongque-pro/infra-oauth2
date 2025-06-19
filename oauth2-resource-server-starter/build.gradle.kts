@@ -8,8 +8,7 @@ dependencies {
 
 
     compileOnly("org.springframework.boot:spring-boot-starter-actuator")
-    testImplementation ("com.labijie:caching-kotlin-core-starter:${Versions.infraCaching}")
-    testImplementation(project(":oauth2-authorization-server-starter"))
     //testImplementation(project(":oauth2-auth-server-starter"))
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation(project(":dummy-auth-server-starter"))
 }

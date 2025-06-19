@@ -30,7 +30,7 @@ class OAuth2SecurityAutoConfiguration {
     protected class ActuatorSecurityFilterConfiguration {
         @Bean
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
-        fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain? {
+        fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
 
             http.securityMatcher(EndpointRequest.toAnyEndpoint())
                 .sessionManagement {

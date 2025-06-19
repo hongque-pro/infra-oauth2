@@ -9,7 +9,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import kotlin.reflect.KClass
 
 object OAuth2TestingUtils {
-    private val defaultClient = DefaultClientProperties()
+    val defaultClient = DefaultClientProperties()
 
     const val TestUserNme = "testUser"
     const val TestUserPassword = "pass0rd"

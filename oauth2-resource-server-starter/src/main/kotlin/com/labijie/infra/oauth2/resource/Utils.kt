@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.configurers.AuthorizeH
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.jwt.JwtClaimAccessor
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext
 import org.springframework.util.Assert
 import org.springframework.util.StringUtils
@@ -69,12 +70,9 @@ fun Authentication.getTokenAttributes(attribute: String): Any? {
 
 private fun readIsTwoFactorGranted(details: Map<*, *>?): Boolean {
     return if (!details.isNullOrEmpty()) {
-        val v = details.getOrDefault(OAuth2Constants.CLAIM_TWO_FACTOR, true)
-        if (v is Boolean) {
-            v
-        } else {
-            v.toString().toBoolean()
-        }
+        val v = details.getOrDefault(OAuth2Constants.CLAIM_TWO_FACTOR, false)
+        val valid = v as? Boolean ?: v.toString().toBoolean()
+        valid
     } else {
         false
     }
