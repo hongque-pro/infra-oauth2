@@ -2,6 +2,7 @@ package com.labijie.infra.oauth2.aot
 
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationToken
+import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
 import com.labijie.infra.oauth2.filter.ClientRequired
 import com.labijie.infra.oauth2.serialization.jackson.*
 import org.springframework.aot.hint.MemberCategory
@@ -45,6 +46,7 @@ class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
         hints.reflection().registerType(OAuth2AccessToken::class.java)
         hints.reflection().registerType(OidcIdToken::class.java)
         hints.reflection().registerType(Principal::class.java)
+        hints.reflection().registerType(OAuth2ServerAutoConfiguration::class.java)
 
         listOf(
             AccessToken::class.java,
