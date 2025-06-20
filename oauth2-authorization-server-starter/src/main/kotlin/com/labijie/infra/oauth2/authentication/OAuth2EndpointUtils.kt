@@ -16,7 +16,7 @@ object OAuth2EndpointUtils {
     fun getParameters(request: HttpServletRequest): MultiValueMap<String, String> {
         val parameterMap = request.parameterMap
         val parameters: MultiValueMap<String, String> = LinkedMultiValueMap(parameterMap.size)
-        parameterMap.forEach { (key: String?, values: Array<String?>) ->
+        parameterMap.forEach { (key: String, values: Array<String>) ->
             if (values.isNotEmpty()) {
                 for (value in values) {
                     parameters.add(key, value)
