@@ -5,10 +5,8 @@
 package com.labijie.infra.oauth2.resource.component
 
 import jakarta.servlet.http.HttpServletRequest
-import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
-import java.util.Base64
 
 class CookieSupportedBearerTokenResolver(
     cookieDecoder: IOAuth2TokenCookieDecoder?) : BearerTokenResolver {
