@@ -5,6 +5,7 @@
 package com.labijie.infra.oauth2.aot
 
 import com.labijie.infra.oauth2.AccessToken
+import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import org.springframework.aot.hint.MemberCategory
 import org.springframework.aot.hint.RuntimeHints
@@ -22,6 +23,7 @@ class Oauth2CommonsRuntimeHintsRegistrar : RuntimeHintsRegistrar {
         ) {
             it.withMembers(*MemberCategory.entries.toTypedArray())
         }
+        hints.reflection().registerType(OAuth2Utils::class.java)
 
         hints.resources().registerPattern("git-info/git.properties")
     }

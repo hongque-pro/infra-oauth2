@@ -27,7 +27,7 @@ class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
 
         hints.reflection().registerType(TypeReference.of("org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"))
         hints.reflection().registerType(TypeReference.of("org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"))
-        hints.reflection().registerType(OAuth2Utils::class.java)
+
 
         hints.reflection().registerTypes(
             listOf(
