@@ -22,5 +22,7 @@ class Oauth2CommonsRuntimeHintsRegistrar : RuntimeHintsRegistrar {
         ) {
             it.withMembers(*MemberCategory.entries.toTypedArray())
         }
+
+        hints.resources().registerPattern("git-info/git.properties")
     }
 }

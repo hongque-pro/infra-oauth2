@@ -1,12 +1,13 @@
 package com.labijie.infra.oauth2.configuration
 
-import java.time.Duration
+import org.springframework.boot.context.properties.NestedConfigurationProperty
 
 /**
  * Created with IntelliJ IDEA.
  * @author Anders Xiao
  * @date 2019-02-23
  */
-class TokenProperties(
+class TokenProperties {
+        @NestedConfigurationProperty
         var jwt:JwtSettings = JwtSettings()
-)
+}

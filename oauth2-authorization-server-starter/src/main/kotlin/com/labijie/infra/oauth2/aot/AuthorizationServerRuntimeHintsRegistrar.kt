@@ -2,7 +2,11 @@ package com.labijie.infra.oauth2.aot
 
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationToken
+import com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties
+import com.labijie.infra.oauth2.configuration.DefaultClientProperties
+import com.labijie.infra.oauth2.configuration.JwtSettings
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
+import com.labijie.infra.oauth2.configuration.TokenProperties
 import com.labijie.infra.oauth2.filter.ClientRequired
 import com.labijie.infra.oauth2.serialization.jackson.*
 import org.springframework.aot.hint.MemberCategory
@@ -58,6 +62,11 @@ class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
             OAuth2AuthorizationResponseTypeDeserializer::class.java,
             AuthorizationGrantTypeSerializer::class.java,
             AuthorizationGrantTypeDeserializer::class.java,
+            //nested configuration
+            AuthorizationServiceProperties::class.java,
+            DefaultClientProperties::class.java,
+            TokenProperties::class.java,
+            JwtSettings::class.java
         ).forEach { clazz ->
             hints.reflection().registerType(clazz) {
                 it.withMembers(MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS)

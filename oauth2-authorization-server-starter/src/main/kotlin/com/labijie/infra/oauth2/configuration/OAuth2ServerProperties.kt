@@ -16,8 +16,10 @@ data class OAuth2ServerProperties(
     @NestedConfigurationProperty
     val authorizationService: AuthorizationServiceProperties = AuthorizationServiceProperties(),
 
-    var clientRepository: String = "memory",
+    @NestedConfigurationProperty
     val defaultClient: DefaultClientProperties = DefaultClientProperties(),
+
+    var clientRepository: String = "memory",
     var scopeValidationEnabled: Boolean = false,
     var createJdbcSchema: Boolean = false
 ) {
