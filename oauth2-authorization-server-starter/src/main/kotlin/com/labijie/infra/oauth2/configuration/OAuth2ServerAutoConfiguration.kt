@@ -14,6 +14,7 @@ import com.labijie.infra.oauth2.customizer.InfraClaimsContextCustomizer
 import com.labijie.infra.oauth2.customizer.InfraOAuth2JwtTokenCustomizer
 import com.labijie.infra.oauth2.mvc.CheckTokenController
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2CommonsJacksonModule
+import com.labijie.infra.utils.ifNullOrBlank
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
@@ -250,7 +251,7 @@ class OAuth2ServerAutoConfiguration(
                 val information = StringBuilder()
                 information.appendLine("OAuth2 authorization server started.")
                 information.appendLine()
-                information.appendLine("issuer: ${settings.issuer}")
+                information.appendLine("server issuer: ${settings.issuer.ifNullOrBlank { "<null>" }}")
                 information.appendLine()
                 information.appendLine("The following endpoints are already active:")
                 information.appendLine(settings.jwkSetEndpoint)
