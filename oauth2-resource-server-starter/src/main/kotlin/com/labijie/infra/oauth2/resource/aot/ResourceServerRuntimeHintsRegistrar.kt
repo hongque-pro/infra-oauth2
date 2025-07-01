@@ -24,7 +24,6 @@ class ResourceServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
         }
 
         hints.reflection().registerType(ResourceServerAutoConfiguration::class.java)
-        hints.reflection().registerType(ResourceServerAutoConfiguration::class.java)
         hints.reflection().registerType(IResourceAuthorizationConfigurer::class.java)
 
 

@@ -26,8 +26,9 @@ class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
     override fun registerHints(hints: RuntimeHints, classLoader: ClassLoader?) {
 
         hints.reflection().registerType(TypeReference.of("org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"))
-        hints.reflection().registerType(TypeReference.of("org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"))
-
+        hints.reflection().registerType(TypeReference.of("com.labijie.caching.ICacheManager"))
+        hints.reflection().registerType(TypeReference.of("kotlinx.serialization.KSerializer"))
+        hints.reflection().registerType(TypeReference.of("com.labijie.caching.redis.configuration.RedisCachingAutoConfiguration"))
 
         hints.reflection().registerTypes(
             listOf(

@@ -1,3 +1,7 @@
+infra {
+    useKotlinSerializationPlugin()
+}
+
 dependencies {
     api(project(":oauth2-commons"))
     api("org.springframework.boot:spring-boot-starter-jdbc")
@@ -5,6 +9,8 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter-web")
     api("org.springframework.security:spring-security-oauth2-authorization-server")
     compileOnly("com.esotericsoftware:kryo")
+    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json")
+    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-protobuf")
 
     implementation("com.labijie:caching-kotlin:${Versions.infraCaching}")
 
@@ -14,4 +20,6 @@ dependencies {
     testImplementation("com.labijie:caching-kotlin-redis-starter:${Versions.infraCaching}")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("com.esotericsoftware:kryo")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf")
 }

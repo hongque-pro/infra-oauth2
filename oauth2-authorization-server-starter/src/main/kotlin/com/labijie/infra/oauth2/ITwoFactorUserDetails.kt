@@ -48,7 +48,7 @@ fun ITwoFactorUserDetails.toPlainObject(): UserPlainObject {
         this.isAccountNonExpired,
         this.isAccountNonLocked,
         this.isTwoFactorEnabled(),
-        ArrayList(this.authorities.map { it.authority }),
+        this.authorities.map { it.authority }.toTypedArray(),
         HashMap(this.getTokenAttributes())
     )
 }

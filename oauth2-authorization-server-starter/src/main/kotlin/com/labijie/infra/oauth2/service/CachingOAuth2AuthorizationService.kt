@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.service
 
+import com.labijie.caching.ICacheItem
 import com.labijie.caching.ICacheManager
 import com.labijie.caching.get
 import com.labijie.infra.oauth2.AuthorizationPlainObject
@@ -15,9 +16,12 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import java.time.Duration
 
 class CachingOAuth2AuthorizationService(
-    private val cache: ICacheManager,  private val cachingRegion: String? = null) : OAuth2AuthorizationService {
+    private val cache: ICacheManager,
+    private val cachingRegion: String? = null
+) : OAuth2AuthorizationService {
 
-    companion object{
+
+    companion object {
         private fun getAccessTokenCacheKey(tokenId: String) = "o2_tk_${tokenId}"
         private fun getSateCacheKey(key: String) = "o2_tks_${key}"
         private fun getRefreshTokenCacheKey(tokenId: String) = "o2_tkr_${tokenId}"
@@ -26,58 +30,54 @@ class CachingOAuth2AuthorizationService(
     override fun save(authorization: OAuth2Authorization) {
         val plainObject = OAuth2AuthorizationConverter.Instance.convertToPlain(authorization)
         val mills = plainObject.expiresDurationMills()
-        if(mills != null && mills < 0){
+        if (mills != null && mills < 0) {
             this.remove(authorization)
         }
-        val expired = mills ?: Duration.ofDays(365).toMillis()
+        val tokenExp = mills ?: Duration.ofDays(365).toMillis()
         val tokenId = plainObject.tokenId()
         val cacheKey = getAccessTokenCacheKey(tokenId)
 
-        val refreshExpires = plainObject.refreshToken?.expiresDurationMills() ?: 0
+        val refreshTokenExp = (plainObject.refreshToken?.expiresDurationMills() ?: 0).coerceAtLeast(tokenExp)
 
-        val maxCacheExpired = refreshExpires.coerceAtLeast(expired)
+        val map = mutableMapOf<String, ICacheItem>()
+        //1. access token
+        map.put(cacheKey, ICacheItem.of(plainObject))
 
-        val map = mutableMapOf<String, Any>()
-        map.put(cacheKey, plainObject)
-
-        //cache.set(cacheKey, plainObject, maxCacheExpired, region = this.cachingRegion)
         val r = plainObject.refreshToken
-        if(r != null){
+        if (r != null) {
             //连接一个缓存键
             val rk = r.getRefreshTokenCacheKey()
-            val exp = r.expiresDurationMills() ?: maxCacheExpired
-            //cache.set(rk, tokenId, exp, region = this.cachingRegion)
-
-            map.put(rk, tokenId)
+            //2. refresh token
+            map.put(rk, ICacheItem.of(tokenId))
         }
-        if(!plainObject.state.isNullOrBlank()){
-            val key = getSateCacheKey(plainObject.state!!)
-            //cache.set(key, tokenId, region = this.cachingRegion)
-
-            map.put(key, tokenId)
+        val state = plainObject.state
+        if (!state.isNullOrBlank()) {
+            val key = getSateCacheKey(state)
+            //2. state
+            map.put(key, ICacheItem.of(tokenId))
         }
-        cache.setMulti(map, maxCacheExpired, region = this.cachingRegion)
+        cache.setMulti(map, refreshTokenExp, region = cachingRegion)
     }
 
     private fun TokenPlainObject.getRefreshTokenCacheKey(): String {
         val id = this.tokenId()
-       return getRefreshTokenCacheKey(id)
+        return getRefreshTokenCacheKey(id)
     }
 
     override fun remove(authorization: OAuth2Authorization) {
         val tid = authorization.tokenId()
-        val auth = cache.get(tid, AuthorizationPlainObject::class, region = this.cachingRegion)
-        if(auth != null){
+        val auth = cache.get<AuthorizationPlainObject>(tid, region = cachingRegion)
+        if (auth != null) {
             val keys = mutableSetOf<String>()
             keys.add((tid))
             //cache.remove(tid, region = this.cachingRegion)
             //如果有 refresh token, 同时删除一下
-            if(auth.refreshToken != null){
+            if (auth.refreshToken != null) {
                 val k = auth.refreshToken!!.getRefreshTokenCacheKey()
                 //cache.remove(k, region = this.cachingRegion)
                 keys.add((k))
             }
-            if(!auth.state.isNullOrBlank()){
+            if (!auth.state.isNullOrBlank()) {
                 val key = getSateCacheKey(auth.state!!)
                 //cache.remove(key, region = this.cachingRegion)
                 keys.add((key))
@@ -91,36 +91,38 @@ class CachingOAuth2AuthorizationService(
     }
 
     override fun findByToken(token: String?, tokenType: OAuth2TokenType?): OAuth2Authorization? {
-        val tokenValue = if(token.isNullOrBlank()) throw IllegalArgumentException("token cannot be empty (findByToken)") else token
+        val tokenValue =
+            if (token.isNullOrBlank()) throw IllegalArgumentException("token cannot be empty (findByToken)") else token
 
-        val obj = if (tokenType == null || OAuth2ParameterNames.CODE == tokenType.value || OAuth2TokenType.ACCESS_TOKEN == tokenType) {
-            val id = AuthorizationPlainObject.tokenValueToId(tokenValue)
-            val key = getAccessTokenCacheKey(id)
-            cache.get(key, AuthorizationPlainObject::class, region = this.cachingRegion)
-        } else if (OAuth2ParameterNames.STATE == tokenType.value) {
-            val key = getSateCacheKey(token)
-            val tokenId = cache.get(key, String::class)
-            if(!tokenId.isNullOrBlank()){
-                val tk = getAccessTokenCacheKey(tokenId)
-                cache.get(tk, AuthorizationPlainObject::class, region = this.cachingRegion)
-            }else{
+        val obj =
+            if (tokenType == null || OAuth2ParameterNames.CODE == tokenType.value || OAuth2TokenType.ACCESS_TOKEN == tokenType) {
+                val id = AuthorizationPlainObject.tokenValueToId(tokenValue)
+                val key = getAccessTokenCacheKey(id)
+                cache.get<AuthorizationPlainObject>(key, region = this.cachingRegion)
+            } else if (OAuth2ParameterNames.STATE == tokenType.value) {
+                val key = getSateCacheKey(token)
+                val tokenId = cache.get<String>(key)
+                if (!tokenId.isNullOrBlank()) {
+                    val tk = getAccessTokenCacheKey(tokenId)
+                    cache.get<AuthorizationPlainObject>(tk, region = this.cachingRegion)
+                } else {
+                    null
+                }
+            } else if (OAuth2TokenType.REFRESH_TOKEN == tokenType) {
+                val id = AuthorizationPlainObject.tokenValueToId(tokenValue)
+                val key = getRefreshTokenCacheKey(id)
+                val tokenId = cache.get<String>(key, region = this.cachingRegion)
+                if (!tokenId.isNullOrBlank()) {
+                    val tk = getAccessTokenCacheKey(tokenId)
+                    cache.get<AuthorizationPlainObject>(tk, region = this.cachingRegion)
+                } else {
+                    null
+                }
+            } else {
                 null
             }
-        }else if (OAuth2TokenType.REFRESH_TOKEN == tokenType) {
-            val id = AuthorizationPlainObject.tokenValueToId(tokenValue)
-            val key = getRefreshTokenCacheKey(id)
-            val tokenId = cache.get(key, String::class, region = this.cachingRegion)
-            if(!tokenId.isNullOrBlank()){
-                val tk = getAccessTokenCacheKey(tokenId)
-                cache.get(tk, AuthorizationPlainObject::class, region = this.cachingRegion)
-            }else{
-                null
-            }
-        }else{
-            null
-        }
 
-        return if(obj != null) OAuth2AuthorizationConverter.Instance.convertFromPlain(obj) else null
+        return if (obj != null) OAuth2AuthorizationConverter.Instance.convertFromPlain(obj) else null
     }
 
 }

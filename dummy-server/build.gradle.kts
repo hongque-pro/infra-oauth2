@@ -20,4 +20,6 @@ dependencies {
     implementation("com.h2database:h2")
     implementation(project(":dummy-auth-server-starter"))
     implementation("com.labijie:caching-kotlin-redis-starter:${Versions.infraCaching}")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf")
+    implementation("com.esotericsoftware:kryo")
 }

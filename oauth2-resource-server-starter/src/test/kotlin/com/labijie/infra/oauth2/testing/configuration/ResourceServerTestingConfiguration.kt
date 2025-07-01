@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.testing.configuration
 
+import com.labijie.caching.configuration.CachingAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2SecurityAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.security.crypto.password.PasswordEncoder
 
 @ImportAutoConfiguration(
+    CachingAutoConfiguration::class,
     OAuth2DependenciesAutoConfiguration::class,
     OAuth2ServerAutoConfiguration::class,
     OAuth2SecurityAutoConfiguration::class,

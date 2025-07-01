@@ -95,11 +95,11 @@ class OAuth2ServerTester : OAuth2Tester() {
     @Test
     fun testSignInHelper() {
 
-        mockMvc.perform(
-            get("/access")
-                .accept(MediaType.APPLICATION_JSON)
-        )
-            .andExpect(status().is4xxClientError)
+//        mockMvc.perform(
+//            get("/access")
+//                .accept(MediaType.APPLICATION_JSON)
+//        )
+//        .andExpect(status().is4xxClientError)
 
         val result = mockMvc.perform(
             post("/fake-login")

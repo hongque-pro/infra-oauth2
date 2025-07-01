@@ -7,8 +7,16 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.dataformat.smile.databind.SmileMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.labijie.infra.oauth2.MetadataTypedValue.Companion.getValue
+import com.labijie.infra.oauth2.MetadataTypedValue.Companion.toMetadataValue
 import com.labijie.infra.oauth2.OAuth2ServerUtils.toInstant
+import com.labijie.infra.oauth2.TokenSerializableObject.Companion.asSerializable
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2JacksonModule
+import org.slf4j.LoggerFactory
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.jackson2.CoreJackson2Module
 import org.springframework.security.oauth2.core.AbstractOAuth2Token
 import org.springframework.security.oauth2.core.AuthorizationGrantType
@@ -25,10 +33,9 @@ import org.springframework.security.web.jackson2.WebServletJackson2Module
 import org.springframework.security.web.server.jackson2.WebServerJackson2Module
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.security.Principal
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
-import kotlin.reflect.KClass
-import kotlin.reflect.full.createInstance
 
 
 class OAuth2AuthorizationConverter private constructor() {
@@ -36,6 +43,10 @@ class OAuth2AuthorizationConverter private constructor() {
     companion object {
         val Instance: OAuth2AuthorizationConverter by lazy {
             OAuth2AuthorizationConverter()
+        }
+
+        private val logger by lazy {
+            LoggerFactory.getLogger(OAuth2AuthorizationConverter::class.java)
         }
     }
 
@@ -58,8 +69,7 @@ class OAuth2AuthorizationConverter private constructor() {
         }
         val out = ByteArrayOutputStream()
         val `in` = ByteArrayInputStream(bytes)
-        GZIPInputStream(`in`).use {
-            stream->
+        GZIPInputStream(`in`).use { stream ->
             val buffer = ByteArray(256)
             var n: Int
             while ((stream.read(buffer).also { n = it }) >= 0) {
@@ -98,8 +108,8 @@ class OAuth2AuthorizationConverter private constructor() {
     }
 
 
-    private fun writeMap(data: Map<String, Any>): ByteArray? {
-        if(data.isNotEmpty()) {
+    fun writeMap(data: Map<String, Any>): ByteArray? {
+        if (data.isNotEmpty()) {
             return try {
                 objectMapper.writeValueAsBytes(data)
             } catch (ex: Exception) {
@@ -120,23 +130,80 @@ class OAuth2AuthorizationConverter private constructor() {
         }
     }
 
-    private fun <T : AbstractOAuth2Token, O : TokenPlainObject> parseToken(
+    internal fun ITokenPlainObject.fillMetadata(metadata: MutableMap<String, Any>) {
+        this.invalidated?.let {
+            metadata[OAuth2Authorization.Token.INVALIDATED_METADATA_NAME] = it
+        }
+
+        this.claims?.let { claims ->
+
+            val claimRead = mutableMapOf<String, Any?>()
+
+            for (claim in claims) {
+                if (claim.key == OAuth2Constants.CLAIM_AUD && claim.value.type == MetadataType.String) {
+                    claimRead[claim.key] = (claim.value.getValue() as String).split(",")
+                    continue
+                }
+                if (claim.key == OAuth2Constants.CLAIM_AUTHORITIES && claim.value.type == MetadataType.String) {
+                    claimRead[claim.key] = (claim.value.getValue() as String).split(",")
+                    continue
+                }
+                claimRead[claim.key] = claim.value.getValue()
+            }
+            metadata[OAuth2Authorization.Token.CLAIMS_METADATA_NAME] = claimRead
+        }
+    }
+
+    fun <T : AbstractOAuth2Token, TOut : ITokenPlainObject> parseToken(
         token: OAuth2Authorization.Token<T>?,
-        objectType: KClass<O>,
-        customizer: ((t: OAuth2Authorization.Token<T>, o: O) -> Unit)? = null
-    ): O? {
+        factory: (() -> TOut),
+        customizer: ((input: OAuth2Authorization.Token<T>, output: TOut) -> Unit)
+    ): TOut? {
 
         val t = token?.token
         if (t != null && !t.tokenValue.isNullOrBlank()) {
-            return objectType.createInstance().apply {
+            return factory().apply {
                 this.tokenValue = t.tokenValue
                 this.issuedAtEpochSecond = t.issuedAt?.epochSecond
                 this.expiresAtEpochSecond = t.expiresAt?.epochSecond
-                this.metadata = writeMap(token.metadata)
-                customizer?.invoke(token, this)
+                this.invalidated = token.metadata[OAuth2Authorization.Token.INVALIDATED_METADATA_NAME] as? Boolean
+
+                val claimValues = mutableMapOf<String, MetadataTypedValue>()
+                val claims = token.metadata[OAuth2Authorization.Token.CLAIMS_METADATA_NAME]
+                if (claims is Map<*, *>) {
+                    for (kv in claims) {
+                        val key = kv.key
+                        val value = kv.value
+                        if (key == OAuth2Constants.CLAIM_AUD && value is Collection<*> && value.all { it is String }) {
+                            val aud = value.joinToString(",")
+                            claimValues[OAuth2Constants.CLAIM_AUD] = aud.toMetadataValue()
+                            continue
+                        }
+                        if (key == OAuth2Constants.CLAIM_AUTHORITIES && value is Collection<*> && value.all { it is String }) {
+                            val aud = value.joinToString(",")
+                            claimValues[OAuth2Constants.CLAIM_AUTHORITIES] = aud.toMetadataValue()
+                            continue
+                        }
+                        if (key is String && value != null) {
+                            val typedValue = value.toMetadataValue()
+                            claimValues[key] = typedValue
+                        } else {
+                            logger.error("Unsupported token claim, key: $key, value: $value")
+                        }
+                    }
+                    this.claims = claimValues
+                    customizer.invoke(token, this)
+                }
             }
         }
         return null
+    }
+
+    fun <T : AbstractOAuth2Token, TOut : ITokenPlainObject> parseToken(
+        token: OAuth2Authorization.Token<T>?,
+        factory: (() -> TOut),
+    ): TOut? {
+        return parseToken(token, factory, customizer = { p1, p2 -> })
     }
 
 
@@ -147,9 +214,19 @@ class OAuth2AuthorizationConverter private constructor() {
         plainObject.clientId = authorization.registeredClientId
         plainObject.principalName = authorization.principalName
         plainObject.grantType = authorization.authorizationGrantType.value
+        plainObject.scopes = authorization.authorizedScopes
 
-        val attributes = writeMap(authorization.attributes)
-        plainObject.attributes = attributes
+        authorization.attributes[Principal::class.java.name]?.let {
+
+            if(it is Authentication && it.principal is ITwoFactorUserDetails) {
+                plainObject.user = (it.principal as ITwoFactorUserDetails).toPlainObject()
+            }else if(it is ITwoFactorUserDetails) {
+                plainObject.user = it.toPlainObject()
+            }
+        }
+
+//        val attributes = writeMap(authorization.attributes)
+//        plainObject.attributes = attributes
 
         val authorizationState = authorization.getAttribute<String>(OAuth2ParameterNames.STATE)
         if (!authorizationState.isNullOrBlank()) {
@@ -158,11 +235,11 @@ class OAuth2AuthorizationConverter private constructor() {
 
         val authorizationCode = authorization.getToken(OAuth2AuthorizationCode::class.java)
         if (authorizationCode != null) {
-            plainObject.authorizationCodeToken = parseToken(authorizationCode, TokenPlainObject::class)
+            plainObject.authorizationCodeToken = parseToken(authorizationCode) { TokenPlainObject() }
         }
 
         val accessToken = authorization.getToken(OAuth2AccessToken::class.java)
-        plainObject.accessToken = parseToken(accessToken, AccessTokenPlainObject::class) { t, o ->
+        plainObject.accessToken = parseToken(accessToken, { AccessTokenPlainObject() }) { t, o ->
             o.tokenType = t.token.tokenType.value
             if (t.token.scopes.isNotEmpty()) {
                 o.scopes = t.token.scopes.toTypedArray()
@@ -170,11 +247,11 @@ class OAuth2AuthorizationConverter private constructor() {
         }
 
         val oidcIdToken = authorization.getToken(OidcIdToken::class.java)
-        plainObject.oidcIdToken = parseToken(oidcIdToken, TokenPlainObject::class)
+        plainObject.oidcIdToken = parseToken(oidcIdToken) { TokenPlainObject() }
 
 
         val refreshToken = authorization.refreshToken
-        plainObject.refreshToken = parseToken(refreshToken, TokenPlainObject::class)
+        plainObject.refreshToken = parseToken(refreshToken) { TokenPlainObject() }
 
         return plainObject
     }
@@ -189,23 +266,42 @@ class OAuth2AuthorizationConverter private constructor() {
             .redirectUri("https://localhost")
             .build()
         val builder = OAuth2Authorization.withRegisteredClient(client)
-        val attributes = readMap(plainObject.attributes)
+
+        val user = plainObject.user
+        if(user != null) {
+            builder.attribute(
+                Principal::class.java.name,
+                UsernamePasswordAuthenticationToken.authenticated(
+                    ITwoFactorUserDetails.fromPlainObject(user),
+                    null,
+                    user.authorities.map { a-> SimpleGrantedAuthority(a) })
+            )
+        }else {
+            builder.attribute(Principal::class.java.name,
+                UsernamePasswordAuthenticationToken.authenticated(
+                    SimplePrincipal(plainObject.principalName),
+                    null,
+                    listOf()
+                ))
+        }
 
         builder.id(plainObject.id)
             .principalName(plainObject.principalName)
             .authorizationGrantType(AuthorizationGrantType(plainObject.grantType))
-            .attributes {
-                it.putAll(attributes)
-            }
+            .authorizedScopes(plainObject.scopes)
+            .principalName(plainObject.principalName)
+//            .attributes {
+//                it.putAll(attributes)
+//            }
 
         val state = plainObject.state
         if (!state.isNullOrBlank()) {
             builder.attribute(OAuth2ParameterNames.STATE, state)
         }
 
+
         val code = plainObject.authorizationCodeToken
         if (code != null) {
-            val authorizationCodeMetadata = readMap(code.metadata)
             val authorizationCode = OAuth2AuthorizationCode(
                 code.tokenValue,
                 code.issuedAtEpochSecond.toInstant(),
@@ -214,18 +310,16 @@ class OAuth2AuthorizationConverter private constructor() {
             builder.token(
                 authorizationCode
             ) { metadata ->
-                metadata.putAll(
-                    authorizationCodeMetadata
-                )
+                code.fillMetadata(metadata)
             }
         }
 
         val accessToken = plainObject.accessToken
         if (accessToken != null) {
-            val accessTokenMetadata = readMap(accessToken.metadata)
             var tokenType: OAuth2AccessToken.TokenType? = null
-            if (OAuth2AccessToken.TokenType.BEARER.value.equals(accessToken.tokenType, ignoreCase = true)) {
-                tokenType = OAuth2AccessToken.TokenType.BEARER
+            when (accessToken.tokenType) {
+                OAuth2AccessToken.TokenType.BEARER.value -> tokenType = OAuth2AccessToken.TokenType.BEARER
+                OAuth2AccessToken.TokenType.DPOP.value -> tokenType = OAuth2AccessToken.TokenType.DPOP
             }
             val t = OAuth2AccessToken(
                 tokenType,
@@ -235,33 +329,25 @@ class OAuth2AuthorizationConverter private constructor() {
                 accessToken.scopes.toSet()
             )
             builder.token(t) { metadata ->
-                metadata.putAll(
-                    accessTokenMetadata
-                )
+                accessToken.fillMetadata(metadata)
             }
         }
 
         val oidcIdToken = plainObject.oidcIdToken
         if (oidcIdToken != null) {
-            val oidcTokenMetadata = readMap(oidcIdToken.metadata)
-            @Suppress("UNCHECKED_CAST") val t = OidcIdToken(
-                oidcIdToken.tokenValue,
-                oidcIdToken.issuedAtEpochSecond.toInstant(),
-                oidcIdToken.expiresAtEpochSecond.toInstant(),
-                oidcTokenMetadata[OAuth2Authorization.Token.CLAIMS_METADATA_NAME] as? Map<String, Any>
-            )
+            val token = OidcIdToken.withTokenValue(oidcIdToken.tokenValue)
+                .issuedAt(oidcIdToken.issuedAtEpochSecond.toInstant())
+                .expiresAt(oidcIdToken.expiresAtEpochSecond.toInstant())
+                .build()
             builder.token(
-                t
+                token
             ) { metadata: MutableMap<String, Any> ->
-                metadata.putAll(
-                    oidcTokenMetadata
-                )
+                oidcIdToken.fillMetadata(metadata)
             }
         }
 
         val refreshToken = plainObject.refreshToken
         if (refreshToken != null) {
-            val refreshTokenMetadata = readMap(refreshToken.metadata)
             val t = OAuth2RefreshToken(
                 refreshToken.tokenValue,
                 refreshToken.issuedAtEpochSecond.toInstant(),
@@ -270,9 +356,7 @@ class OAuth2AuthorizationConverter private constructor() {
             builder.token(
                 t
             ) { metadata ->
-                metadata.putAll(
-                    refreshTokenMetadata
-                )
+                refreshToken.fillMetadata(metadata)
             }
         }
         return builder.build()

@@ -1,8 +1,13 @@
 package com.labijie.infra.oauth2
 
+import com.labijie.infra.oauth2.MetadataTypedValue.Companion.getValue
+import com.labijie.infra.oauth2.MetadataTypedValue.Companion.toMetadataValue
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import java.io.Serializable
+import java.net.URLDecoder
+import java.net.URLEncoder
+import kotlin.collections.ArrayList
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,6 +25,7 @@ class SimpleTwoFactorUserDetails(
         private val twoFactorEnabled: Boolean = false,
         private val authorities:ArrayList<SimpleGrantedAuthority> = arrayListOf(),
         private val attachedFields:Map<String, String> = mapOf()) : ITwoFactorUserDetails, Serializable {
+
 
     override fun getUserId(): String {
         return this.userid

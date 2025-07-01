@@ -27,7 +27,6 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository
@@ -43,7 +42,7 @@ import javax.sql.DataSource
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(JdbcTemplateAutoConfiguration::class)
 @EnableConfigurationProperties(OAuth2ServerProperties::class)
-class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
+class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
 
     private lateinit var springContext: ApplicationContext
 
@@ -62,14 +61,24 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
         @Bean
         @ConditionalOnMissingBean(RegisteredClientRepository::class)
         @ConditionalOnBean(JdbcTemplate::class)
-        @ConditionalOnProperty(prefix = "infra.oauth2", name = ["client-repository"], havingValue = "jdbc", matchIfMissing = false)
+        @ConditionalOnProperty(
+            prefix = "infra.oauth2",
+            name = ["client-repository"],
+            havingValue = "jdbc",
+            matchIfMissing = false
+        )
         fun jdbcClientRepository(jdbcTemplate: JdbcTemplate): JdbcRegisteredClientRepository {
             return JdbcRegisteredClientRepository(jdbcTemplate)
         }
 
         @Bean
         @ConditionalOnMissingBean(RegisteredClientRepository::class)
-        @ConditionalOnProperty(prefix = "infra.oauth2", name = ["client-repository"], havingValue = "memory", matchIfMissing = true)
+        @ConditionalOnProperty(
+            prefix = "infra.oauth2",
+            name = ["client-repository"],
+            havingValue = "memory",
+            matchIfMissing = true
+        )
         fun inMemoryClientRepository(): InMemoryRegisteredClientRepository {
             val client = OAuth2ServerUtils.createDefaultClientRegistration(properties)
             return InMemoryRegisteredClientRepository(client)
@@ -82,7 +91,7 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
     }
 
     @Bean
-    fun passwordPrincipalResolver(): PasswordPrincipalResolver{
+    fun passwordPrincipalResolver(): PasswordPrincipalResolver {
         return PasswordPrincipalResolver()
     }
 
@@ -98,7 +107,8 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
     @ConditionalOnClass(name = ["com.labijie.caching.redis.configuration.RedisCachingAutoConfiguration"])
     class OAuth2KryoConfiguration {
         @Bean
-        fun oauth2KryoCacheDataSerializerCustomizer(): OAuth2KryoCacheDataSerializerCustomizer = OAuth2KryoCacheDataSerializerCustomizer()
+        fun oauth2KryoCacheDataSerializerCustomizer(): OAuth2KryoCacheDataSerializerCustomizer =
+            OAuth2KryoCacheDataSerializerCustomizer()
     }
 
 
@@ -121,70 +131,66 @@ class OAuth2DependenciesAutoConfiguration: ApplicationContextAware {
 
     @Bean
     @ConditionalOnMissingBean(AuthorizationServerSettings::class)
-    fun authorizationServerSettings(properties: OAuth2ServerProperties, environment: Environment): AuthorizationServerSettings {
+    fun authorizationServerSettings(
+        properties: OAuth2ServerProperties,
+        environment: Environment
+    ): AuthorizationServerSettings {
 
         val issuser = environment.getProperty("spring.security.oauth2.authorizationserver.issuer")
 
-        return AuthorizationServerSettings.builder().let {
-            builder->
+        return AuthorizationServerSettings.builder().let { builder ->
             issuser?.let {
                 builder.issuer(it)
             } ?: builder
         }
-        .build()
+            .build()
     }
 
-
-    @Bean
+    @Configuration(proxyBeanMethods = false)
     @ConditionalOnMissingBean(OAuth2AuthorizationService::class)
-    fun oauth2AuthorizationService(properties: OAuth2ServerProperties) : OAuth2AuthorizationService {
-        val svc = when (properties.authorizationService.provider) {
-            "caching" -> {
-                val cache = springContext.getBeanProvider(ICacheManager::class.java).firstOrNull()
-                if (cache != null) {
-                    logger.info("Caching oauth2 authorization service has been used, cache region: ${properties.authorizationService.cachingRegion.ifNullOrBlank { "default" }}")
-                    CachingOAuth2AuthorizationService(cache, properties.authorizationService.cachingRegion)
-                } else {
-                    val msg = StringBuilder()
-                        .appendLine("OAuth2 authorization service configured as 'caching'," +
-                                "but ICacheManager bean missed, add one of follow packages to fix it:")
-                        .appendLine("com.labijie:caching-kotlin-core-starter")
-                        .appendLine("com.labijie:caching-kotlin-redis-starter")
-                        .appendLine("Now, InMemoryOAuth2AuthorizationService will be used.")
-                        .appendLine()
-                        .appendLine("OAuth2 authorization service fallback to in memory provider.")
-                        .toString()
-                    logger.warn(msg)
-                    null
-                }
-            }
-            "jdbc" -> {
-                val jdbcTemplate = springContext.getBeanProvider(JdbcTemplate::class.java).firstOrNull()
-                if (jdbcTemplate != null) {
-                    val clientRepo = springContext.getBean(RegisteredClientRepository::class.java)
-                    JdbcOAuth2AuthorizationService(jdbcTemplate, clientRepo)
-                } else {
-                    val msg = StringBuilder()
-                        .appendLine("OAuth2 authorization service configured as 'jdbc', but JdbcTemplate bean missed, add follow package to fix it:")
-                        .appendLine("org.springframework.boot:spring-boot-starter-jdbc")
-                        .appendLine("Now, InMemoryOAuth2AuthorizationService will be used.")
-                        .appendLine()
-                        .appendLine("OAuth2 authorization service fallback to in memory provider.")
-                        .toString()
-                    logger.warn(msg)
-                    null
-                }
-            }
-            else -> InMemoryOAuth2AuthorizationService()
+    @ConditionalOnClass(name = ["com.labijie.caching.ICacheManager"])
+    @ConditionalOnProperty(
+        name = ["infra.oauth2.authorization-server.authorization-service.provider"],
+        havingValue = "caching",
+        matchIfMissing = true
+    )
+    class CachingAuthorizationServiceAutoConfiguration {
+        @Bean
+        fun cachingOAuth2AuthorizationService(
+            cacheManager: ICacheManager,
+            properties: OAuth2ServerProperties
+        ): CachingOAuth2AuthorizationService {
+            logger.info("Caching oauth2 authorization service has been used, cache region: ${properties.authorizationService.cachingRegion.ifNullOrBlank { "default" }}")
+            return CachingOAuth2AuthorizationService(
+                cacheManager,
+                properties.authorizationService.cachingRegion
+            )
         }
-        return svc ?: InMemoryOAuth2AuthorizationService()
     }
 
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnMissingBean(OAuth2AuthorizationService::class)
+    @ConditionalOnProperty(
+        name = ["infra.oauth2.authorization-server.authorization-service.provider"],
+        havingValue = "jdbc",
+        matchIfMissing = true
+    )
+    class JdbcAuthorizationServiceAutoConfiguration {
+        @Bean
+        @ConditionalOnBean(JdbcTemplate::class)
+        fun cachingOAuth2AuthorizationService(
+            jdbcTemplate: JdbcTemplate,
+            registeredClientRepository: RegisteredClientRepository,
+            properties: OAuth2ServerProperties
+        ): JdbcOAuth2AuthorizationService {
+            return JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository)
+        }
+    }
 
     @Bean
     @ConditionalOnMissingBean(OAuth2Initializer::class)
     @ConditionalOnBean(DataSource::class)
-    fun oauth2Initializer(dataSource: DataSource, properties: OAuth2ServerProperties) : OAuth2Initializer {
+    fun oauth2Initializer(dataSource: DataSource, properties: OAuth2ServerProperties): OAuth2Initializer {
         return OAuth2Initializer(dataSource, properties)
     }
 
