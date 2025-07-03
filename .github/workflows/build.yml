@@ -31,8 +31,8 @@ env:
   MAVEN_USER: ${{ secrets.MAVEN_USER_NAME }}
   MAVEN_KEY: ${{ secrets.MAVEN_USER_PWD }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  PUB_MAVEN: ${{ github.event.inputs.maven_pub }}
-  PUB_GITHUB: ${{ github.event.inputs.github_pub }}
+  PUB_MAVEN: ${{ github.event.inputs.maven_pub || 'Yes' }}
+  PUB_GITHUB: ${{ github.event.inputs.github_pub || 'No' }}
 jobs:
   build:
 
