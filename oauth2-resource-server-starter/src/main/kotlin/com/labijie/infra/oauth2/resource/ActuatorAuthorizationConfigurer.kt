@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configurers.AuthorizeH
 class ActuatorAuthorizationConfigurer : IResourceAuthorizationConfigurer {
 
     override fun configure(registry: AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry) {
-        registry.requestMatchers(EndpointRequest.toAnyEndpoint()).permitAll()
+        registry.requestMatchers(EndpointRequest.toAnyEndpoint())
+            .permitAll()
     }
 }

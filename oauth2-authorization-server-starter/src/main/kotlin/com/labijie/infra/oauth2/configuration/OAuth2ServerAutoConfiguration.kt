@@ -18,6 +18,7 @@ import com.labijie.infra.utils.ifNullOrBlank
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
+import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,6 +38,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.authentication.ClientSecretAuthenticationProvider
@@ -46,6 +48,9 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
+import org.springframework.security.web.util.matcher.OrRequestMatcher
+import org.springframework.security.web.util.matcher.RequestMatcher
 
 
 @Configuration(proxyBeanMethods = false)
@@ -55,7 +60,7 @@ class OAuth2ServerAutoConfiguration(
     private val serverProperties: OAuth2ServerProperties
 ) {
     companion object {
-        private val LOGGER: Logger by lazy {
+        private val logger: Logger by lazy {
             LoggerFactory.getLogger(OAuth2ServerAutoConfiguration::class.java)
         }
     }
@@ -133,6 +138,8 @@ class OAuth2ServerAutoConfiguration(
         )
     }
 
+
+
     @Configuration(proxyBeanMethods = false)
     protected class SecurityFilterChainConfiguration : ApplicationContextAware {
 
@@ -181,27 +188,34 @@ class OAuth2ServerAutoConfiguration(
              // Enable OpenID Connect 1.0
 
 
-            http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
+            val checkPointerMatcher = PathPatternRequestMatcher.withDefaults().matcher(ENDPOINT_CHECK_TOKEN)
+
+
+            val oauth2EndPoints = OrRequestMatcher(authorizationServerConfigurer.endpointsMatcher, checkPointerMatcher)
+
+
+            http.ignoreCSRF(oauth2EndPoints)
+
+            http.securityMatcher(oauth2EndPoints)
                 .authorizeHttpRequests {
                     it.requestMatchers(HttpMethod.OPTIONS).permitAll()
                     it.requestMatchers(ENDPOINT_CHECK_TOKEN).permitAll()
                     it.anyRequest().authenticated()
                 }
-                .csrf {
-                    it.disable()
-                }
                 .cors {
 
                 }.with(authorizationServerConfigurer) {
-                    configurer -> configurer.oidc(Customizer.withDefaults())
+                    configurer -> configurer.oidc( Customizer.withDefaults())
                 }
                 .sessionManagement {
+                    it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                     it.disable()
                 }
                 .exceptionHandling {
                     it.accessDeniedHandler(OAuth2ExceptionHandler.getInstance(this.springContext))
                 }
 
+            logger.info("OAuth2 authorization server configured.")
 
             return http.formLogin {
                 it.disable()
@@ -245,7 +259,7 @@ class OAuth2ServerAutoConfiguration(
                         .appendLine("All above configuration can be pem file content, file path, or classpath resource file path.")
                         .toString()
 
-                    LOGGER.warn(warn)
+                    logger.warn(warn)
                 }
 
                 val information = StringBuilder()
@@ -272,7 +286,7 @@ class OAuth2ServerAutoConfiguration(
                               jwk-set-uri: "http://localhost:${serverProperties.port ?: 8080}${settings.jwkSetEndpoint}"
                 """.trimIndent())
 
-                LOGGER.info(information.toString())
+                logger.info(information.toString())
             }
 
 

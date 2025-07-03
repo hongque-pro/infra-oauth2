@@ -1,7 +1,6 @@
 package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.*
-import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
 import com.labijie.infra.oauth2.resource.*
 import com.labijie.infra.oauth2.resource.component.*
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
@@ -24,7 +23,6 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
-import org.springframework.context.annotation.ImportRuntimeHints
 import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
@@ -46,8 +44,6 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 import java.io.IOException
 import java.security.interfaces.RSAPublicKey
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 
 @EnableWebSecurity
@@ -223,13 +219,18 @@ class ResourceServerAutoConfiguration(
                 it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 it.disable()
             }
+
+//            val notOAuth2Matcher = PathPatternRequestMatcher.withDefaults().matcher("/oauth2/**").let {
+//                NegatedRequestMatcher(it)
+//            }
+
             //http.cors(Customizer.withDefaults())
             val settings = http
                 .authorizeHttpRequests { authorize ->
                     authorize.requestMatchers(*getPermitAllUrlsFromController()).permitAll()
                     authorize.withObjectPostProcessor(RequestMatcherPostProcessor)
                     authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                    authorize.requestMatchers("${baseUrl}/oauth2/unauthorized", ENDPOINT_CHECK_TOKEN).permitAll()
+                    authorize.requestMatchers("${baseUrl}/oauth2/unauthorized").permitAll()
                     resourceConfigurers.orderedStream().forEach {
                         it.configure(authorize)
                     }

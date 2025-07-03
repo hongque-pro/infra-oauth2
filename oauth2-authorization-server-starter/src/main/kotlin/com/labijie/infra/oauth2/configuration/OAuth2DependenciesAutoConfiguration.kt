@@ -14,6 +14,7 @@ import com.labijie.infra.oauth2.service.OAuth2Initializer
 import com.labijie.infra.utils.ifNullOrBlank
 import com.labijie.infra.utils.logger
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.*
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration
@@ -22,8 +23,12 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.core.env.Environment
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -33,18 +38,21 @@ import org.springframework.security.oauth2.server.authorization.client.InMemoryR
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
+import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import javax.sql.DataSource
 
 
+@EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(JdbcTemplateAutoConfiguration::class)
 @EnableConfigurationProperties(OAuth2ServerProperties::class)
 class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
 
     private lateinit var springContext: ApplicationContext
+
 
     @Bean
     @ConditionalOnMissingBean(UserDetailsService::class)

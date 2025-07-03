@@ -1,7 +1,8 @@
 package com.labijie.infra.oauth2.mvc
 
-import com.labijie.infra.oauth2.OAuth2Constants
 import com.labijie.infra.oauth2.IOAuth2ServerJwtCodec
+import com.labijie.infra.oauth2.OAuth2Constants
+import jakarta.annotation.security.PermitAll
 import org.springframework.security.oauth2.jwt.JwtException
 import org.springframework.web.bind.annotation.*
 import java.time.Instant

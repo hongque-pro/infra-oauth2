@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes
 import org.springframework.security.oauth2.jwt.JwtClaimNames
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -103,7 +104,7 @@ class OAuth2ServerTester : OAuth2Tester() {
 
         val result = mockMvc.perform(
             post("/fake-login")
-            .accept(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
         )
             .andExpect(status().isOk)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -229,7 +230,7 @@ class OAuth2ServerTester : OAuth2Tester() {
                     )
                 )
         )
-        .andExpect(status().isOk)
+            .andExpect(status().isOk)
 
         r.readToMap()
     }

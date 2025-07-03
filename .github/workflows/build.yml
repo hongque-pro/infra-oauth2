@@ -40,11 +40,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           distribution: 'microsoft'
-          java-version: 17
+          java-version: 21
       - name: PGP Prepare
         run: |
           echo "Create .gpg key"
@@ -55,18 +55,11 @@ jobs:
           sed -i -e "s,signing.secretKeyRingFile=,signing.secretKeyRingFile=$GITHUB_WORKSPACE/release.gpg,g" gradle.properties
           cat gradle.properties
       - name: Build with Gradle
-        run: gradle clean build -x test
+        run: gradle clean fastBuild
       - name: Publish To GitHub Packages
-        run: |
-          if [ "$PUB_GITHUB" == "Yes" ]; then
-            gradle publishToGitHubPackages
-          else
-            echo "Skip github packages publish"
+        if: ${{ env.PUB_GITHUB == 'Yes' }}
+        run: gradle publishToGitHubPackages
           fi
       - name: Publish To Maven Central
-        run: |
-          if [ "PUB_MAVEN" == "No" ]; then
-            echo "Skip maven publish"
-          else
-            gradle publishToSonatype closeAndReleaseSonatypeStagingRepository
-          fi
+        if: ${{ env.PUB_MAVEN == 'Yes' }}
+        run: gradle publishToSonatype closeAndReleaseSonatypeStagingRepository

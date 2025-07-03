@@ -25,6 +25,7 @@ class ResourceServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
 
         hints.reflection().registerType(ResourceServerAutoConfiguration::class.java)
         hints.reflection().registerType(IResourceAuthorizationConfigurer::class.java)
+        hints.reflection().registerType(TypeReference.of("org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"))
 
 
         hints.reflection()
