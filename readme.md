@@ -3,6 +3,7 @@
 ![maven central version](https://img.shields.io/maven-central/v/com.labijie.infra/oauth2-commons?logo=java)
 ![workflow status](https://img.shields.io/github/actions/workflow/status/hongque-pro/infra-oauth2/build.yml?branch=main)
 ![license](https://img.shields.io/github/license/hongque-pro/infra-oauth2?style=flat-square)
+![Static Badge](https://img.shields.io/badge/GraalVM-supported-green?style=flat&logoColor=blue&labelColor=orange)
 
 基于 [**Spring-Authorization-Server**](https://github.com/spring-projects/spring-authorization-server)  的 OAuth2 服务器扩展。 
 频闭 Spring Security 和 Spring Authorization Server 复杂性，专注于业务。
