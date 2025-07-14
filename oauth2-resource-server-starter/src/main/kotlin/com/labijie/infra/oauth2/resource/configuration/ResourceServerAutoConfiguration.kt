@@ -257,6 +257,12 @@ class ResourceServerAutoConfiguration(
             if(clientRegistrationRepository != null) {
                 val requestRepository = oauth2AuthorizationRequestRepository ?: HttpCookieOAuth2AuthorizationRequestRepository()
                 settings.oauth2Login {
+                    it.tokenEndpoint {
+                        endpoint->
+                        endpoint.accessTokenResponseClient(DelegatingAuthorizationCodeTokenResponseClient().apply {
+                            setApplicationContext(applicationContext)
+                        })
+                    }
                     it.authorizationEndpoint {
                         endpoint->
                         endpoint.authorizationRequestRepository(requestRepository)

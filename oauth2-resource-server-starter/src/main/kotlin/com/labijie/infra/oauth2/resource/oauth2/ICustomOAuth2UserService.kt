@@ -1,5 +1,6 @@
-package com.labijie.infra.oauth2.resource.component
+package com.labijie.infra.oauth2.resource.oauth2
 
+import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService
 import org.springframework.security.oauth2.core.user.OAuth2User
@@ -11,5 +12,5 @@ import org.springframework.security.oauth2.core.user.OAuth2User
  *
  */
 interface ICustomOAuth2UserService : OAuth2UserService<OAuth2UserRequest, OAuth2User> {
-    fun isSupported(registrationId: String): Boolean
+    fun isSupported(client: ClientRegistration): Boolean
 }

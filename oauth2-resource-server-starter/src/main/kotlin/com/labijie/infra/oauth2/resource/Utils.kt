@@ -6,6 +6,7 @@ import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorExpressionRoo
 import org.springframework.security.authorization.AuthorityAuthorizationManager
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer
 import org.springframework.security.core.Authentication
+import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient
 import org.springframework.security.oauth2.jwt.JwtClaimAccessor
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -77,6 +78,8 @@ private fun readIsTwoFactorGranted(details: Map<*, *>?): Boolean {
         false
     }
 }
+
+internal val DefaultAuthorizationCodeTokenResponseClientClient = RestClientAuthorizationCodeTokenResponseClient()
 
 
 

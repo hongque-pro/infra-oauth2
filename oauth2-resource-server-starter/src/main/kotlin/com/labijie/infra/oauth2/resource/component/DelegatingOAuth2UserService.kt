@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.resource.component
 
+import com.labijie.infra.oauth2.resource.oauth2.ICustomOAuth2UserService
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
@@ -20,18 +21,12 @@ class DelegatingOAuth2UserService : OAuth2UserService<OAuth2UserRequest, OAuth2U
     private lateinit var applicationContext: ApplicationContext
 
     private val services by lazy {
-        applicationContext.getBeanProvider(ICustomOAuth2UserService::class.java).orderedStream().filter {
-            it !is DefaultOAuth2UserService
-        }.toList()
+        applicationContext.getBeanProvider(ICustomOAuth2UserService::class.java).orderedStream().toList()
     }
 
 
     override fun loadUser(userRequest: OAuth2UserRequest): OAuth2User? {
-        val id = userRequest.clientRegistration.registrationId
-
-        return services.find { it.isSupported(id) }?.let {
-            svc->svc.loadUser(userRequest)
-        } ?: defaultService.loadUser(userRequest)
+        return services.find { it.isSupported(userRequest.clientRegistration) }?.loadUser(userRequest) ?: defaultService.loadUser(userRequest)
     }
 
     override fun setApplicationContext(applicationContext: ApplicationContext) {
