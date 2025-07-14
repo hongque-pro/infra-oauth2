@@ -261,6 +261,12 @@ class ResourceServerAutoConfiguration(
                         endpoint->
                         endpoint.authorizationRequestRepository(requestRepository)
                     }
+                    it.userInfoEndpoint {
+                        endpoint->
+                        endpoint.userService(DelegatingOAuth2UserService().apply {
+                            setApplicationContext(applicationContext)
+                        })
+                    }
                     it.loginPage("${baseUrl}/oauth2/unauthorized")
                     customizers.orderedStream().forEach { c ->
                         c.customize(resourceServerProperties, it)
