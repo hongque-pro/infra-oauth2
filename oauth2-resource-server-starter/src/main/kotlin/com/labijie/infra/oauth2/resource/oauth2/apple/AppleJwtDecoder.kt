@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2Clien
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.MediaType
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.web.client.RestClient
 import java.net.URI
 import java.text.ParseException
@@ -31,8 +32,8 @@ class AppleJwtDecoder(
 
     private val client by lazy {
         val context = applicationContext ?:  throw RuntimeException("ApplicationContext is null")
-        val clientProperties = context.getBean<OAuth2ClientProperties>()
-        val client = clientProperties.registration["apple"] ?: throw RuntimeException("Apple oauth2 client has not been registered")
+        val clientProperties = context.getBean<ClientRegistrationRepository>()
+        val client = clientProperties.findByRegistrationId("apple") ?: throw RuntimeException("Apple oauth2 client has not been registered (name: apple)")
         client
     }
     // 公钥缓存
