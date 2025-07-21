@@ -14,5 +14,6 @@ logging:
 spring:
   security:
     oauth2:
+
       authorizationserver:
         issuer: https://testing.com

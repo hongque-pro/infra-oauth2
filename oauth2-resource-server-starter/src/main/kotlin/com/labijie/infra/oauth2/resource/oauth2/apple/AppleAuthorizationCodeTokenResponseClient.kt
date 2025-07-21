@@ -38,8 +38,11 @@ class AppleAuthorizationCodeTokenResponseClient(
 
         if (clientRegistration.registrationId.lowercase() == "apple") {
 
+            val scopes = if(clientRegistration.scopes.isEmpty()) setOf("email", "fullname") else clientRegistration.scopes
+
             val updatedRegistration = ClientRegistration.withClientRegistration(clientRegistration)
                 .clientSecret(generateClientSecret(clientRegistration))
+                .scope(scopes)
                 .build()
 
             val updatedRequest = OAuth2AuthorizationCodeGrantRequest(updatedRegistration, request.authorizationExchange)

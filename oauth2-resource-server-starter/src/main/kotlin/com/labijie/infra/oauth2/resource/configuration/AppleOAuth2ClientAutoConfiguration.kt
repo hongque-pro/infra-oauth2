@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.resource.oauth2.apple.AppleAuthorizationCodeTokenResponseClient
+import com.labijie.infra.oauth2.resource.oauth2.apple.AppleJwtDecoder
 import com.labijie.infra.oauth2.resource.oauth2.apple.AppleOAuth2UserService
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -30,5 +31,10 @@ class AppleOAuth2ClientAutoConfiguration {
     fun appleOAuth2UserService(): AppleOAuth2UserService
     {
         return AppleOAuth2UserService()
+    }
+
+    @Bean
+    fun appleJwtDecoder(): AppleJwtDecoder {
+        return AppleJwtDecoder()
     }
 }
