@@ -1,13 +1,11 @@
-package com.labijie.infra.oauth2.resource.component
+package com.labijie.infra.oauth2.client
 
-import com.labijie.infra.oauth2.resource.oauth2.ICustomOAuth2UserService
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService
 import org.springframework.security.oauth2.core.user.OAuth2User
-import kotlin.getValue
 
 /**
  *

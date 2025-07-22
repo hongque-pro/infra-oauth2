@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
@@ -171,20 +172,13 @@ class ResourceServerAutoConfiguration(
     @Configuration(proxyBeanMethods = false)
     class ResourceServerSecurityFilterChainConfiguration(
         @param: Autowired(required = false)
-        private val clientRegistrationRepository: ClientRegistrationRepository?,
-        @param: Autowired(required = false)
         private val cookieDecoder: IOAuth2TokenCookieDecoder?,
         private val resourceServerProperties: ResourceServerProperties,
-        private val customizers: ObjectProvider<IOAuth2LoginCustomizer>,
         private val jwtDecoder: JwtDecoder,
         private val resourceConfigurers: ObjectProvider<IResourceAuthorizationConfigurer>
     ): ApplicationContextAware {
 
         private lateinit var applicationContext: ApplicationContext
-
-        @Autowired(required = false)
-        private var oauth2AuthorizationRequestRepository: AuthorizationRequestRepository<OAuth2AuthorizationRequest>? = null
-
 
         private fun getPermitAllUrlsFromController(): Array<String> {
             val requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping::class.java)
@@ -203,7 +197,7 @@ class ResourceServerAutoConfiguration(
         }
 
         @Bean
-        @Order(SecurityProperties.BASIC_AUTH_ORDER - 10)
+        @Order(Ordered.LOWEST_PRECEDENCE)
         fun resourceServerSecurityChain(http: HttpSecurity): SecurityFilterChain {
 
             val baseUrl = resourceServerProperties.baseUrl.removeSuffix("/")
@@ -247,38 +241,11 @@ class ResourceServerAutoConfiguration(
                 })
                 obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint(applicationContext))
             }
-            settings.authorizeHttpRequests {
-
-            }
             settings.exceptionHandling {
                 it.accessDeniedHandler(OAuth2ExceptionHandler.getInstance(this.applicationContext))
             }
 
-            if(clientRegistrationRepository != null) {
-                val requestRepository = oauth2AuthorizationRequestRepository ?: HttpCookieOAuth2AuthorizationRequestRepository()
-                settings.oauth2Login {
-                    it.tokenEndpoint {
-                        endpoint->
-                        endpoint.accessTokenResponseClient(DelegatingAuthorizationCodeTokenResponseClient().apply {
-                            setApplicationContext(applicationContext)
-                        })
-                    }
-                    it.authorizationEndpoint {
-                        endpoint->
-                        endpoint.authorizationRequestRepository(requestRepository)
-                    }
-                    it.userInfoEndpoint {
-                        endpoint->
-                        endpoint.userService(DelegatingOAuth2UserService().apply {
-                            setApplicationContext(applicationContext)
-                        })
-                    }
-                    it.loginPage("${baseUrl}/oauth2/unauthorized")
-                    customizers.orderedStream().forEach { c ->
-                        c.customize(resourceServerProperties, it)
-                    }
-                }
-            }
+
 
             return settings.formLogin { it.disable() }.build()
         }

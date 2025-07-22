@@ -29,6 +29,10 @@
       "name":"infra.oauth2.authorization-server.default-client",
       "type": "com.labijie.infra.oauth2.configuration.DefaultClient",
       "description": "default oauth2 client"
+    },
+    {
+      "name": "spring.security.oauth2.client.registration.apple",
+      "type": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties"
     }
   ],
   "properties":[
@@ -116,6 +120,32 @@
       "type": "java.time.Duration",
       "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
       "defaultValue": "7d"
+    },
+
+    {
+      "name": "spring.security.oauth2.client.registration.apple.secret-validity-seconds",
+      "type": "java.lang.Integer",
+      "sourceType": "com.labijie.application.auth.configuration.AppleOAuth2ClientRegistrationProperties",
+      "description": "Apple secret timeout in seconds",
+      "defaultValue": 30
+    },
+    {
+      "name": "spring.security.oauth2.client.registration.apple.rsa-private-key",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.application.auth.configuration.AppleOAuth2ClientRegistrationProperties",
+      "description": "Private rsa key (RS256)"
+    },
+    {
+      "name": "spring.security.oauth2.client.registration.apple.teamId",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.application.auth.configuration.AppleOAuth2ClientRegistrationProperties",
+      "description": "Apple Developer Team ID"
+    },
+    {
+      "name": "spring.security.oauth2.client.registration.apple.keyId",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.application.auth.configuration.AppleOAuth2ClientRegistrationProperties",
+      "description": "KeyId for sign in with Apple"
     }
   ],
   "hints": [

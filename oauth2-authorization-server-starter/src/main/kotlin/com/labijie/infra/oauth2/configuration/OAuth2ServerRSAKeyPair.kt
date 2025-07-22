@@ -44,10 +44,10 @@ internal class OAuth2ServerRSAKeyPair(
         } else {
             val privateKey =
                 OAuth2Utils.loadContent(serverProperties.token.jwt.rsa.privateKey, RsaUtils::getPrivateKey)
-                    ?: throw IllegalArgumentException("${OAuth2ServerProperties.PRIVATE_KEY_PROPERTY_PATH} is an invalid")
+                    ?: throw IllegalArgumentException("${OAuth2ServerProperties.PRIVATE_KEY_PROPERTY_PATH} is an invalid private rsa key.")
             val publicKey =
                 OAuth2Utils.loadContent(serverProperties.token.jwt.rsa.publicKey, RsaUtils::getPublicKey)
-                    ?: throw IllegalArgumentException("${OAuth2ServerProperties.PUBLIC_KEY_PROPERTY_PATH} is an invalid")
+                    ?: throw IllegalArgumentException("${OAuth2ServerProperties.PUBLIC_KEY_PROPERTY_PATH} is an invalid public rsa key.")
             KeyPair(publicKey, privateKey)
         }
         val publicKey: RSAPublicKey = kp.public as RSAPublicKey

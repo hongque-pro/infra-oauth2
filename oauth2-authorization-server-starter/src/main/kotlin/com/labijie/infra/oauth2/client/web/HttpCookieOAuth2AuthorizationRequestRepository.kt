@@ -1,16 +1,17 @@
-/**
- * @author Anders Xiao
- * @date 2024-06-18
- */
-package com.labijie.infra.oauth2.resource.component
+package com.labijie.infra.oauth2.client.web
 
-import com.labijie.infra.oauth2.resource.CookieUtils
+import com.labijie.infra.oauth2.CookieUtils
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest
 
-
+/**
+ *
+ * @Author: Anders Xiao
+ * @Date: 2025/7/22
+ *
+ */
 class HttpCookieOAuth2AuthorizationRequestRepository : AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
     override fun loadAuthorizationRequest(request: HttpServletRequest): OAuth2AuthorizationRequest? {
         return CookieUtils.getCookie(request, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME)?.let {

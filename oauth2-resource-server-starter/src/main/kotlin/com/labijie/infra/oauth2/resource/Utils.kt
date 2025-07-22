@@ -79,7 +79,6 @@ private fun readIsTwoFactorGranted(details: Map<*, *>?): Boolean {
     }
 }
 
-internal val DefaultAuthorizationCodeTokenResponseClientClient = RestClientAuthorizationCodeTokenResponseClient()
 
 
 

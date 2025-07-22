@@ -1,4 +1,4 @@
-package com.labijie.infra.oauth2.resource.oauth2
+package com.labijie.infra.oauth2.client
 
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest

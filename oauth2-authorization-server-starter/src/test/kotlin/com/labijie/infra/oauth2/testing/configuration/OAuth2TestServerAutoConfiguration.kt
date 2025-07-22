@@ -1,23 +1,16 @@
 package com.labijie.infra.oauth2.testing.configuration
 
 import com.labijie.caching.configuration.CachingAutoConfiguration
-import com.labijie.caching.redis.configuration.RedisCachingAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
-import com.labijie.infra.oauth2.configuration.OAuth2SecurityAutoConfiguration
+import com.labijie.infra.oauth2.configuration.OAuth2ServerSecurityAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
 import com.labijie.infra.oauth2.testing.component.OAuth2SignInTestingListener
 import com.labijie.infra.oauth2.testing.component.TestingIdentityService
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
-import org.springframework.core.Ordered
-import org.springframework.core.annotation.Order
-import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.web.SecurityFilterChain
 
 @EnableWebSecurity
 @Configuration
@@ -25,13 +18,14 @@ import org.springframework.security.web.SecurityFilterChain
     CachingAutoConfiguration::class,
     OAuth2DependenciesAutoConfiguration::class,
     OAuth2ServerAutoConfiguration::class,
-    OAuth2SecurityAutoConfiguration::class)
+    OAuth2ServerSecurityAutoConfiguration::class)
 class OAuth2TestServerAutoConfiguration {
 
 //    @Bean
 //    fun dummyClientDetailServiceFactory(): TestingClientDetailServiceFactory {
 //        return TestingClientDetailServiceFactory()
 //    }
+
 
     @Bean
     fun testController() = TestController()

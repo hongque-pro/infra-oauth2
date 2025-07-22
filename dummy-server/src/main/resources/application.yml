@@ -1,7 +1,7 @@
 infra:
   oauth2:
   caching:
-    provider: redis
+    provider: memory
     redis:
       regions:
         default:
@@ -16,5 +16,6 @@ spring:
     username: sa
     password: password
     driverClassName: org.h2.Driver
+
 
 

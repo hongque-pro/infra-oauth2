@@ -1,9 +1,11 @@
-package com.labijie.infra.oauth2.resource.oauth2.apple
+package com.labijie.infra.oauth2.client.apple
 
-import com.labijie.infra.oauth2.resource.DefaultAuthorizationCodeTokenResponseClientClient
-import com.labijie.infra.oauth2.resource.configuration.AppleOAuth2ClientRegistrationProperties
-import com.labijie.infra.oauth2.resource.oauth2.ICustomAuthorizationCodeTokenResponseClient
-import com.labijie.infra.security.RsaKeyHelper
+import com.labijie.infra.oauth2.OAuth2Utils
+import com.labijie.infra.oauth2.RsaUtils
+import com.labijie.infra.oauth2.client.DefaultAuthorizationCodeTokenResponseClientClient
+import com.labijie.infra.oauth2.client.ICustomAuthorizationCodeTokenResponseClient
+import com.labijie.infra.oauth2.client.OAuth2ClientBuilders
+import com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
@@ -13,9 +15,7 @@ import com.nimbusds.jwt.SignedJWT
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse
-import java.security.KeyFactory
 import java.security.interfaces.RSAPrivateKey
-import java.security.spec.PKCS8EncodedKeySpec
 import java.time.Instant
 import java.util.*
 
@@ -38,11 +38,16 @@ class AppleAuthorizationCodeTokenResponseClient(
 
         if (clientRegistration.registrationId.lowercase() == "apple") {
 
-            val scopes = if(clientRegistration.scopes.isEmpty()) setOf("email", "fullname") else clientRegistration.scopes
+            val scopes = if(clientRegistration.scopes.isEmpty()) setOf("email", "name") else clientRegistration.scopes
 
-            val updatedRegistration = ClientRegistration.withClientRegistration(clientRegistration)
+            val updatedRegistration = OAuth2ClientBuilders.apple(clientRegistration.clientId)
+                .apply {
+                    if(clientRegistration.scopes.isNotEmpty()) {
+                        scope(scopes)
+                    }
+                }
+                .clientName(clientRegistration.clientName)
                 .clientSecret(generateClientSecret(clientRegistration))
-                .scope(scopes)
                 .build()
 
             val updatedRequest = OAuth2AuthorizationCodeGrantRequest(updatedRegistration, request.authorizationExchange)
@@ -52,11 +57,11 @@ class AppleAuthorizationCodeTokenResponseClient(
         return DefaultAuthorizationCodeTokenResponseClientClient.getTokenResponse(request)
     }
 
-    fun loadPrivateKeyFromPKCS8(pem: String): RSAPrivateKey {
-        val keyBytes: ByteArray = RsaKeyHelper.extractRsaPem(properties.privateRsaKey)
-        val keySpec = PKCS8EncodedKeySpec(keyBytes)
-        val keyFactory = KeyFactory.getInstance("RSA")
-        return keyFactory.generatePrivate(keySpec) as RSAPrivateKey
+    fun loadPrivateKeyFromPKCS8(): RSAPrivateKey {
+        val privateKey =
+            OAuth2Utils.loadContent(properties.privateRsaKey, RsaUtils::getPrivateKey)
+                ?: throw IllegalArgumentException("${AppleOAuth2ClientRegistrationProperties.PRIVATE_KEY_PROPERTY_PATH} is an invalid private rsa key.")
+        return privateKey
     }
 
 
@@ -80,7 +85,7 @@ class AppleAuthorizationCodeTokenResponseClient(
             .type(JOSEObjectType.JWT)
             .build()
 
-        val privateKey = loadPrivateKeyFromPKCS8(properties.privateRsaKey)
+        val privateKey = loadPrivateKeyFromPKCS8()
 
         val signedJWT = SignedJWT(header, claims)
         val signer = RSASSASigner(privateKey)

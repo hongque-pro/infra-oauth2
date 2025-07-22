@@ -1,12 +1,9 @@
-package com.labijie.infra.oauth2.resource.component
+package com.labijie.infra.oauth2.client
 
-import com.labijie.infra.oauth2.resource.DefaultAuthorizationCodeTokenResponseClientClient
-import com.labijie.infra.oauth2.resource.oauth2.ICustomAuthorizationCodeTokenResponseClient
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest
-import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse
 
 /**

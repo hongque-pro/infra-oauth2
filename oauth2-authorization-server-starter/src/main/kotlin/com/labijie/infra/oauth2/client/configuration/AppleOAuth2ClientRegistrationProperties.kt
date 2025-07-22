@@ -1,4 +1,4 @@
-package com.labijie.infra.oauth2.resource.configuration
+package com.labijie.infra.oauth2.client.configuration
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 
@@ -14,4 +14,8 @@ class AppleOAuth2ClientRegistrationProperties {
     var teamId: String = ""
     var keyId: String = ""
     var privateRsaKey: String = ""
+
+    companion object {
+        const val PRIVATE_KEY_PROPERTY_PATH = "spring.security.oauth2.client.registration.apple.private-rsa-key"
+    }
 }
