@@ -8,13 +8,11 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.dataformat.smile.databind.SmileMapper
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2CommonsJacksonModule
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.security.oauth2.client.jackson2.OAuth2ClientJackson2Module
 import java.util.*
 
 

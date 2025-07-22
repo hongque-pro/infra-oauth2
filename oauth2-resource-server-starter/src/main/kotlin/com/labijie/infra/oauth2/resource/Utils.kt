@@ -6,10 +6,8 @@ import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorExpressionRoo
 import org.springframework.security.authorization.AuthorityAuthorizationManager
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer
 import org.springframework.security.core.Authentication
-import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient
 import org.springframework.security.oauth2.jwt.JwtClaimAccessor
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext
 import org.springframework.util.Assert
 import org.springframework.util.StringUtils
