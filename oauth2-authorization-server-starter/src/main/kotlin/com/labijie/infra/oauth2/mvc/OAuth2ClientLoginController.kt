@@ -29,7 +29,7 @@ class OAuth2ClientLoginController(
     private val openIdTokenService: IOpenIDConnectService,
 ) {
 
-    @GetMapping("/oidc-logins")
+    @GetMapping("/oidc")
     fun oidcClients(): OidcClientsResponse {
         val providers = openIdTokenService.allProviders()
 
@@ -55,7 +55,7 @@ class OAuth2ClientLoginController(
         list
     }
 
-    @GetMapping("/standard-logins")
+    @GetMapping("/standard")
     fun webClients(): OAuth2ClientsResponse {
         return OAuth2ClientsResponse(registeredClientRepository != null, clients)
     }
