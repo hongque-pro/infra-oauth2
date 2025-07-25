@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNam
  */
 object OAuth2Constants {
     const val ENDPOINT_CHECK_TOKEN ="/oauth2/check_token"
-    const val OIDC_LOGIN_PATTERN ="/oauth2/connect/**"
+    const val OIDC_LOGIN_PATTERN ="/oauth2/logins/**"
     const val ENDPOINT_INTROSPECT ="/oauth2/introspect"
 
     const val GRANT_TYPE_PASSWORD = "password"

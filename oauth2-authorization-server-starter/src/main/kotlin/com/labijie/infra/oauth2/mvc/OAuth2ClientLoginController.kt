@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*
  */
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @RestController
-@RequestMapping("/oauth2/connect")
+@RequestMapping("/oauth2/logins")
 @Validated
 class OAuth2ClientLoginController(
     private val registeredClientRepository: RegisteredClientRepository? = null,
@@ -60,7 +60,7 @@ class OAuth2ClientLoginController(
         return OAuth2ClientsResponse(registeredClientRepository != null, clients)
     }
 
-    @PostMapping("/oidc-login/{provider}")
+    @PostMapping("/oidc/{provider}")
     fun oidcLogin(
         @PathVariable("provider") provider: String,
         @RequestBody(required = true) @Valid request: OidcLoginRequest,
