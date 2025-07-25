@@ -9,6 +9,9 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter-web")
     api("org.springframework.security:spring-security-oauth2-authorization-server")
     api("org.springframework.boot:spring-boot-starter-oauth2-client")
+    api("jakarta.validation:jakarta.validation-api")
+
+
     compileOnly("com.esotericsoftware:kryo")
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json")
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-protobuf")

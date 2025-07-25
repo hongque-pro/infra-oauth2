@@ -9,27 +9,18 @@ import org.springframework.security.oauth2.core.OAuth2Error
 /**
  *
  * @Author: Anders Xiao
- * @Date: 2025/7/21
+ * @Date: 2025/7/23
  *
  */
-open class InvalidOAuth2ClientTokenException: OAuth2ClientAuthenticationException {
+class InvalidOAuth2ClientProviderException : OAuth2ClientAuthenticationException {
 
     constructor(provider: String, message: String? = null) :
             super(
                 provider,
                 OAuth2Error(
-                    OAuth2ClientErrorCodes.INVALID_OIDC_TOKEN,
-                    message.ifNullOrBlank { "Invalid OAuth 2.0 Token from $provider" },
+                    OAuth2ClientErrorCodes.INVALID_OAUTH2_CLIENT_PROVIDER,
+                    message.ifNullOrBlank { "OAuth client provider with name '$provider' unsupported." },
                     null
                 )
             )
-
-    constructor(provider: String, clientName: String, message: String?, cause: Throwable) : super(
-        provider,
-        OAuth2Error(
-            OAuth2ClientErrorCodes.INVALID_OIDC_TOKEN,
-            message.ifNullOrBlank { "Invalid OAuth 2.0 Token from $clientName" },
-            null
-        ), cause)
-
 }

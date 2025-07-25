@@ -19,7 +19,7 @@ class TestController {
 
     @RequestMapping("/fake-login")
     fun sign(): AccessToken {
-        return signInHelper.signIn(OAuth2TestingUtils.TestClientId, OAuth2TestingUtils.TestUserNme).toAccessToken()
+        return signInHelper.signIn(OAuth2TestingUtils.TestClientId, OAuth2TestingUtils.TestUserName).toAccessToken()
     }
 
 

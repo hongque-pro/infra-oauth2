@@ -7,6 +7,7 @@ package com.labijie.infra.oauth2.client
  *
  */
 object OAuth2ClientErrorCodes {
-    const val INVALID_OAUTH2_CLIENT_TOKEN = "invalid_oauth2_client_token"
+    const val INVALID_OAUTH2_CLIENT_PROVIDER = "invalid_oauth2_client_provider"
+    const val INVALID_OIDC_TOKEN = "invalid_oidc_token"
     const val INVALID_TOKEN_RESPONSE_ERROR_CODE = "invalid_token_response"
 }

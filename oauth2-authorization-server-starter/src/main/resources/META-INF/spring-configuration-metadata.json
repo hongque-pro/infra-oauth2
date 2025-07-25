@@ -146,6 +146,25 @@
       "type": "java.lang.String",
       "sourceType": "com.labijie.application.auth.configuration.AppleOAuth2ClientRegistrationProperties",
       "description": "KeyId for sign in with Apple"
+    },
+
+    {
+      "name": "spring.security.oauth2.client.oidc-login",
+      "type": "java.util.Map<java.lang.String, com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties>",
+      "sourceType": "com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties",
+      "description": "OpenID Connect login providers (login with id token)"
+    },
+
+    {
+      "name": "spring.security.oauth2.client.oidc-login-enabled",
+      "type": "java.lang.Boolean",
+      "description": "Oidc login features enabled."
+    },
+
+    {
+      "name": "spring.security.oauth2.client.oidc-login.values.[].audience-set",
+      "type": "java.lang.String",
+      "description": "Audience (oidc aud) for verify."
     }
   ],
   "hints": [
@@ -176,6 +195,28 @@
         {
           "value": "memory",
           "description": "in memory oauth2 authorization service"
+        }
+      ]
+    },
+    {
+      "name": "spring.security.oauth2.client.oidc-login.keys",
+      "values": [
+        {
+          "value": "apple"
+        },
+        {
+          "value": "google"
+        }
+      ]
+    },
+    {
+      "name": "spring.security.oauth2.client.oidc-login.values",
+      "providers": [
+        {
+          "name": "handle-as",
+          "parameters": {
+            "target": "com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties"
+          }
         }
       ]
     }

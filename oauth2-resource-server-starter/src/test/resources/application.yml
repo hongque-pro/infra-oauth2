@@ -7,7 +7,6 @@ spring:
     oauth2:
       authorizationserver:
         issuer: https://testing.com
-#      resourceserver:
-#        jwt:
-#          issuer-uri: https://testing.com
-#          jwk-set-uri: http://localhost:8080/oauth2/jwks
+      resourceserver:
+        jwt:
+          issuer-uri: https://testing2.com

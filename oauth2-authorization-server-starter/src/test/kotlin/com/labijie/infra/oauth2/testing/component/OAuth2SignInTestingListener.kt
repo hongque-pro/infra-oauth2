@@ -7,6 +7,6 @@ import org.springframework.context.ApplicationListener
 class OAuth2SignInTestingListener : ApplicationListener<UserSignedInEvent> {
     override fun onApplicationEvent(event: UserSignedInEvent) {
         val principal = event.principle
-        Assertions.assertEquals(OAuth2TestingUtils.TestUserNme, principal.userName)
+        Assertions.assertEquals(OAuth2TestingUtils.TestUserName, principal.userName)
     }
 }

@@ -4,6 +4,7 @@ import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
 import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_INTROSPECT
+import com.labijie.infra.oauth2.OAuth2Constants.OIDC_LOGIN_PATTERN
 import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
@@ -18,7 +19,6 @@ import com.labijie.infra.utils.ifNullOrBlank
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
-import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -50,7 +50,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Acce
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.OrRequestMatcher
-import org.springframework.security.web.util.matcher.RequestMatcher
 
 
 @Configuration(proxyBeanMethods = false)
@@ -80,13 +79,16 @@ class OAuth2ServerAutoConfiguration(
     //包装一下 , 避免和资源服务器的 bean 冲突
     @ConditionalOnMissingBean(IOAuth2ServerJwtCodec::class)
     @Bean
-    fun oauth2ServerJwtCodec(jwkSource: JWKSource<SecurityContext>): OAuth2ServerJwtCodec {
-        return OAuth2ServerJwtCodec(jwkSource)
+    fun oauth2ServerJwtCodec(
+        settings: AuthorizationServerSettings,
+        jwkSource: JWKSource<SecurityContext>): OAuth2ServerJwtCodec {
+        return OAuth2ServerJwtCodec(settings.issuer, jwkSource)
     }
 
     @Bean
     @ConditionalOnMissingBean(JwtDecoder::class)
     fun jwtDecoder(serverJwtCodec: IOAuth2ServerJwtCodec) : JwtDecoder {
+        logger.info("OAuth2 authorization server jwt decoder used.")
         return serverJwtCodec.jwtDecoder()
     }
 
@@ -189,9 +191,10 @@ class OAuth2ServerAutoConfiguration(
 
 
             val checkPointerMatcher = PathPatternRequestMatcher.withDefaults().matcher(ENDPOINT_CHECK_TOKEN)
+            val oidcLoginMatcher = PathPatternRequestMatcher.withDefaults().matcher(OIDC_LOGIN_PATTERN)
 
 
-            val oauth2EndPoints = OrRequestMatcher(authorizationServerConfigurer.endpointsMatcher, checkPointerMatcher)
+            val oauth2EndPoints = OrRequestMatcher(authorizationServerConfigurer.endpointsMatcher, checkPointerMatcher, oidcLoginMatcher)
 
 
             http.ignoreCSRF(oauth2EndPoints)
@@ -199,7 +202,7 @@ class OAuth2ServerAutoConfiguration(
             http.securityMatcher(oauth2EndPoints)
                 .authorizeHttpRequests {
                     it.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                    it.requestMatchers(ENDPOINT_CHECK_TOKEN).permitAll()
+                    it.requestMatchers(checkPointerMatcher, oidcLoginMatcher).permitAll()
                     it.anyRequest().authenticated()
                 }
                 .cors {
@@ -264,8 +267,7 @@ class OAuth2ServerAutoConfiguration(
 
                 val information = StringBuilder()
                 information.appendLine("OAuth2 authorization server started.")
-                information.appendLine()
-                information.appendLine("server issuer: ${settings.issuer.ifNullOrBlank { "<null>" }}")
+                information.appendLine("OAuth2 issuer: ${settings.issuer.ifNullOrBlank { "<null>" }}")
                 information.appendLine()
                 information.appendLine("The following endpoints are already active:")
                 information.appendLine(settings.jwkSetEndpoint)

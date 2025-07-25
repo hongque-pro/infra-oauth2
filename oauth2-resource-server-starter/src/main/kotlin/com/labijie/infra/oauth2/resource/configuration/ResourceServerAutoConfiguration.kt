@@ -9,15 +9,18 @@ import com.labijie.infra.oauth2.resource.component.RequestMatcherPostProcessor
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import com.labijie.infra.oauth2.resource.token.DefaultJwtAuthenticationConverter
+import com.labijie.infra.utils.ifNullOrBlank
 import jakarta.annotation.security.PermitAll
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties
 import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
@@ -51,6 +54,7 @@ import java.security.interfaces.RSAPublicKey
 @EnableConfigurationProperties(ResourceServerProperties::class)
 @AutoConfigureAfter(OAuth2ResourceServerAutoConfiguration::class)
 @Import(UnauthorizedController::class)
+@AutoConfigureOrder(1)
 class ResourceServerAutoConfiguration(
     private val resourceServerProperties: ResourceServerProperties,
 ) {
@@ -110,10 +114,15 @@ class ResourceServerAutoConfiguration(
         return ActuatorAuthorizationConfigurer()
     }
 
-    private fun createOAuth2TokenValidator(): OAuth2TokenValidator<Jwt> {
-        return DelegatingOAuth2TokenValidator(
+    private fun createOAuth2TokenValidator(issuerUri: String?): OAuth2TokenValidator<Jwt> {
+        val validators = mutableListOf<OAuth2TokenValidator<Jwt>>(
             JwtTimestampValidator(resourceServerProperties.jwt.clockSkew)
         )
+        issuerUri?.let {
+            validators.add(JwtIssuerValidator(issuerUri))
+        }
+
+        return DelegatingOAuth2TokenValidator(*validators.toTypedArray())
     }
 
     private fun createJwtClaimSetConverter(): MappedJwtClaimSetConverter {
@@ -137,6 +146,7 @@ class ResourceServerAutoConfiguration(
     @ConditionalOnMissingBean(JwtDecoder::class)
     fun jwtDecoder(
         @Autowired(required = false) secretsStore: IResourceServerSecretsStore?,
+        springResourceProperties: OAuth2ResourceServerProperties,
         serverProperties: ResourceServerProperties): JwtDecoder {
 
         val decoder = if(secretsStore != null ){
@@ -157,11 +167,14 @@ class ResourceServerAutoConfiguration(
                 .build()
         }
 
-        val withClockSkew: OAuth2TokenValidator<Jwt> = createOAuth2TokenValidator()
-        decoder.setJwtValidator(withClockSkew)
+        val validator: OAuth2TokenValidator<Jwt> = createOAuth2TokenValidator(springResourceProperties.jwt.issuerUri)
+        decoder.setJwtValidator(validator)
 
         val converter = createJwtClaimSetConverter()
         decoder.setClaimSetConverter(converter)
+
+        logger.info("OAuth2 resource server jwt decoder applied (issuer: ${springResourceProperties.jwt.issuerUri.ifNullOrBlank { "<empty>" }}).")
+
         return decoder
     }
 

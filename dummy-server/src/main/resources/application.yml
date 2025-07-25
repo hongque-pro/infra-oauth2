@@ -1,5 +1,6 @@
 infra:
   oauth2:
+
   caching:
     provider: memory
     redis:
@@ -16,6 +17,18 @@ spring:
     username: sa
     password: password
     driverClassName: org.h2.Driver
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: https://test.api
+      client:
+        oidc-login-enabled: true
+        oidc-login:
+          google:
+            audience-set:
+          apple:
+            audience-set:
+
 
 
 
