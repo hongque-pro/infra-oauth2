@@ -55,7 +55,7 @@ class OAuth2ClientLoginController(
         list
     }
 
-    @GetMapping("/oauth2-logins")
+    @GetMapping("/standard-logins")
     fun webClients(): OAuth2ClientsResponse {
         return OAuth2ClientsResponse(registeredClientRepository != null, clients)
     }
