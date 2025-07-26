@@ -12,10 +12,15 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 
 fun ClientRegistration.findProvider(properties: OAuth2ClientProperties): String {
 
+    return findProvider(properties.provider)
+}
+
+fun ClientRegistration.findProvider(providers: Map<String, OAuth2ClientProperties.Provider>): String {
+
     val currentAuthUri = this.providerDetails.authorizationUri
     val currentTokenUri = this.providerDetails.tokenUri
 
-    val provider = properties.provider.firstNotNullOfOrNull { (name, provider) ->
+    val provider = providers.firstNotNullOfOrNull { (name, provider) ->
 
         if(name.equals(this.registrationId, ignoreCase = true)) {
             name
@@ -28,3 +33,4 @@ fun ClientRegistration.findProvider(properties: OAuth2ClientProperties): String 
 
     return provider ?: this.registrationId
 }
+

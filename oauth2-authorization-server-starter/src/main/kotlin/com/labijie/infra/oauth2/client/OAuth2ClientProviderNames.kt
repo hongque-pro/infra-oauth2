@@ -7,10 +7,10 @@ package com.labijie.infra.oauth2.client
  *
  */
 object OAuth2ClientProviderNames {
-    const val APPLE = "Apple"
-    const val DISCORD = "Discord"
-    const val GOOGLE = "Google"
-    const val GITHUB = "GitHub"
-    const val FACEBOOK = "Facebook"
-    const val OKTA = "Okta"
+    const val APPLE = "apple"
+    const val DISCORD = "discord"
+    const val GOOGLE = "google"
+    const val GITHUB = "gitHub"
+    const val FACEBOOK = "facebook"
+    const val OKTA = "okta"
 }

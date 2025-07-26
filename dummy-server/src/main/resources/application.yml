@@ -10,6 +10,7 @@ infra:
           serializer: kotlin-protobuf
 server:
   port: 8088
+  forward-headers-strategy: framework
 
 spring:
   datasource:
@@ -28,6 +29,15 @@ spring:
             audience-set:
           apple:
             audience-set:
+        registration:
+          apple:
+            client-id: ai.ciney.videobot
+            team-id: 78L4772BQR
+            key-id: G92XUZNXMB
+            private-rsa-key: AuthKey_G92XUZNXMB.p8
+          google:
+            client-id: XXXX
+            client-secret: XXXX
 
 
 

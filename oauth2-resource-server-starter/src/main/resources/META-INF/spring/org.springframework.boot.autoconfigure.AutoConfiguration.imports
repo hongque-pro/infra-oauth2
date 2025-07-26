@@ -1,1 +1,2 @@
 com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration
+com.labijie.infra.oauth2.resource.configuration.ResourceServerSecurityAutoConfiguration

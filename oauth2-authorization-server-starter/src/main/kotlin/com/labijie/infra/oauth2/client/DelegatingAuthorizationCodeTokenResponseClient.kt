@@ -23,8 +23,8 @@ class DelegatingAuthorizationCodeTokenResponseClient :
     }
 
     override fun getTokenResponse(authorizationGrantRequest: OAuth2AuthorizationCodeGrantRequest): OAuth2AccessTokenResponse? {
-        return clients.find { it.isSupported(authorizationGrantRequest.clientRegistration) }
-            ?.getTokenResponse(authorizationGrantRequest)
+        val client = clients.find { it.isSupported(authorizationGrantRequest.clientRegistration) }
+        return client?.getTokenResponse(authorizationGrantRequest)
             ?: DefaultAuthorizationCodeTokenResponseClientClient.getTokenResponse(authorizationGrantRequest)
     }
 

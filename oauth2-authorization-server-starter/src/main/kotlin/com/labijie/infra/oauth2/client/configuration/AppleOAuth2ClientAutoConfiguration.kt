@@ -18,6 +18,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.web.client.RestClient
 
@@ -40,15 +41,22 @@ class AppleOAuth2ClientAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(IOpenIDConnectService::class)
     fun openIdTokenService(
+        @Autowired(required = false)
+        clientRegistrationRepository: ClientRegistrationRepository?,
         oauth2ClientProperties: OAuth2ClientProperties,
         infraOAuth2ClientProperties: InfraOAuth2ClientProperties,
         restClientBuilder: RestClient.Builder,
         providers: ObjectProvider<IOpenIDConnectProvider>
-    ): IOpenIDConnectService
-    {
-        val svc = OpenIDConnectService(oauth2ClientProperties.provider, infraOAuth2ClientProperties, restClientBuilder).apply {
+    ): IOpenIDConnectService {
+
+        val svc = OpenIDConnectService(
+            clientRegistrationRepository,
+            oauth2ClientProperties.provider,
+            infraOAuth2ClientProperties,
+            restClientBuilder
+        ).apply {
             providers.orderedStream().forEach {
-                if(!this.hasProvider(it.providerName)) {
+                if (!this.hasProvider(it.providerName)) {
                     this.addProvider(it)
                 }
             }
@@ -59,16 +67,16 @@ class AppleOAuth2ClientAutoConfiguration {
     @Bean
     fun appleAuthorizationCodeTokenResponseClient(
         oauth2ClientProperties: OAuth2ClientProperties,
-        properties: AppleOAuth2ClientRegistrationProperties): AppleAuthorizationCodeTokenResponseClient
-    {
+        properties: AppleOAuth2ClientRegistrationProperties
+    ): AppleAuthorizationCodeTokenResponseClient {
         return AppleAuthorizationCodeTokenResponseClient(oauth2ClientProperties, properties)
     }
 
     @Bean
     fun appleOAuth2UserService(
         oauth2ClientProperties: OAuth2ClientProperties,
-        openIdTokenService: IOpenIDConnectService): AppleOAuth2UserService
-    {
+        openIdTokenService: IOpenIDConnectService
+    ): AppleOAuth2UserService {
         return AppleOAuth2UserService(oauth2ClientProperties, openIdTokenService)
     }
 
@@ -81,6 +89,11 @@ class AppleOAuth2ClientAutoConfiguration {
         openIdTokenService: IOpenIDConnectService,
         @Autowired(required = false) oidcLoginHandler: IOidcLoginHandler?
     ): OAuth2ClientLoginController {
-        return OAuth2ClientLoginController(registeredClientRepository, infraOAuth2ClientProperties, oidcLoginHandler, openIdTokenService)
+        return OAuth2ClientLoginController(
+            registeredClientRepository,
+            infraOAuth2ClientProperties,
+            oidcLoginHandler,
+            openIdTokenService
+        )
     }
 }

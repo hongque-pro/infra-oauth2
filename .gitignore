@@ -41,3 +41,4 @@ out/
 /dist/
 /nbdist/
 /.nb-gradle/
+*.p8

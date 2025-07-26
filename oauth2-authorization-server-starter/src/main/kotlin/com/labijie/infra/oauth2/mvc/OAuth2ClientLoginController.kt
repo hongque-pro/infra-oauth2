@@ -5,6 +5,8 @@ import com.labijie.infra.oauth2.client.IOidcLoginHandler
 import com.labijie.infra.oauth2.client.IOpenIDConnectService
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.exception.InvalidOAuth2ClientProviderException
+import com.labijie.infra.oauth2.client.exception.OAuth2LoginException
+import com.labijie.infra.oauth2.mvc.OidcLoginResponse.Companion.getOrElse
 import jakarta.validation.Valid
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter
@@ -29,20 +31,6 @@ class OAuth2ClientLoginController(
     private val openIdTokenService: IOpenIDConnectService,
 ) {
 
-
-
-    @GetMapping
-    fun webClients(): OAuth2ClientsResponse {
-        return OAuth2ClientsResponse(registeredClientRepository != null, clients)
-    }
-
-    @GetMapping("/oidc")
-    fun oidcClients(): OidcClientsResponse {
-        val providers = openIdTokenService.allProviders()
-
-        return OidcClientsResponse(oidcLoginHandler != null && oauth2ClientProperties.oidcLoginEnabled, providers)
-    }
-
     private val clients by lazy {
         val iterable = registeredClientRepository as? Iterable<*>
 
@@ -62,6 +50,20 @@ class OAuth2ClientLoginController(
         list
     }
 
+    @GetMapping
+    fun standardClients(): OAuth2ClientsResponse {
+        return OAuth2ClientsResponse(registeredClientRepository != null, clients)
+    }
+
+    @GetMapping("/oidc")
+    fun oidcClients(): OidcClientsResponse {
+        val providers = openIdTokenService.allProviders()
+
+        return OidcClientsResponse(oidcLoginHandler != null && oauth2ClientProperties.oidcLoginEnabled, providers)
+    }
+
+
+
     @PostMapping("/oidc/{provider}")
     fun oidcLogin(
         @PathVariable("provider") provider: String,
@@ -79,8 +81,12 @@ class OAuth2ClientLoginController(
             }
         }
 
-        val accessToken = oidcLoginHandler.handle(user, request)
+        val result = oidcLoginHandler.handle(user, request)
 
-        return accessToken
+        return result.getOrElse {
+            throw OAuth2LoginException(provider, it.error).apply {
+                this.request = request
+            }
+        }
     }
 }

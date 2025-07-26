@@ -118,21 +118,26 @@ object OAuth2Utils {
 //    }
 
     fun <T> loadContent(content: String, action: (content: String)-> T): T?{
-        return try{
+        val fromContent = try{
             action(content)
-        }catch (e: Throwable){
+        }catch (e: Throwable) {
             e.throwIfNecessary()
-            //content is resource
-            loadFile(content, action) ?: loadResource(content, action)
+            null
         }
+
+        return fromContent ?: loadFile(content, action) ?: loadResource(content, action)
     }
 
     private fun <T> loadResource(content: String, action: (content: String) -> T): T? {
         return try {
             val cpr = ClassPathResource(content)
-            val stream = cpr.inputStream
-            val c = stream.readBytes().toString(Charsets.UTF_8)
-            action(c)
+            if(!cpr.exists()) {
+                null
+            }else {
+                val stream = cpr.inputStream
+                val c = stream.readBytes().toString(Charsets.UTF_8)
+                action(c)
+            }
         }catch (rex: Throwable){
             null
         }

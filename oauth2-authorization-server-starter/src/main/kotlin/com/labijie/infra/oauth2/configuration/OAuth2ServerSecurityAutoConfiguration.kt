@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.configuration
 
+import com.labijie.infra.oauth2.IHttpSecurityConfigurer
 import com.labijie.infra.oauth2.client.DelegatingAuthorizationCodeTokenResponseClient
 import com.labijie.infra.oauth2.client.DelegatingOAuth2UserService
 import com.labijie.infra.oauth2.client.IOAuth2LoginCustomizer
@@ -9,12 +10,15 @@ import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass
 import org.springframework.boot.autoconfigure.security.SecurityProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -27,10 +31,12 @@ import org.springframework.security.web.util.matcher.RequestMatcher
 
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(OAuth2ServerAutoConfiguration::class)
+@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE - 100)
 class OAuth2ServerSecurityAutoConfiguration() {
 
     companion object {
         private val EMPTY_MATCHER: RequestMatcher = RequestMatcher { request: HttpServletRequest? -> false }
+        private const val RESOURCE_SERVER_AUTO_CONFIG_CLASS = "com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration"
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -40,16 +46,11 @@ class OAuth2ServerSecurityAutoConfiguration() {
         private val clientRegistrationRepository: ClientRegistrationRepository? = null,
         @param: Autowired(required = false)
         private var oauth2AuthorizationRequestRepository: AuthorizationRequestRepository<OAuth2AuthorizationRequest>? = null
-    ) : ApplicationContextAware {
+    ) : ApplicationContextAware, IHttpSecurityConfigurer {
 
         private lateinit var applicationContext: ApplicationContext
 
-        @Bean
-        @Order(SecurityProperties.BASIC_AUTH_ORDER - 2)
-        fun oauth2ServerSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
-
-           http.securityMatcher(EMPTY_MATCHER)
-
+        override fun configure(http: HttpSecurity) {
             if (clientRegistrationRepository != null) {
                 val requestRepository =
                     oauth2AuthorizationRequestRepository ?: HttpCookieOAuth2AuthorizationRequestRepository()
@@ -68,12 +69,26 @@ class OAuth2ServerSecurityAutoConfiguration() {
                         })
                     }
                     oauth2LoginCustomizers.orderedStream().forEach {
-                        customizer ->
+                            customizer ->
                         customizer.customize(it)
                     }
+
                     //it.loginPage("${baseUrl}/oauth2/unauthorized")
                 }
             }
+        }
+
+        @Bean
+        @Order(Ordered.LOWEST_PRECEDENCE - 10)
+        @ConditionalOnMissingClass(RESOURCE_SERVER_AUTO_CONFIG_CLASS)
+        fun oauth2ServerSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
+
+            val settings = http
+                .authorizeHttpRequests { authorize ->
+                    authorize.anyRequest().authenticated()
+                }
+
+            configure(settings)
             return http.build()
         }
 

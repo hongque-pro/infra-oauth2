@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2Clien
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User
 import org.springframework.security.oauth2.core.user.OAuth2User
 
@@ -67,7 +68,7 @@ class AppleOAuth2UserService(
         return DefaultOAuth2User(
             listOf(SimpleGrantedAuthority("ROLE_USER")),
             claims.claims,
-            "sub" // 标识字段，必须与 registration.userNameAttributeName 一致
+            IdTokenClaimNames.SUB // 标识字段，必须与 registration.userNameAttributeName 一致
         )
     }
 }

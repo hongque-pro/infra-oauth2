@@ -4,6 +4,7 @@ import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.configuration.BearerTokenResolverSettings
 import com.labijie.infra.oauth2.resource.configuration.ResourceJwtSettings
 import com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration
+import com.labijie.infra.oauth2.resource.configuration.ResourceServerSecurityAutoConfiguration
 import com.labijie.infra.oauth2.resource.expression.OAuth2TwoFactorExpressionRoot
 import org.springframework.aot.hint.*
 import org.springframework.security.web.access.intercept.RequestMatcherDelegatingAuthorizationManager
@@ -18,14 +19,16 @@ class ResourceServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
                 TypeReference.of(ResourceJwtSettings::class.java),
                 TypeReference.of(BearerTokenResolverSettings::class.java),
 
-            )
+                )
         ) {
             it.withMembers(*MemberCategory.entries.toTypedArray())
         }
 
         hints.reflection().registerType(ResourceServerAutoConfiguration::class.java)
+        hints.resources().registerType(ResourceServerSecurityAutoConfiguration::class.java)
         hints.reflection().registerType(IResourceAuthorizationConfigurer::class.java)
-        hints.reflection().registerType(TypeReference.of("org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"))
+        hints.reflection()
+            .registerType(TypeReference.of("org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"))
 
 
         hints.reflection()

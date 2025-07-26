@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OAuth2 登录测试</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2rem;
+        }
+        .login-btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            margin: 1rem;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .google {
+            background-color: #333;
+        }
+        .apple {
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+<h1>OAuth2 登录测试页面</h1>
+
+<a class="login-btn google" href="/oauth2/authorization/google">使用 Google 登录</a>
+<a class="login-btn apple" href="/oauth2/authorization/apple">使用 Apple 登录</a>
+
+</body>
+</html>

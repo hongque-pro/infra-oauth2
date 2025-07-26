@@ -11,6 +11,11 @@ import com.labijie.infra.utils.ifNullOrBlank
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties
 import org.springframework.security.config.oauth2.client.CommonOAuth2Provider
+import org.springframework.security.oauth2.client.registration.ClientRegistration
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.web.client.RestClient
 import java.lang.IllegalStateException
 import java.net.URI
@@ -22,6 +27,7 @@ import java.net.URI
  *
  */
 class OpenIDConnectService(
+    clientRepository: ClientRegistrationRepository?,
     configuredProviders: Map<String, OAuth2ClientProperties.Provider>,
     infraOAuth2ClientProperties: InfraOAuth2ClientProperties,
     restClientBuilder: RestClient.Builder? = null,
@@ -55,7 +61,7 @@ class OpenIDConnectService(
                     val client = it.getBuilder(it.name.lowercase())
                         .clientId("dummy")
                         .apply {
-                            if(it.name == CommonOAuth2Provider.OKTA.name){
+                            if (it.name == CommonOAuth2Provider.OKTA.name) {
                                 authorizationUri("https://dummpy.okta/authorize")
                                 tokenUri("https://dummpy.okta/authorize")
                             }
@@ -72,8 +78,7 @@ class OpenIDConnectService(
                         this.userNameAttribute = client.providerDetails.userInfoEndpoint.userNameAttributeName
                     }
                     providers.put(name, provider)
-                }
-                catch (ex: IllegalArgumentException) {
+                } catch (ex: IllegalArgumentException) {
                     logger.error("Failed to build oauth2 provider: $name}", ex)
                 }
             }
@@ -92,11 +97,11 @@ class OpenIDConnectService(
                     } else null
                 }
 
-                provider?.let {
-                    provider->
+                provider?.let { provider ->
                     properties.jwkSetUri = properties.jwkSetUri.ifNullOrBlank { provider.jwkSetUri.orEmpty() }
                     properties.issuerUri = properties.issuerUri.ifNullOrBlank { provider.issuerUri.orEmpty() }
-                    properties.userIdAttribute = properties.userIdAttribute.ifNullOrBlank { provider.userNameAttribute.orEmpty() }
+                    properties.userIdAttribute =
+                        properties.userIdAttribute.ifNullOrBlank { provider.userNameAttribute.orEmpty() }
                 }
 
                 if (properties.userIdAttribute.isBlank()) {
@@ -120,14 +125,6 @@ class OpenIDConnectService(
                     logger.warn("OAuth2 oidc login provider has empty audience set, lack of aud set validation can cause security issues.")
                 }
 
-                maps[name.lowercase()] = fromUri(
-                    name,
-                    URI.create(properties.jwkSetUri),
-                    properties.issuerUri,
-                    audSet,
-                    restClient
-                )
-
                 oidcLoginProperties.putIfAbsent(name.lowercase(), properties)
             }
         }
@@ -135,8 +132,40 @@ class OpenIDConnectService(
         userConverters.putIfAbsent(OAuth2ClientProviderNames.APPLE.lowercase(), AppleOidcUserInfoConverter)
         userConverters.putIfAbsent(OAuth2ClientProviderNames.GOOGLE.lowercase(), GoogleOidcUserInfoConverter)
 
-        supportDecoders.putAll(maps)
+        val clients = (clientRepository as? Iterable<*>)?.mapNotNull {
+            it as? ClientRegistration
+        }?.groupBy { it.findProvider(oauth2ClientProviders).lowercase() } ?: emptyMap()
+
+        for ((name, clientProperties) in oauth2ClientProviders) {
+
+
+            val found = oidcLoginProperties[name.lowercase()]
+
+            val jwkSetUri = found?.jwkSetUri.ifNullOrBlank {  clientProperties.jwkSetUri }
+            if(jwkSetUri.isNullOrBlank()) {
+                continue
+            }
+
+            val audSet = mutableSetOf<String>()
+            found?.audienceSet?.split(",")?.map { it.trim() }?.let {
+                audSet.addAll(it)
+            }
+
+            clients[name.lowercase()]?.let { clientList ->
+                val clientIds = clientList.map { it.clientId }
+                audSet.addAll(clientIds)
+            }
+
+            fromUri(
+                name.lowercase(),
+                URI.create(jwkSetUri),
+                found?.issuerUri ?: clientProperties.issuerUri,
+                audSet,
+                restClient
+            )
+        }
     }
+
 
     override fun hasProvider(provider: String): Boolean {
         return supportDecoders.contains(provider.lowercase())
@@ -148,11 +177,18 @@ class OpenIDConnectService(
 
     override fun addProvider(provider: IOpenIDConnectProvider) {
         val name = provider.providerName.lowercase()
-        if(supportDecoders.contains(name)) {
+        if (supportDecoders.contains(name)) {
             IllegalArgumentException("Oidc provider '${provider.providerName}' is already registered.")
         }
         supportDecoders.putIfAbsent(name, provider.decoder)
         userConverters.putIfAbsent(name, provider.converter)
+    }
+
+    private fun getUserIdAttribute(provider: String): String? {
+        val attribute = oidcLoginProperties[provider.lowercase()]?.userIdAttribute
+        return attribute.ifNullOrBlank {
+            oauth2ClientProviders[provider.lowercase()]?.userNameAttribute ?: IdTokenClaimNames.SUB
+        }
     }
 
     override fun decodeToken(
@@ -162,20 +198,32 @@ class OpenIDConnectService(
         nonce: String?,
         ignoreExpiration: Boolean,
     ): OAuth2LoginUser {
+
+        val idAttribute = getUserIdAttribute(provider)
+
+        if (idAttribute.isNullOrBlank()) {
+            throw InvalidOAuth2ClientTokenException(
+                provider,
+                "User id attribute is null in id token (provider: $provider)"
+            )
+        }
+
         val decoder = supportDecoders[provider.lowercase()] ?: throw InvalidOAuth2ClientProviderException(provider)
-        val properties = oidcLoginProperties[provider.lowercase()] ?: throw InvalidOAuth2ClientProviderException(provider)
+        val properties =
+            oidcLoginProperties[provider.lowercase()] ?: throw InvalidOAuth2ClientProviderException(provider)
 
         val token = decoder.decode(jwt, authorizationCode, nonce, ignoreExpiration)
         val id = token.jwtClaimsSet.getStringClaim(properties.userIdAttribute)
         val clientId = token.jwtClaimsSet.audience.firstOrNull()
 
-        if(id.isNullOrBlank()) {
-            throw InvalidOAuth2ClientTokenException(provider, "User id attribute is null in id token (attribute: ${properties.userIdAttribute}, provider: $provider)")
-        }
 
-        val user = OAuth2LoginUser(provider.lowercase(),id, token, if(clientId.isNullOrBlank()) null else clientId)
-        userConverters[provider.lowercase()]?.let {
-            converter ->
+        val user = OAuth2LoginUser(
+            provider.lowercase(),
+            id,
+            token,
+            clientId = if (clientId.isNullOrBlank()) null else clientId
+        )
+        userConverters[provider.lowercase()]?.let { converter ->
             val userInfo = converter.convertFromToken(token)
             user.setInfo(userInfo)
         }

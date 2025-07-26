@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.client
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.nimbusds.jwt.SignedJWT
 import jakarta.servlet.Registration
 
