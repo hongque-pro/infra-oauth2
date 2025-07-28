@@ -2,6 +2,10 @@ package com.labijie.infra.oauth2.aot
 
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationToken
+import com.labijie.infra.oauth2.client.StandardOidcUser
+import com.labijie.infra.oauth2.client.StandardOidcUserInfo
+import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
+import com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties
 import com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties
 import com.labijie.infra.oauth2.configuration.DefaultClientProperties
 import com.labijie.infra.oauth2.configuration.JwtSettings
@@ -19,6 +23,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResp
 import org.springframework.security.oauth2.core.oidc.OidcIdToken
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode
 import java.security.Principal
+import kotlin.jvm.java
 
 
 class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
@@ -40,6 +45,9 @@ class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
                 TypeReference.of(ResourceOwnerPasswordAuthenticationToken::class.java),
                 TypeReference.of(ClientRequired::class.java),
                 TypeReference.of(ITwoFactorUserDetails::class.java),
+                TypeReference.of(StandardOidcUser::class.java),
+                TypeReference.of(StandardOidcUserInfo::class.java),
+                TypeReference.of(OAuth2ClientOidcLoginProperties::class.java)
             )
         ) {
             it.withMembers(*MemberCategory.entries.toTypedArray())
@@ -51,6 +59,7 @@ class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
         hints.reflection().registerType(OAuth2AccessToken::class.java)
         hints.reflection().registerType(OidcIdToken::class.java)
         hints.reflection().registerType(Principal::class.java)
+        hints.reflection().registerType(InfraOAuth2ClientProperties::class.java)
         hints.reflection().registerType(OAuth2ServerAutoConfiguration::class.java)
 
         listOf(

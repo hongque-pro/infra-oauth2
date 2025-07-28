@@ -1,0 +1,18 @@
+{
+  "hints": [
+    {
+      "name": "spring.security.oauth2.client.registration.keys",
+      "values": [
+        {
+          "value": "apple"
+        },
+        {
+          "value": "microsoft"
+        },
+        {
+          "value": "discord"
+        }
+      ]
+    }
+  ]
+}

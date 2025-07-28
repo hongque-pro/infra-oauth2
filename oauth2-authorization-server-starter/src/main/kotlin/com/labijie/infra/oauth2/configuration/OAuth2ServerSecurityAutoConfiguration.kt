@@ -1,11 +1,11 @@
 package com.labijie.infra.oauth2.configuration
 
-import com.labijie.infra.oauth2.IHttpSecurityConfigurer
+import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
 import com.labijie.infra.oauth2.client.DelegatingAuthorizationCodeTokenResponseClient
 import com.labijie.infra.oauth2.client.DelegatingOAuth2UserService
-import com.labijie.infra.oauth2.client.IOAuth2LoginCustomizer
+import com.labijie.infra.oauth2.client.extension.IOAuth2LoginCustomizer
 import com.labijie.infra.oauth2.client.web.HttpCookieOAuth2AuthorizationRequestRepository
-import jakarta.servlet.http.HttpServletRequest
+import com.labijie.infra.oauth2.mvc.AuthServerUnauthorizedController
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest
@@ -21,12 +21,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.util.matcher.RequestMatcher
 
 
 @Configuration(proxyBeanMethods = false)
@@ -35,7 +33,6 @@ import org.springframework.security.web.util.matcher.RequestMatcher
 class OAuth2ServerSecurityAutoConfiguration() {
 
     companion object {
-        private val EMPTY_MATCHER: RequestMatcher = RequestMatcher { request: HttpServletRequest? -> false }
         private const val RESOURCE_SERVER_AUTO_CONFIG_CLASS = "com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration"
     }
 
@@ -46,9 +43,10 @@ class OAuth2ServerSecurityAutoConfiguration() {
         private val clientRegistrationRepository: ClientRegistrationRepository? = null,
         @param: Autowired(required = false)
         private var oauth2AuthorizationRequestRepository: AuthorizationRequestRepository<OAuth2AuthorizationRequest>? = null
-    ) : ApplicationContextAware, IHttpSecurityConfigurer {
+    ) : ApplicationContextAware, IResourceServerHttpSecurityConfigurer {
 
         private lateinit var applicationContext: ApplicationContext
+
 
         override fun configure(http: HttpSecurity) {
             if (clientRegistrationRepository != null) {
@@ -73,23 +71,17 @@ class OAuth2ServerSecurityAutoConfiguration() {
                         customizer.customize(it)
                     }
 
-                    //it.loginPage("${baseUrl}/oauth2/unauthorized")
+                    it.loginPage("/oauth2/unauthorized").permitAll()
                 }
             }
         }
 
         @Bean
-        @Order(Ordered.LOWEST_PRECEDENCE - 10)
+        @Order(Ordered.LOWEST_PRECEDENCE)
         @ConditionalOnMissingClass(RESOURCE_SERVER_AUTO_CONFIG_CLASS)
-        fun oauth2ServerSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
+        fun authServerUnauthorizedController(): AuthServerUnauthorizedController {
 
-            val settings = http
-                .authorizeHttpRequests { authorize ->
-                    authorize.anyRequest().authenticated()
-                }
-
-            configure(settings)
-            return http.build()
+            return AuthServerUnauthorizedController()
         }
 
         override fun setApplicationContext(applicationContext: ApplicationContext) {
@@ -102,21 +94,35 @@ class OAuth2ServerSecurityAutoConfiguration() {
         protected class ActuatorSecurityFilterConfiguration() {
             @Bean
             @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
-            fun defaultSecurityFilterChain(
+            fun actuatorSecurityFilterChain(
                 http: HttpSecurity
             ): SecurityFilterChain {
 
-                http.securityMatcher(EndpointRequest.toAnyEndpoint())
-                    .sessionManagement {
-                        it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                        it.disable()
-                    }
-                    .csrf {
-                        it.disable()
-                    }
-
+                http
+                    .securityMatcher(EndpointRequest.toAnyEndpoint())
+                    .ignoreCSRF(ANY_REQUEST_MATCHER)
                 return http.build()
             }
+        }
+
+
+        @Bean
+        @Order(Ordered.LOWEST_PRECEDENCE - 1)
+        @ConditionalOnMissingClass(RESOURCE_SERVER_AUTO_CONFIG_CLASS)
+        fun oauth2ServerSecurityFilterChain(serverProperties: OAuth2ServerProperties, http: HttpSecurity): SecurityFilterChain {
+
+            val settings = http
+                .securityMatcher("/**")
+                .authorizeHttpRequests { authorize ->
+                    authorize.requestMatchers("/oauth2/unauthorized").permitAll()
+
+                    authorize.anyRequest().authenticated()
+                }
+
+            configure(settings)
+            return settings
+                .applyCommonsPolicy(serverProperties.disableCsrf)
+                .build()
         }
     }
 }

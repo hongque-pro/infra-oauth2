@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 @RestController
-@RequestMapping
+@RequestMapping("/test")
 class TestController {
 
     @Autowired

@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.client.configuration
 
-import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties
+import com.labijie.infra.oauth2.client.OAuth2ClientProvider
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames
 
 /**
  *
@@ -34,11 +35,11 @@ class OAuth2ClientOidcLoginProperties {
     var userIdAttribute: String = ""
 
     companion object {
-        fun createFromProvider(provider: OAuth2ClientProperties.Provider, audienceSet: Set<String>): OAuth2ClientOidcLoginProperties {
+        fun createFromProvider(provider: OAuth2ClientProvider, audienceSet: Set<String>): OAuth2ClientOidcLoginProperties {
             return OAuth2ClientOidcLoginProperties().apply {
-                this.issuerUri = provider.issuerUri
-                this.jwkSetUri = provider.jwkSetUri
-                this.userIdAttribute = provider.userNameAttribute
+                this.issuerUri = provider.issuerUri.orEmpty()
+                this.jwkSetUri = provider.jwkSetUri.orEmpty()
+                this.userIdAttribute = provider.userNameAttribute ?: IdTokenClaimNames.SUB
                 this.audienceSet = audienceSet.joinToString(",")
             }
         }

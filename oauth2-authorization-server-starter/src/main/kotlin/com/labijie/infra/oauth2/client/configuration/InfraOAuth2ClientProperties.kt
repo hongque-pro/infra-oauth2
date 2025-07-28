@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
  * @Date: 2025/7/24
  *
  */
-@ConfigurationProperties("spring.security.oauth2.client")
+@ConfigurationProperties("infra.oauth2.authorization-server.client")
 class InfraOAuth2ClientProperties {
 
     var oidcLoginEnabled: Boolean = true

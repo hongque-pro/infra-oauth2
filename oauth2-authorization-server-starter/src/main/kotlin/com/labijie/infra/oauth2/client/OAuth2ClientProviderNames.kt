@@ -13,4 +13,5 @@ object OAuth2ClientProviderNames {
     const val GITHUB = "gitHub"
     const val FACEBOOK = "facebook"
     const val OKTA = "okta"
+    const val MICROSOFT = "microsoft"
 }

@@ -10,3 +10,12 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: https://testing2.com
+
+logging:
+  level:
+    root: debug
+    com.labijie: debug
+    org:
+      springframework:
+        security:
+          web: trace

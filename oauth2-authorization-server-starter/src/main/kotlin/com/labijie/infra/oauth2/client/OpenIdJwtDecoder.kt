@@ -36,7 +36,7 @@ class OpenIdJwtDecoder(
 
         fun fromProvider(
             providerName: String,
-            provider: OAuth2ClientProperties.Provider,
+            provider: OAuth2ClientProvider,
             audienceSet: Set<String>,
             ): OpenIdJwtDecoder {
 
@@ -48,7 +48,8 @@ class OpenIdJwtDecoder(
                 throw IllegalArgumentException("Provider issuerUri can not be empty for creating OpenIdJwtDecoder.")
             }
 
-            return fromUri(providerName, URI(provider.jwkSetUri.orEmpty()), provider.issuerUri, audienceSet)
+
+            return fromUri(providerName, URI(provider.jwkSetUri), provider.issuerUri, audienceSet)
         }
 
         fun fromUri(

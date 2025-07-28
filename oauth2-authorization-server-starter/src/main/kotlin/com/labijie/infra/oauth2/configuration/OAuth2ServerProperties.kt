@@ -21,7 +21,8 @@ data class OAuth2ServerProperties(
 
     var clientRepository: String = "memory",
     var scopeValidationEnabled: Boolean = false,
-    var createJdbcSchema: Boolean = false
+    var createJdbcSchema: Boolean = false,
+    var disableCsrf: Boolean = true
 ) {
     companion object {
         const val PRIVATE_KEY_PROPERTY_PATH = "infra.oauth2.token.jwt.rsa.private-key"

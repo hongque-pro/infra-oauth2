@@ -16,4 +16,5 @@ class ResourceServerProperties {
     @NestedConfigurationProperty
     val bearerTokenResolver = BearerTokenResolverSettings()
 
+    var disableCsrf: Boolean = true
 }

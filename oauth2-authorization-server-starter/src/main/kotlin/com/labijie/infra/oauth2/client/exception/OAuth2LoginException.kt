@@ -1,7 +1,7 @@
 package com.labijie.infra.oauth2.client.exception
 
 import com.labijie.infra.oauth2.OAuth2ClientAuthenticationException
-import com.labijie.infra.oauth2.mvc.OidcLoginRequest
+import com.labijie.infra.oauth2.client.StandardOidcUserInfo
 import org.springframework.security.oauth2.core.OAuth2Error
 
 /**
@@ -12,7 +12,17 @@ import org.springframework.security.oauth2.core.OAuth2Error
  */
 class OAuth2LoginException : OAuth2ClientAuthenticationException {
 
-    var request: OidcLoginRequest? = null
+    var userInfo: StandardOidcUserInfo?
+        get() {
+            return details["userInfo"] as? StandardOidcUserInfo
+        }
+        set(value) {
+            if (value == null) {
+                details.remove("userInfo")
+            } else {
+                details["userInfo"] = value
+            }
+        }
 
     constructor(
         provider: String,

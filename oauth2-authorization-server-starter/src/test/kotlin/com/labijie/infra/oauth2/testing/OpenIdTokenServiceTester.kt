@@ -1,8 +1,9 @@
 package com.labijie.infra.oauth2.testing
 
+import com.labijie.infra.oauth2.client.DefaultOAuth2ClientProviderService
 import com.labijie.infra.oauth2.client.InfraOAuth2CommonsProviders
 import com.labijie.infra.oauth2.client.OAuth2ClientProviderNames
-import com.labijie.infra.oauth2.client.OpenIDConnectService
+import com.labijie.infra.oauth2.client.DefaultOpenIDConnectService
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties
 import kotlin.test.Test
@@ -20,19 +21,19 @@ class OpenIdTokenServiceTester {
     val appleAuthCode = "c55d518ccd0bf4aa981d808ca54e96b5c.0.srtsx.zuuGCQtAdE8S0qqkR6Aotw"
 
     val providers = mapOf(
-        OAuth2ClientProviderNames.APPLE to InfraOAuth2CommonsProviders.APPLE,
-        OAuth2ClientProviderNames.DISCORD to InfraOAuth2CommonsProviders.DISCORD,
+        OAuth2ClientProviderNames.APPLE to InfraOAuth2CommonsProviders.Apple,
+        OAuth2ClientProviderNames.DISCORD to InfraOAuth2CommonsProviders.Discord,
     )
 
     val properties by lazy {
         InfraOAuth2ClientProperties().apply {
-            oidcLogin.putIfAbsent(OAuth2ClientProviderNames.APPLE, OAuth2ClientOidcLoginProperties.createFromProvider(InfraOAuth2CommonsProviders.APPLE, setOf<String>()))
+            oidcLogin.putIfAbsent(OAuth2ClientProviderNames.APPLE, OAuth2ClientOidcLoginProperties.createFromProvider(InfraOAuth2CommonsProviders.Apple, setOf<String>()))
         }
     }
 
     @Test
     fun testAppleIDTokenDecoding() {
-        val service = OpenIDConnectService(providers, properties)
+        val service = DefaultOpenIDConnectService(DefaultOAuth2ClientProviderService())
         val user = service.decodeToken(OAuth2ClientProviderNames.APPLE, appleIdToken, appleAuthCode, ignoreExpiration = true)
 
         assertTrue(user.emailVerified)

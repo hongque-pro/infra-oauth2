@@ -1,12 +1,9 @@
 package com.labijie.infra.oauth2.client
 
-import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.core.env.MapPropertySource
-import org.springframework.security.oauth2.core.AuthenticationMethod
-import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames
 import java.util.*
 
 /**
@@ -28,14 +25,15 @@ class OAuth2ClientEnvironmentPreparedListener : ApplicationListener<ApplicationE
         LocaleContextHolder.setDefaultLocale(Locale.getDefault())
         val configMap = mutableMapOf<String, Any>()
 
-        configMap.addOAuth2ClientProvider(OAuth2ClientProviderNames.APPLE, InfraOAuth2CommonsProviders.APPLE)
-        configMap.addOAuth2ClientProvider(OAuth2ClientProviderNames.DISCORD, InfraOAuth2CommonsProviders.DISCORD)
+        configMap.addOAuth2ClientProvider(OAuth2ClientProviderNames.APPLE, InfraOAuth2CommonsProviders.Apple)
+        configMap.addOAuth2ClientProvider(OAuth2ClientProviderNames.DISCORD, InfraOAuth2CommonsProviders.Discord)
+        configMap.addOAuth2ClientProvider(OAuth2ClientProviderNames.MICROSOFT, InfraOAuth2CommonsProviders.Microsoft)
 
         return MapPropertySource("spring.security.oauth2.client.provider", configMap)
 
     }
 
-    private fun MutableMap<String, Any>.addOAuth2ClientProvider(name: String, provider: OAuth2ClientProperties.Provider) {
+    private fun MutableMap<String, Any>.addOAuth2ClientProvider(name: String, provider: OAuth2ClientProvider) {
         val basePath = "spring.security.oauth2.client.provider.${name}"
 
         if(!provider.authorizationUri.isNullOrBlank()) {
@@ -53,7 +51,7 @@ class OAuth2ClientEnvironmentPreparedListener : ApplicationListener<ApplicationE
         if (!provider.userNameAttribute.isNullOrBlank()) {
             this.putIfAbsent("$basePath.user-name-attribute", provider.userNameAttribute)
         }
-        if (!provider.userNameAttribute.isNullOrBlank()) {
+        if (!provider.issuerUri.isNullOrBlank()) {
             this.putIfAbsent("$basePath.issuer-uri", provider.issuerUri)
         }
     }

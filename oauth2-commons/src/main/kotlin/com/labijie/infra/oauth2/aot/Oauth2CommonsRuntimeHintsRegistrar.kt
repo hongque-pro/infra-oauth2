@@ -8,10 +8,12 @@ import com.labijie.infra.oauth2.AccessToken
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.configuration.IgnoreCsrfConfigure
+import com.labijie.infra.oauth2.serialization.PlainOAuth2AuthorizationRequest
 import org.springframework.aot.hint.MemberCategory
 import org.springframework.aot.hint.RuntimeHints
 import org.springframework.aot.hint.RuntimeHintsRegistrar
 import org.springframework.aot.hint.TypeReference
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest
 
 
 class Oauth2CommonsRuntimeHintsRegistrar : RuntimeHintsRegistrar {
@@ -20,6 +22,8 @@ class Oauth2CommonsRuntimeHintsRegistrar : RuntimeHintsRegistrar {
             listOf(
                 TypeReference.of(AccessToken::class.java),
                 TypeReference.of(TwoFactorPrincipal::class.java),
+                TypeReference.of(OAuth2AuthorizationRequest::class.java),
+                TypeReference.of(PlainOAuth2AuthorizationRequest::class.java),
             )
         ) {
             it.withMembers(*MemberCategory.entries.toTypedArray())

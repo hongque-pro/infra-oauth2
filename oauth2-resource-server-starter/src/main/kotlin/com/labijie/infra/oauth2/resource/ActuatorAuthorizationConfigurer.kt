@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.resource
 
+import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer

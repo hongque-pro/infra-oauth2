@@ -13,6 +13,7 @@ import com.labijie.infra.oauth2.serialization.jackson.OAuth2CommonsJacksonModule
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import com.fasterxml.jackson.databind.Module
 import java.util.*
 
 
@@ -27,6 +28,10 @@ object CookieUtils {
 
             registerModules(OAuth2CommonsJacksonModule())
         }
+    }
+
+    fun registerJacksonModule(vararg modules: Module) {
+        smileMapper.registerModules(*modules)
     }
 
     fun getCookie(request: HttpServletRequest, name: String?): Cookie? {

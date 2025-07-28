@@ -1,12 +1,11 @@
-package com.labijie.infra.oauth2.client.apple
+package com.labijie.infra.oauth2.client.provider.apple
 
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.client.DefaultAuthorizationCodeTokenResponseClientClient
-import com.labijie.infra.oauth2.client.ICustomAuthorizationCodeTokenResponseClient
+import com.labijie.infra.oauth2.client.extension.ICustomAuthorizationCodeTokenResponseClient
 import com.labijie.infra.oauth2.client.OAuth2ClientProviderNames
 import com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties
 import com.labijie.infra.oauth2.client.findProvider
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader

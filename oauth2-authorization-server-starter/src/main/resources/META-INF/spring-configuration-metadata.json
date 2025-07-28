@@ -33,6 +33,10 @@
     {
       "name": "spring.security.oauth2.client.registration.apple",
       "type": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.client",
+      "type": "com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties"
     }
   ],
   "properties":[
@@ -41,6 +45,12 @@
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
       "defaultValue": "https://labijie.com"
+    },
+    {
+      "name":"infra.oauth2.authorization-server.disable-csrf",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "defaultValue": true
     },
     {
       "name":"infra.oauth2.authorization-server.client-repository",
@@ -149,20 +159,20 @@
     },
 
     {
-      "name": "spring.security.oauth2.client.oidc-login",
+      "name": "infra.oauth2.authorization-server.client.oidc-login",
       "type": "java.util.Map<java.lang.String, com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties>",
       "sourceType": "com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties",
       "description": "OpenID Connect login providers (login with id token)"
     },
 
     {
-      "name": "spring.security.oauth2.client.oidc-login-enabled",
+      "name": "infra.oauth2.authorization-server.client.oidc-login-enabled",
       "type": "java.lang.Boolean",
       "description": "Oidc login features enabled."
     },
 
     {
-      "name": "spring.security.oauth2.client.oidc-login.values.[].audience-set",
+      "name": "infra.oauth2.authorization-server.client.oidc-login.values.[].audience-set",
       "type": "java.lang.String",
       "description": "Audience (oidc aud) for verify."
     }
@@ -199,7 +209,7 @@
       ]
     },
     {
-      "name": "spring.security.oauth2.client.oidc-login.keys",
+      "name": "infra.oauth2.authorization-server.client.oidc-login.keys",
       "values": [
         {
           "value": "apple"
@@ -210,7 +220,7 @@
       ]
     },
     {
-      "name": "spring.security.oauth2.client.oidc-login.values",
+      "name": "infra.oauth2.authorization-server.client.oidc-login.values",
       "providers": [
         {
           "name": "handle-as",

@@ -8,6 +8,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
  * @Date: 2025/7/26
  *
  */
-interface IHttpSecurityConfigurer {
+interface IResourceServerHttpSecurityConfigurer {
     fun configure(http: HttpSecurity): Unit
 }

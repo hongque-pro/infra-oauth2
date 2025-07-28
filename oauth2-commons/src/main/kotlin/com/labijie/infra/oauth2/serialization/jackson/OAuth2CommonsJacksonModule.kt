@@ -6,7 +6,9 @@ package com.labijie.infra.oauth2.serialization.jackson
 
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.labijie.infra.oauth2.AccessToken
+import org.springframework.security.oauth2.core.AuthenticationMethod
 import org.springframework.security.oauth2.core.AuthorizationGrantType
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType
 
 
@@ -20,5 +22,11 @@ class OAuth2CommonsJacksonModule : SimpleModule("infra.oauth2.commons") {
 
         this.addSerializer(AuthorizationGrantType::class.java, AuthorizationGrantTypeSerializer())
         this.addDeserializer(AuthorizationGrantType::class.java, AuthorizationGrantTypeDeserializer())
+
+        this.addSerializer(OAuth2AuthorizationRequest::class.java, OAuth2AuthorizationRequestSerializer())
+        this.addDeserializer(OAuth2AuthorizationRequest::class.java, OAuth2AuthorizationRequestDeserializer())
+
+        this.addSerializer(AuthenticationMethod::class.java, AuthenticationMethodSerializer())
+        this.addDeserializer(AuthenticationMethod::class.java, AuthenticationMethodDeserializer())
     }
 }

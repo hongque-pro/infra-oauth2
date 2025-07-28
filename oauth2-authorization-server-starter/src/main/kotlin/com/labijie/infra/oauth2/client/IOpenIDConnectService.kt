@@ -1,5 +1,7 @@
 package com.labijie.infra.oauth2.client
 
+import com.labijie.infra.oauth2.client.extension.IOpenIDConnectProvider
+
 /**
  *
  * @Author: Anders Xiao
@@ -20,5 +22,5 @@ interface IOpenIDConnectService {
         authorizationCode: String? = null,
         nonce: String? = null,
         ignoreExpiration: Boolean = false,
-    ): OAuth2LoginUser
+    ): StandardOidcUser
 }

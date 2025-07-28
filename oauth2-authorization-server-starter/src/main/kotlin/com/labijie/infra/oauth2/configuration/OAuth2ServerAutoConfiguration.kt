@@ -81,13 +81,14 @@ class OAuth2ServerAutoConfiguration(
     @Bean
     fun oauth2ServerJwtCodec(
         settings: AuthorizationServerSettings,
-        jwkSource: JWKSource<SecurityContext>): OAuth2ServerJwtCodec {
+        jwkSource: JWKSource<SecurityContext>
+    ): OAuth2ServerJwtCodec {
         return OAuth2ServerJwtCodec(settings.issuer, jwkSource)
     }
 
     @Bean
     @ConditionalOnMissingBean(JwtDecoder::class)
-    fun jwtDecoder(serverJwtCodec: IOAuth2ServerJwtCodec) : JwtDecoder {
+    fun jwtDecoder(serverJwtCodec: IOAuth2ServerJwtCodec): JwtDecoder {
         logger.info("OAuth2 authorization server jwt decoder used.")
         return serverJwtCodec.jwtDecoder()
     }
@@ -141,7 +142,6 @@ class OAuth2ServerAutoConfiguration(
     }
 
 
-
     @Configuration(proxyBeanMethods = false)
     protected class SecurityFilterChainConfiguration : ApplicationContextAware {
 
@@ -152,9 +152,9 @@ class OAuth2ServerAutoConfiguration(
         @Order(Ordered.HIGHEST_PRECEDENCE)
         fun authorizationServerSecurityFilterChain(
             http: HttpSecurity,
+            serverProperties: OAuth2ServerProperties,
             clientRepository: RegisteredClientRepository,
             authorizationService: OAuth2AuthorizationService,
-            authorizationServerSettings: AuthorizationServerSettings
         ): SecurityFilterChain {
 
 
@@ -187,17 +187,18 @@ class OAuth2ServerAutoConfiguration(
                     it.accessTokenRequestConverter(resourceOwnerPasswordAuthenticationConverter)
                     it.authenticationProvider(resourceOwnerPasswordAuthenticationProvider)
                 }
-             // Enable OpenID Connect 1.0
+            // Enable OpenID Connect 1.0
 
 
             val checkPointerMatcher = PathPatternRequestMatcher.withDefaults().matcher(ENDPOINT_CHECK_TOKEN)
             val oidcLoginMatcher = PathPatternRequestMatcher.withDefaults().matcher(OIDC_LOGIN_PATTERN)
 
 
-            val oauth2EndPoints = OrRequestMatcher(authorizationServerConfigurer.endpointsMatcher, checkPointerMatcher, oidcLoginMatcher)
+            val oauth2EndPoints =
+                OrRequestMatcher(authorizationServerConfigurer.endpointsMatcher, checkPointerMatcher, oidcLoginMatcher)
 
 
-            http.ignoreCSRF(oauth2EndPoints)
+            //http.ignoreCSRF(oauth2EndPoints)
 
             http.securityMatcher(oauth2EndPoints)
                 .authorizeHttpRequests {
@@ -207,8 +208,8 @@ class OAuth2ServerAutoConfiguration(
                 }
                 .cors {
 
-                }.with(authorizationServerConfigurer) {
-                    configurer -> configurer.oidc( Customizer.withDefaults())
+                }.with(authorizationServerConfigurer) { configurer ->
+                    configurer.oidc(Customizer.withDefaults())
                 }
                 .sessionManagement {
                     it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -222,7 +223,7 @@ class OAuth2ServerAutoConfiguration(
 
             return http.formLogin {
                 it.disable()
-            }.build()
+            }.applyCommonsPolicy(serverProperties.disableCsrf).build()
         }
 
 
@@ -278,15 +279,17 @@ class OAuth2ServerAutoConfiguration(
                 information.appendLine(settings.authorizationEndpoint)
                 information.appendLine(settings.authorizationEndpoint)
                 information.appendLine("Use the configuration below to configure your resource server:")
-                information.appendLine("""
+                information.appendLine(
+                    """
                     spring:
                       security:
                         oauth2:
                           resourceserver:
                             jwt:
                               issuer-uri: ${settings.issuer}
-                              jwk-set-uri: "http://localhost:${serverProperties.port ?: 8080}${settings.jwkSetEndpoint}"
-                """.trimIndent())
+                              jwk-set-uri: http://localhost:${serverProperties.port ?: 8080}${settings.jwkSetEndpoint}
+                """.trimIndent()
+                )
 
                 logger.info(information.toString())
             }

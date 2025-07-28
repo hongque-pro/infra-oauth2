@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.ApplicationContext
 import org.springframework.http.ResponseEntity
+import org.springframework.security.web.csrf.CsrfException
 
 /**
  *
@@ -76,29 +77,40 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
         applicationContext?.getBeansOfType(IOAuthErrorWriter::class.java)?.values?.firstOrNull()
     }
 
+    private data class NormalizedError(val error: OAuth2Error, val status: HttpStatus, val details: Map<String, Any>? = null)
+
     private fun writeError(request: HttpServletRequest,response: HttpServletResponse, ex: Exception, httpStatus: HttpStatus) {
-        val (error, status) = when (ex) {
+
+        val (error, status, details) = when (ex) {
             is BadCredentialsException -> {
-                Pair(
+                NormalizedError(
                     OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null),
                     httpStatus
                 )
             }
 
+            is CsrfException -> {
+                NormalizedError(OAuth2Error(SecurityErrorCodes.INVALID_CSRF_TOKEN), httpStatus)
+            }
+
+            is OAuth2ClientAuthenticationException-> {
+                NormalizedError(ex.error, httpStatus, ex.details)
+            }
+
             is OAuth2AuthenticationException -> {
-                Pair(ex.error, httpStatus)
+                NormalizedError(ex.error, httpStatus)
             }
 
             is InsufficientAuthenticationException -> {
-                Pair(OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, ex.message, null), httpStatus)
+                NormalizedError(OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, ex.message, null), httpStatus)
             }
 
             is AuthenticationException -> {
-                Pair(OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, ex.message, null), httpStatus)
+                NormalizedError(OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, ex.message, null), httpStatus)
             }
 
             is AccessDeniedException -> {
-                Pair(
+                NormalizedError(
                     OAuth2Error(OAuth2ErrorCodes.ACCESS_DENIED, ex.message.ifNullOrBlank { "Access denied." }, null),
                     httpStatus
                 )
@@ -111,21 +123,26 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
                     "Unhandled error has occurred when handle authentication failure.",
                     null
                 )
-                Pair(err, HttpStatus.INTERNAL_SERVER_ERROR)
+                NormalizedError(err, HttpStatus.INTERNAL_SERVER_ERROR)
             }
         }
 
         val writer = errorWriter
         if(writer != null) {
-            writer.writeErrorResponse(request, response, error)
+            writer.writeErrorResponse(request, response, error, details)
             response.status = status.value()
             return
         }
 
-        val errorMessage = mutableMapOf(
+        val errorMessage: MutableMap<String, Any> = mutableMapOf(
             "error" to error.errorCode,
-            "error_description" to error.description.ifNullOrBlank { "Authenticate failed." }
+            "error_description" to error.description.ifNullOrBlank { "OAuth2 authenticate failed." }
         )
+
+        details?.let {
+            errorMessage.putIfAbsent("details", details)
+        }
+
         if (!error.uri.isNullOrBlank()) {
             errorMessage["error_uri"] = error.uri
         }

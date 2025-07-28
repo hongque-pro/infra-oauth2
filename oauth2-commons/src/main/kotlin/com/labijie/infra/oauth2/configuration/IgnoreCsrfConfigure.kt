@@ -24,7 +24,7 @@ internal class IgnoreCsrfConfigure() :
     override fun configure(http: HttpSecurity) {
         http.csrf {
             csrf->csrf.ignoringRequestMatchers(*ignoreMatchers.toTypedArray())
-            ignoreMatchers.clear()
+            csrf.disable()
         }
     }
 }

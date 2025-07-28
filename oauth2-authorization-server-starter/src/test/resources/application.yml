@@ -8,12 +8,16 @@ infra:
 
 logging:
   level:
-    root: error
+    root: debug
     com.labijie: debug
+    org:
+      springframework:
+        security:
+          web: trace
 
 spring:
   security:
-    oauth2:
 
+    oauth2:
       authorizationserver:
         issuer: https://testing.com

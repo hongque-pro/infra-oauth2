@@ -1,11 +1,7 @@
 package com.labijie.infra.oauth2.client
 
-import com.labijie.infra.oauth2.AccessToken
 import com.labijie.infra.oauth2.mvc.OidcLoginRequest
 import com.labijie.infra.oauth2.mvc.OidcLoginResponse
-import com.nimbusds.jwt.SignedJWT
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 
 /**
  *
@@ -14,5 +10,5 @@ import jakarta.servlet.http.HttpServletResponse
  *
  */
 interface IOidcLoginHandler {
-    fun handle(user: OAuth2LoginUser, request: OidcLoginRequest): OidcLoginResponse
+    fun handle(user: StandardOidcUser, request: OidcLoginRequest): OidcLoginResponse
 }

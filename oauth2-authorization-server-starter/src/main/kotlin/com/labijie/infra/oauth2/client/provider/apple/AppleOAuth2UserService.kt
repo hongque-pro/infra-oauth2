@@ -1,8 +1,8 @@
-package com.labijie.infra.oauth2.client.apple
+package com.labijie.infra.oauth2.client.provider.apple
 
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.labijie.infra.oauth2.client.ICustomOAuth2UserService
+import com.labijie.infra.oauth2.client.extension.ICustomOAuth2UserService
 import com.labijie.infra.oauth2.client.IOpenIDConnectService
 import com.labijie.infra.oauth2.client.OAuth2ClientProviderNames
 import com.labijie.infra.oauth2.client.exception.InvalidOauth2ClientTokenResponseException
@@ -56,7 +56,7 @@ class AppleOAuth2UserService(
         }
 
         val idTokenValue = userRequest.additionalParameters["id_token"] as? String
-            ?: throw IllegalStateException("Missing id_token in Apple OAuth response")
+            ?: throw InvalidOauth2ClientTokenResponseException("Missing id_token in Apple oauth2 response")
 
         val user = openIdTokenService.decodeToken(OAuth2ClientProviderNames.APPLE,idTokenValue)
 

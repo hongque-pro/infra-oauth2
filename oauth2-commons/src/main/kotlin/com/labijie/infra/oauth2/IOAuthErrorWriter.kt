@@ -10,5 +10,5 @@ import org.springframework.security.oauth2.core.OAuth2Error
 
 
 interface IOAuthErrorWriter {
-    fun writeErrorResponse(request: HttpServletRequest, response: HttpServletResponse, error: OAuth2Error)
+    fun writeErrorResponse(request: HttpServletRequest, response: HttpServletResponse, error: OAuth2Error, details: Map<String, Any>? = null)
 }

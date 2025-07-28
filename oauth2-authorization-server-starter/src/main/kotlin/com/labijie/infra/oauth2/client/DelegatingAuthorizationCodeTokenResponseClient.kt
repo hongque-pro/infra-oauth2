@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.client
 
+import com.labijie.infra.oauth2.client.extension.ICustomAuthorizationCodeTokenResponseClient
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient

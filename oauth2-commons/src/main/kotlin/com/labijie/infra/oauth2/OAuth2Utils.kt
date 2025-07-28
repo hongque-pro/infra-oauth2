@@ -5,6 +5,9 @@ import com.nimbusds.jose.jwk.JWKSelector
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.OctetSequenceKey
 import com.nimbusds.jose.jwk.source.JWKSource
+import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.openid.connect.sdk.claims.ClaimsSet
+import net.minidev.json.JSONObject
 import org.springframework.context.ApplicationContext
 import org.springframework.core.io.ClassPathResource
 import org.springframework.security.authentication.BadCredentialsException
@@ -60,6 +63,11 @@ object OAuth2Utils {
             tokeValueResolvers = applicationContext.getBeanProvider(ITokenValueResolver::class.java).stream()
                 .collect(Collectors.toList())
         }
+    }
+
+    fun JWTClaimsSet.toClaimSet(): ClaimsSet {
+        val attributes = this.claims
+        return ClaimsSet(JSONObject(attributes))
     }
 
     fun currentTwoFactorPrincipalOrNull(): TwoFactorPrincipal? {

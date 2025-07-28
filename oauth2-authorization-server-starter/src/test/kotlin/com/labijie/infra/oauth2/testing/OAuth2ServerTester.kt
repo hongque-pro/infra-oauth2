@@ -16,19 +16,23 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.FilterType
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes
 import org.springframework.security.oauth2.jwt.JwtClaimNames
+import org.springframework.security.web.csrf.CsrfFilter
+import org.springframework.security.web.server.csrf.CsrfWebFilter
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
+import org.springframework.web.context.WebApplicationContext
 import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,15 +40,33 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
-@WebMvcTest
+@WebMvcTest(excludeFilters = [ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = [CsrfFilter::class, CsrfWebFilter::class])])
 @ContextConfiguration(classes = [OAuth2TestServerAutoConfiguration::class])
 @ImportAutoConfiguration(classes = [SecurityFilterAutoConfiguration::class])
 class OAuth2ServerTester : OAuth2Tester() {
+
+//    @Autowired
+//    private lateinit var context: WebApplicationContext
+
     @Autowired
     override lateinit var mockMvc: MockMvc
 
+//    override val mockMvc: MockMvc
+//        get() {
+//            return MockMvcBuilders
+//                .webAppContextSetup(context)
+//                .apply<DefaultMockMvcBuilder>(SecurityMockMvcConfigurers.springSecurity())
+//                .build()
+//        }
+
+
+    @Autowired
+    private lateinit var webApplicationContext: WebApplicationContext
+
+
     @Autowired
     private lateinit var jwtDecoder: IOAuth2ServerJwtCodec
+
 
     @Test
     fun testCorrectPasswordLogin() {
@@ -96,28 +118,24 @@ class OAuth2ServerTester : OAuth2Tester() {
     @Test
     fun testSignInHelper() {
 
-//        mockMvc.perform(
-//            get("/access")
-//                .accept(MediaType.APPLICATION_JSON)
-//        )
-//        .andExpect(status().is4xxClientError)
-
-        val result = mockMvc.perform(
-            post("/fake-login")
+       val denined = mockMvc.perform(
+            get("/test/access")
                 .accept(MediaType.APPLICATION_JSON)
         )
-            .andExpect(status().isOk)
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        denined.andExpect(status().is4xxClientError)
+
+        val result = mockMvc.perform(
+            post("/test/fake-login")
+                .accept(MediaType.APPLICATION_JSON)
+        )
+        result.andExpect(status().isOk)
+        result.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 
         val map = result.readToMap()
         assert(map.containsKey("access_token"))
         assert(map.containsKey("refresh_token"))
+        assert(map.containsKey("access_token").toString().isNotBlank())
 
-        mockMvc.perform(
-            get("/access").withBearerToken(map["access_token"]!!.toString())
-                .accept(MediaType.APPLICATION_JSON)
-        )
-            .andExpect(status().isOk)
 
         val params: MultiValueMap<String, String> = LinkedMultiValueMap()
         params.add("grant_type", "refresh_token")

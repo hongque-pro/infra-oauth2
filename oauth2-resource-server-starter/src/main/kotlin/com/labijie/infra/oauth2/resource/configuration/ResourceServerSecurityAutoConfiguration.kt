@@ -1,7 +1,9 @@
 package com.labijie.infra.oauth2.resource.configuration
 
-import com.labijie.infra.oauth2.IHttpSecurityConfigurer
+import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
+import com.labijie.infra.oauth2.configuration.applyCommonsPolicy
+import com.labijie.infra.oauth2.configuration.ignoreCSRF
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
 import com.labijie.infra.oauth2.resource.component.CookieSupportedBearerTokenResolver
@@ -20,7 +22,6 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
-import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
@@ -61,21 +62,12 @@ class ResourceServerSecurityAutoConfiguration(
 
     @Bean
     @Order(Ordered.LOWEST_PRECEDENCE)
-    fun resourceServerSecurityChain(http: HttpSecurity, configurers: ObjectProvider<IHttpSecurityConfigurer>): SecurityFilterChain {
+    fun resourceServerSecurityChain(
+        http: HttpSecurity,
+        serverProperties: ResourceServerProperties,
+        configurers: ObjectProvider<IResourceServerHttpSecurityConfigurer>
+    ): SecurityFilterChain {
 
-        val baseUrl = resourceServerProperties.baseUrl.removeSuffix("/")
-
-        http.csrf {
-            it.disable()
-        }
-        http.httpBasic {
-            it.disable()
-        }
-
-        http.sessionManagement {
-            it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            it.disable()
-        }
 
 //            val notOAuth2Matcher = PathPatternRequestMatcher.withDefaults().matcher("/oauth2/**").let {
 //                NegatedRequestMatcher(it)
@@ -83,20 +75,18 @@ class ResourceServerSecurityAutoConfiguration(
 
         //http.cors(Customizer.withDefaults())
         val settings = http
+            .securityMatcher("/**")
             .authorizeHttpRequests { authorize ->
                 authorize.requestMatchers(*getPermitAllUrlsFromController()).permitAll()
                 authorize.withObjectPostProcessor(RequestMatcherPostProcessor)
                 authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                authorize.requestMatchers("${baseUrl}/oauth2/unauthorized").permitAll()
+                authorize.requestMatchers("/oauth2/unauthorized").permitAll()
                 resourceConfigurers.orderedStream().forEach {
                     it.configure(authorize)
                 }
                 authorize.anyRequest().authenticated()
             }
 
-        configurers.orderedStream().forEach {
-                configurer -> configurer.configure(settings)
-        }
 
         settings.oauth2ResourceServer { obj ->
             obj.jwt {
@@ -113,9 +103,18 @@ class ResourceServerSecurityAutoConfiguration(
             it.accessDeniedHandler(OAuth2ExceptionHandler.getInstance(this.applicationContext))
         }
 
+        configurers.orderedStream().forEach { configurer ->
+            configurer.configure(settings)
+        }
 
 
-        return settings.formLogin { it.disable() }.build()
+        return settings.formLogin {
+            it.loginPage("/oauth2/unauthorized")
+            it.permitAll()
+            it.disable()
+        }
+            .applyCommonsPolicy(serverProperties.disableCsrf)
+            .build()
     }
 
     fun applyJwtConfiguration(

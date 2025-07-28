@@ -58,7 +58,7 @@ class RemoteServerTester() {
         }
     }
 
-    private val resetClient = RestClient.builder().defaultStatusHandler(NoErrorHandler).baseUrl("http://localhost:8088").build()
+    private val resetClient = RestClient.builder().defaultStatusHandler(NoErrorHandler).baseUrl("http://localhost:8089").build()
 
     protected val defaultOAuth2ServerSettings = AuthorizationServerSettings.builder().build()
 

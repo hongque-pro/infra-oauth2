@@ -1,10 +1,13 @@
 package com.labijie.infra.oauth2.testing.configuration
 
 import com.labijie.caching.configuration.CachingAutoConfiguration
+import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
+import com.labijie.infra.oauth2.client.configuration.InfraOidcUserConverterAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerSecurityAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
 import com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration
+import com.labijie.infra.oauth2.resource.configuration.ResourceServerSecurityAutoConfiguration
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.context.annotation.Bean
@@ -16,7 +19,10 @@ import org.springframework.security.crypto.password.PasswordEncoder
     OAuth2DependenciesAutoConfiguration::class,
     OAuth2ServerAutoConfiguration::class,
     OAuth2ServerSecurityAutoConfiguration::class,
-    ResourceServerAutoConfiguration::class)
+    InfraOidcUserConverterAutoConfiguration::class,
+    InfraOAuth2ClientProperties::class,
+    ResourceServerAutoConfiguration::class,
+    ResourceServerSecurityAutoConfiguration::class)
 @Configuration
 class ResourceServerTestingConfiguration(passwordEncoder: PasswordEncoder) {
 

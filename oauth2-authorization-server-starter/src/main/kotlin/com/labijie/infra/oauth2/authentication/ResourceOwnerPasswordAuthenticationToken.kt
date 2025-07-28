@@ -1,16 +1,9 @@
 package com.labijie.infra.oauth2.authentication
 
-import jakarta.servlet.http.HttpServletResponse
-import org.apache.catalina.authenticator.AuthenticatorBase
-import org.apache.catalina.connector.Request
 import org.springframework.security.authentication.AbstractAuthenticationToken
-import org.springframework.security.core.Authentication
-import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientCredentialsAuthenticationProvider
 import java.util.*
-import kotlin.collections.HashSet
 
 
 class ResourceOwnerPasswordAuthenticationToken(

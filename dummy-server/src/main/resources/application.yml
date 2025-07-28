@@ -1,5 +1,13 @@
 infra:
   oauth2:
+    authorization-server:
+      client:
+        oidc-login:
+          google:
+            audience-set:
+          apple:
+            audience-set:
+        oidc-login-enabled: true
 
   caching:
     provider: memory
@@ -9,8 +17,9 @@ infra:
           url: redis://localhost:6379/1
           serializer: kotlin-protobuf
 server:
-  port: 8088
+  port: 8089
   forward-headers-strategy: framework
+
 
 spring:
   datasource:
@@ -22,22 +31,6 @@ spring:
     oauth2:
       authorizationserver:
         issuer: https://test.api
-      client:
-        oidc-login-enabled: true
-        oidc-login:
-          google:
-            audience-set:
-          apple:
-            audience-set:
-        registration:
-          apple:
-            client-id: ai.ciney.videobot
-            team-id: 78L4772BQR
-            key-id: G92XUZNXMB
-            private-rsa-key: AuthKey_G92XUZNXMB.p8
-          google:
-            client-id: XXXX
-            client-secret: XXXX
 
 
 

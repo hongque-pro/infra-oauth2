@@ -1,24 +1,27 @@
 package com.labijie.infra.oauth2.testing.configuration
 
 import com.labijie.caching.configuration.CachingAutoConfiguration
+import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
+import com.labijie.infra.oauth2.client.configuration.InfraOidcUserConverterAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
-import com.labijie.infra.oauth2.configuration.OAuth2ServerSecurityAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
+import com.labijie.infra.oauth2.configuration.OAuth2ServerSecurityAutoConfiguration
 import com.labijie.infra.oauth2.testing.component.OAuth2SignInTestingListener
 import com.labijie.infra.oauth2.testing.component.TestingIdentityService
+import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
+import org.springframework.boot.autoconfigure.security.SecurityProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.DefaultSecurityFilterChain
 
 @EnableWebSecurity
 @Configuration
-@ImportAutoConfiguration(
-    CachingAutoConfiguration::class,
-    OAuth2DependenciesAutoConfiguration::class,
-    OAuth2ServerAutoConfiguration::class,
-    OAuth2ServerSecurityAutoConfiguration::class)
+@ImportAutoConfiguration(CachingAutoConfiguration::class)
 class OAuth2TestServerAutoConfiguration {
 
 //    @Bean
@@ -26,6 +29,33 @@ class OAuth2TestServerAutoConfiguration {
 //        return TestingClientDetailServiceFactory()
 //    }
 
+
+
+    @Configuration(proxyBeanMethods = false)
+    @AutoConfigureBefore(OAuth2ServerSecurityAutoConfiguration::class)
+    class SecurityAutoConfig {
+        @Bean
+        @Order(SecurityProperties.BASIC_AUTH_ORDER)
+        fun testServerChain(http: HttpSecurity): DefaultSecurityFilterChain? {
+            return http
+                .csrf { it.disable() }
+                .securityMatcher("/test/**")
+                .authorizeHttpRequests { authorize ->
+                    authorize.requestMatchers("/test/fake-login").permitAll()
+                    authorize.anyRequest().authenticated()
+                }.build()
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @ImportAutoConfiguration(
+        OAuth2DependenciesAutoConfiguration::class,
+        OAuth2ServerAutoConfiguration::class,
+        OAuth2ServerSecurityAutoConfiguration::class,
+        InfraOidcUserConverterAutoConfiguration::class,
+        InfraOAuth2ClientProperties::class,
+    )
+    class OAuth2ServerImports
 
     @Bean
     fun testController() = TestController()
@@ -36,7 +66,7 @@ class OAuth2TestServerAutoConfiguration {
     }
 
     @Bean
-    fun eventTestSubscription(): EventTestSubscription{
+    fun eventTestSubscription(): EventTestSubscription {
         return EventTestSubscription()
     }
 

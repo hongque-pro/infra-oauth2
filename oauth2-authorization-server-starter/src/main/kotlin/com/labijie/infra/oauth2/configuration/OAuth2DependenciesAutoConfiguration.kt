@@ -14,8 +14,8 @@ import com.labijie.infra.oauth2.service.OAuth2Initializer
 import com.labijie.infra.utils.ifNullOrBlank
 import com.labijie.infra.utils.logger
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.condition.*
 import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -27,8 +27,10 @@ import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.core.env.Environment
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer.AuthorizationManagerRequestMatcherRegistry
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -37,6 +39,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
@@ -48,10 +52,27 @@ import javax.sql.DataSource
 @EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(JdbcTemplateAutoConfiguration::class)
+@AutoConfigureBefore(OAuth2AuthorizationServerConfiguration::class)
 @EnableConfigurationProperties(OAuth2ServerProperties::class)
 class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
 
     private lateinit var springContext: ApplicationContext
+
+//    @Bean
+//    @Order(Ordered.HIGHEST_PRECEDENCE)
+//    @Throws(Exception::class)
+//    fun overrideAuthorizationServerSecurityFilterChain(
+//        http: HttpSecurity,
+//        serverProperties: OAuth2ServerProperties): SecurityFilterChain {
+//        // @formatter:off
+//        val authorizationServerConfigurer =
+//            OAuth2AuthorizationServerConfigurer.authorizationServer()
+//        http
+//            .securityMatcher(authorizationServerConfigurer.endpointsMatcher)
+//            .applyCommonsPolicy(serverProperties.disableCsrf)
+//
+//        return http.build()
+//    }
 
 
     @Bean
