@@ -187,23 +187,10 @@ class OAuth2ServerAutoConfiguration(
                     it.accessTokenRequestConverter(resourceOwnerPasswordAuthenticationConverter)
                     it.authenticationProvider(resourceOwnerPasswordAuthenticationProvider)
                 }
-            // Enable OpenID Connect 1.0
 
-
-            val checkPointerMatcher = PathPatternRequestMatcher.withDefaults().matcher(ENDPOINT_CHECK_TOKEN)
-            val oidcLoginMatcher = PathPatternRequestMatcher.withDefaults().matcher(OIDC_LOGIN_PATTERN)
-
-
-            val oauth2EndPoints =
-                OrRequestMatcher(authorizationServerConfigurer.endpointsMatcher, checkPointerMatcher, oidcLoginMatcher)
-
-
-            //http.ignoreCSRF(oauth2EndPoints)
-
-            http.securityMatcher(oauth2EndPoints)
+            http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
                 .authorizeHttpRequests {
                     it.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                    it.requestMatchers(checkPointerMatcher, oidcLoginMatcher).permitAll()
                     it.anyRequest().authenticated()
                 }
                 .cors {

@@ -2,17 +2,12 @@ package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.resource.*
-import com.labijie.infra.oauth2.resource.component.CookieSupportedBearerTokenResolver
-import com.labijie.infra.oauth2.resource.component.IOAuth2TokenCookieDecoder
 import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
-import com.labijie.infra.oauth2.resource.component.RequestMatcherPostProcessor
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
 import com.labijie.infra.oauth2.resource.token.DefaultJwtAuthenticationConverter
 import com.labijie.infra.utils.ifNullOrBlank
-import jakarta.annotation.security.PermitAll
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -23,28 +18,18 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties
 import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
-import org.springframework.core.Ordered
-import org.springframework.core.annotation.Order
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
-import org.springframework.http.HttpMethod
-import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
-import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2TokenValidator
 import org.springframework.security.oauth2.core.converter.ClaimConversionService
 import org.springframework.security.oauth2.jwt.*
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector
-import org.springframework.security.web.SecurityFilterChain
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 import java.io.IOException
 import java.security.interfaces.RSAPublicKey
 
@@ -53,11 +38,11 @@ import java.security.interfaces.RSAPublicKey
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(ResourceServerProperties::class)
 @AutoConfigureAfter(OAuth2ResourceServerAutoConfiguration::class)
-@Import(UnauthorizedController::class)
 @AutoConfigureOrder(1)
 class ResourceServerAutoConfiguration(
     private val resourceServerProperties: ResourceServerProperties,
 ) {
+
 
     companion object {
         private val OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Any::class.java)
@@ -82,6 +67,12 @@ class ResourceServerAutoConfiguration(
     }
 
     private var defaultPubKeyUsed = false
+
+    @Bean
+    @ConditionalOnMissingBean(IUnauthorizedController::class)
+    fun resourceServerUnauthorizedController(): ResourceServerUnauthorizedController {
+        return ResourceServerUnauthorizedController()
+    }
 
     @Bean
     @ConditionalOnMissingBean(JwtAuthenticationConverter::class)
@@ -147,9 +138,10 @@ class ResourceServerAutoConfiguration(
     fun jwtDecoder(
         @Autowired(required = false) secretsStore: IResourceServerSecretsStore?,
         springResourceProperties: OAuth2ResourceServerProperties,
-        serverProperties: ResourceServerProperties): JwtDecoder {
+        serverProperties: ResourceServerProperties
+    ): JwtDecoder {
 
-        val decoder = if(secretsStore != null ){
+        val decoder = if (secretsStore != null) {
 
             val pubKey = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey(serverProperties))
             NimbusJwtDecoder.withPublicKey(pubKey)

@@ -3,7 +3,6 @@ package com.labijie.infra.oauth2.resource.configuration
 import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
 import com.labijie.infra.oauth2.configuration.applyCommonsPolicy
-import com.labijie.infra.oauth2.configuration.ignoreCSRF
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
 import com.labijie.infra.oauth2.resource.component.CookieSupportedBearerTokenResolver
@@ -78,9 +77,12 @@ class ResourceServerSecurityAutoConfiguration(
             .securityMatcher("/**")
             .authorizeHttpRequests { authorize ->
                 authorize.requestMatchers(*getPermitAllUrlsFromController()).permitAll()
-                authorize.withObjectPostProcessor(RequestMatcherPostProcessor)
                 authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
                 authorize.requestMatchers("/oauth2/unauthorized").permitAll()
+
+
+                authorize.withObjectPostProcessor(RequestMatcherPostProcessor)
+
                 resourceConfigurers.orderedStream().forEach {
                     it.configure(authorize)
                 }

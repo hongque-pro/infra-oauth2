@@ -5,7 +5,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
 import org.springframework.security.web.util.matcher.RequestMatcher
-import kotlin.math.PI
 
 /**
  *
@@ -18,21 +17,17 @@ import kotlin.math.PI
 val EMPTY_REQUEST_MATCHER: RequestMatcher = RequestMatcher { request: HttpServletRequest? -> false }
 val ANY_REQUEST_MATCHER: RequestMatcher = RequestMatcher { request: HttpServletRequest? -> true }
 
-fun HttpSecurity.ignoreCSRF(vararg matchers: RequestMatcher): HttpSecurity {
-    val config = this.getConfigurer(IgnoreCsrfConfigure::class.java)
-    if (config != null) {
-        config.addMatcher(*matchers)
-    } else {
-        this.with(IgnoreCsrfConfigure()) {
-            it.addMatcher(*matchers)
-        }
-    }
-    return this
+fun HttpSecurity.ignoreCSRF(): HttpSecurity {
+     return this.csrf {
+         it.requireCsrfProtectionMatcher(EMPTY_REQUEST_MATCHER)
+         it.ignoringRequestMatchers(ANY_REQUEST_MATCHER)
+     }
 }
 
 fun HttpSecurity.applyCommonsPolicy(disableCSRF: Boolean): HttpSecurity {
 
     val http = if (disableCSRF) {
+        //使用 disable 单元测试任然需要验证 csrf
         this.csrf { it.requireCsrfProtectionMatcher(EMPTY_REQUEST_MATCHER) }
     } else {
         this.csrf {
@@ -41,11 +36,6 @@ fun HttpSecurity.applyCommonsPolicy(disableCSRF: Boolean): HttpSecurity {
     }
 
     return http
-        .csrf {
-            if (disableCSRF) {
-                this.ignoreCSRF(ANY_REQUEST_MATCHER)
-            }
-        }
         .httpBasic {
             it.disable()
         }.sessionManagement {

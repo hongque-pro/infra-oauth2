@@ -20,6 +20,14 @@ server:
   port: 8089
   forward-headers-strategy: framework
 
+logging:
+  level:
+    root: warn
+    com.labijie: debug
+    org:
+      springframework:
+        security:
+          web: trace
 
 spring:
   datasource:

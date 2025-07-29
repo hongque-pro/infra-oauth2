@@ -4,6 +4,7 @@
  */
 package com.labijie.infra.oauth2.resource
 
+import com.labijie.infra.oauth2.IUnauthorizedController
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -17,8 +18,9 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/oauth2")
-class UnauthorizedController: ApplicationContextAware {
+class ResourceServerUnauthorizedController: ApplicationContextAware, IUnauthorizedController {
     private lateinit var applicationContext: ApplicationContext
+
     @GetMapping("/unauthorized")
     fun default(httpServletRequest: HttpServletRequest, httpServletResponse: HttpServletResponse) {
         OAuth2ExceptionHandler.getInstance(applicationContext).handle(httpServletRequest, httpServletResponse, AccessDeniedException("Authorization is required to access the resource."))

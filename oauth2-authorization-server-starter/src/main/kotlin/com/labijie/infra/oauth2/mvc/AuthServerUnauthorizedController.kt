@@ -4,6 +4,7 @@
  */
 package com.labijie.infra.oauth2.mvc
 
+import com.labijie.infra.oauth2.IUnauthorizedController
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/oauth2")
-class AuthServerUnauthorizedController: ApplicationContextAware {
+class AuthServerUnauthorizedController: ApplicationContextAware, IUnauthorizedController {
     private lateinit var applicationContext: ApplicationContext
     @GetMapping("/unauthorized")
     fun default(httpServletRequest: HttpServletRequest, httpServletResponse: HttpServletResponse) {
