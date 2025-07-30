@@ -1,7 +1,9 @@
 package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.*
-import com.labijie.infra.oauth2.resource.*
+import com.labijie.infra.oauth2.resource.ActuatorAuthorizationConfigurer
+import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
+import com.labijie.infra.oauth2.resource.ResourceServerUnauthorizedController
 import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
@@ -20,7 +22,6 @@ import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.O
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity

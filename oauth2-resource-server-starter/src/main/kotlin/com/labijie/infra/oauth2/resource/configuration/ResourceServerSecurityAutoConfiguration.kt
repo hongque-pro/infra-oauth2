@@ -43,6 +43,7 @@ class ResourceServerSecurityAutoConfiguration(
 
     private lateinit var applicationContext: ApplicationContext
 
+
     private fun getPermitAllUrlsFromController(): Array<String> {
         val requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping::class.java)
         val handlerMethodMap = requestMappingHandlerMapping.handlerMethods
