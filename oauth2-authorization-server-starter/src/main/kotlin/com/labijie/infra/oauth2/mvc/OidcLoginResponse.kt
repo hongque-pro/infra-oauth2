@@ -37,6 +37,11 @@ class OidcLoginResponse {
             OAuth2ClientErrorCodes.OAUTH2_ACCOUNT_NOT_REGISTERED,
             "OAuth2 user must be registered as an application account."
         )
+
+        fun accountLinkedByAnother(): OidcLoginResponse = OidcLoginResponse(
+            OAuth2ClientErrorCodes.OAUTH2_ACCOUNT_LINKED_BY_ANOTHER,
+            "OAuth2 user already been linked to another user."
+        )
     }
 
     fun errorOrNull(): OAuth2Error? = error

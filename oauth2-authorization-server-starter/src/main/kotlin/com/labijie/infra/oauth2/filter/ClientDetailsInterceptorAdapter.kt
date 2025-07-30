@@ -24,6 +24,9 @@ class ClientDetailsInterceptorAdapter(private val registeredClientRepository: Re
 
     private val errorConverter = OAuth2ErrorHttpMessageConverter()
 
+    private val ERROR_URI: String = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1"
+
+
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val method = handler as? HandlerMethod
         if(method != null){
@@ -50,7 +53,7 @@ class ClientDetailsInterceptorAdapter(private val registeredClientRepository: Re
     private fun writeError(response: HttpServletResponse) {
         val serverResponse = ServletServerHttpResponse(response)
         serverResponse.setStatusCode(HttpStatus.UNAUTHORIZED)
-        errorConverter.write(OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT), MediaType.APPLICATION_JSON, serverResponse)
+        errorConverter.write(OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT, "Client authentication failed.", ERROR_URI), MediaType.APPLICATION_JSON, serverResponse)
     }
 
     override fun afterCompletion(request: HttpServletRequest, response: HttpServletResponse, handler: Any, ex: Exception?) {
