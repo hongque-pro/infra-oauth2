@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMe
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter
 import java.time.Instant
 
 /**
@@ -19,27 +20,30 @@ import java.time.Instant
  * @author Anders Xiao
  * @date 2019-07-11
  */
-class ClientDetailsInterceptorAdapter(private val registeredClientRepository: RegisteredClientRepository):
+class ClientDetailsInterceptorAdapter(private val registeredClientRepository: RegisteredClientRepository) :
     HandlerInterceptor {
 
     private val errorConverter = OAuth2ErrorHttpMessageConverter()
 
-    private val ERROR_URI: String = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1"
-
+    companion object {
+        private val error = OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT, "Client authentication failed.", "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1")
+    }
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val method = handler as? HandlerMethod
-        if(method != null){
+        if (method != null) {
             val annotation = method.getMethodAnnotation(ClientRequired::class.java)
-            if(annotation != null){
+            if (annotation != null) {
                 val (clientId, secret) = extractClientIdAndSecretFromHeader(request)
-                if(clientId.isBlank()){
+                if (clientId.isBlank()) {
                     writeError(response)
                     return false
-                }
-                else{
+                } else {
                     val clientDetail = registeredClientRepository.findByClientId(clientId)
-                    if(clientDetail == null || ((clientDetail.clientSecretExpiresAt?.epochSecond ?: Long.MAX_VALUE)  < Instant.now().epochSecond) || !clientDetail.clientSecret.orEmpty().equals(secret, ignoreCase = false)){
+                    if (clientDetail == null || ((clientDetail.clientSecretExpiresAt?.epochSecond
+                            ?: Long.MAX_VALUE) < Instant.now().epochSecond) || !clientDetail.clientSecret.orEmpty()
+                            .equals(secret, ignoreCase = false)
+                    ) {
                         writeError(response)
                         return false
                     }
@@ -53,10 +57,18 @@ class ClientDetailsInterceptorAdapter(private val registeredClientRepository: Re
     private fun writeError(response: HttpServletResponse) {
         val serverResponse = ServletServerHttpResponse(response)
         serverResponse.setStatusCode(HttpStatus.UNAUTHORIZED)
-        errorConverter.write(OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT, "Client authentication failed.", ERROR_URI), MediaType.APPLICATION_JSON, serverResponse)
+
+        errorConverter.write(
+            error, null, serverResponse
+        )
     }
 
-    override fun afterCompletion(request: HttpServletRequest, response: HttpServletResponse, handler: Any, ex: Exception?) {
+    override fun afterCompletion(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        handler: Any,
+        ex: Exception?
+    ) {
         ClientDetailsHolder.clearContext()
         super.afterCompletion(request, response, handler, ex)
     }
