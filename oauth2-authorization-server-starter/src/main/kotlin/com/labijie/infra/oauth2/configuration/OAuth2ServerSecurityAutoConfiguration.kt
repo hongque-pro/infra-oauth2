@@ -1,15 +1,15 @@
 package com.labijie.infra.oauth2.configuration
 
+import com.labijie.infra.oauth2.matcher.ControllerClassRequestMatcher
 import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
 import com.labijie.infra.oauth2.IUnauthorizedController
-import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
-import com.labijie.infra.oauth2.OAuth2Constants.OIDC_LOGIN_PATTERN
-import com.labijie.infra.oauth2.OAuth2Constants.UNAUTHORIZED_ENDPOINT
 import com.labijie.infra.oauth2.client.DelegatingAuthorizationCodeTokenResponseClient
 import com.labijie.infra.oauth2.client.DelegatingOAuth2UserService
 import com.labijie.infra.oauth2.client.extension.IOAuth2LoginCustomizer
 import com.labijie.infra.oauth2.client.web.HttpCookieOAuth2AuthorizationRequestRepository
 import com.labijie.infra.oauth2.mvc.AuthServerUnauthorizedController
+import com.labijie.infra.oauth2.mvc.CheckTokenController
+import com.labijie.infra.oauth2.mvc.OAuth2ClientLoginController
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest
@@ -33,28 +33,36 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.OrRequestMatcher
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 
 
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(OAuth2ServerAutoConfiguration::class)
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE - 100)
-class OAuth2ServerSecurityAutoConfiguration() {
+class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
 
     companion object {
         private const val RESOURCE_SERVER_AUTO_CONFIG_CLASS =
             "com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration"
     }
 
-    @Bean("oauth2ServerPermitAllFilterChain")
+    private lateinit var applicationContext: ApplicationContext
+
+    @Bean("oauth2ServerControllersFilterChain")
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    fun oauth2ServerPermitAllFilterChain(http: HttpSecurity): SecurityFilterChain {
+    fun oauth2ServerControllersFilterChain(
+        http: HttpSecurity,
+        requestMappingHandlerMapping: RequestMappingHandlerMapping,
+    ): SecurityFilterChain {
 
-        val checkPointerMatcher = PathPatternRequestMatcher.withDefaults().matcher(ENDPOINT_CHECK_TOKEN)
-        val oidcLoginMatcher = PathPatternRequestMatcher.withDefaults().matcher(OIDC_LOGIN_PATTERN)
+        val serverControllerMatcher = ControllerClassRequestMatcher(
+            requestMappingHandlerMapping,
+            CheckTokenController::class.java,
+            OAuth2ClientLoginController::class.java
+        )
 
-        val endpoints = OrRequestMatcher( checkPointerMatcher, oidcLoginMatcher)
+        val endpoints = OrRequestMatcher(serverControllerMatcher)
         return http
             .securityMatcher(endpoints)
             .authorizeHttpRequests {
@@ -68,6 +76,10 @@ class OAuth2ServerSecurityAutoConfiguration() {
             .build()
     }
 
+    override fun setApplicationContext(applicationContext: ApplicationContext) {
+        this.applicationContext = applicationContext
+    }
+
 
     @Configuration(proxyBeanMethods = false)
     protected class OAuth2LoginAutoConfiguration(
@@ -79,7 +91,6 @@ class OAuth2ServerSecurityAutoConfiguration() {
     ) : ApplicationContextAware, IResourceServerHttpSecurityConfigurer {
 
         private lateinit var applicationContext: ApplicationContext
-
 
 
         override fun configure(http: HttpSecurity) {
@@ -108,7 +119,6 @@ class OAuth2ServerSecurityAutoConfiguration() {
                 }
             }
         }
-
 
 
         @Bean

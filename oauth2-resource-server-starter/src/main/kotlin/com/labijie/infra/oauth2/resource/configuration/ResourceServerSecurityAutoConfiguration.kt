@@ -2,6 +2,7 @@ package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
+import com.labijie.infra.oauth2.buildMatchers
 import com.labijie.infra.oauth2.configuration.applyCommonsPolicy
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
@@ -23,6 +24,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
+import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 
 /**
@@ -44,20 +47,14 @@ class ResourceServerSecurityAutoConfiguration(
     private lateinit var applicationContext: ApplicationContext
 
 
-    private fun getPermitAllUrlsFromController(): Array<String> {
+    private fun getPermitAllMatcher(): List<RequestMatcher> {
         val requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping::class.java)
         val handlerMethodMap = requestMappingHandlerMapping.handlerMethods
-        val urlList = mutableSetOf<String>()
-        handlerMethodMap.forEach { (key, value) ->
+        return handlerMethodMap.flatMap { (key, value) ->
             value.method.getDeclaredAnnotation(PermitAll::class.java)?.let { permitAll ->
-                key.pathPatternsCondition?.patterns?.let { urls ->
-                    urls.forEach {
-                        urlList.add(it.patternString)
-                    }
-                }
-            }
+                key.buildMatchers()
+            } ?: emptyList()
         }
-        return urlList.toTypedArray()
     }
 
     @Bean
@@ -69,18 +66,17 @@ class ResourceServerSecurityAutoConfiguration(
     ): SecurityFilterChain {
 
 
-//            val notOAuth2Matcher = PathPatternRequestMatcher.withDefaults().matcher("/oauth2/**").let {
-//                NegatedRequestMatcher(it)
-//            }
 
         //http.cors(Customizer.withDefaults())
         val settings = http
             .securityMatcher("/**")
             .authorizeHttpRequests { authorize ->
-                authorize.requestMatchers(*getPermitAllUrlsFromController()).permitAll()
                 authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
                 authorize.requestMatchers("/oauth2/unauthorized").permitAll()
-
+                val permitAllMatchers = getPermitAllMatcher()
+                if(permitAllMatchers.isNotEmpty()) {
+                    authorize.requestMatchers(*permitAllMatchers.toTypedArray()).permitAll()
+                }
 
                 authorize.withObjectPostProcessor(RequestMatcherPostProcessor)
 

@@ -91,6 +91,13 @@ class ResourceServerTester : OAuth2Tester() {
     }
 
     @Test
+    fun testPermitAllAnnotation() {
+        val result = performGet("","/test/permitAllAnno").andExpect(status().isOk)
+        val r = result.readString()
+        Assertions.assertEquals("ok", r)
+    }
+
+    @Test
     fun tokeRequiredAccess() {
         val result = performGet("", "/test/1fac")
         result.andExpect(status().is4xxClientError)

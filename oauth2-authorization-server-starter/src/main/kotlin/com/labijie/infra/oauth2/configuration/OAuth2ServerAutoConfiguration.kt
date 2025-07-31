@@ -3,8 +3,6 @@ package com.labijie.infra.oauth2.configuration
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
-import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_INTROSPECT
-import com.labijie.infra.oauth2.OAuth2Constants.OIDC_LOGIN_PATTERN
 import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
@@ -48,8 +46,6 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
-import org.springframework.security.web.util.matcher.OrRequestMatcher
 
 
 @Configuration(proxyBeanMethods = false)
@@ -261,7 +257,7 @@ class OAuth2ServerAutoConfiguration(
                 information.appendLine(settings.jwkSetEndpoint)
                 information.appendLine(settings.tokenEndpoint)
                 information.appendLine(ENDPOINT_CHECK_TOKEN)
-                information.appendLine(ENDPOINT_INTROSPECT)
+                information.appendLine(settings.tokenIntrospectionEndpoint)
                 information.appendLine(settings.tokenRevocationEndpoint)
                 information.appendLine(settings.authorizationEndpoint)
                 information.appendLine(settings.authorizationEndpoint)

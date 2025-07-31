@@ -7,7 +7,6 @@ import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.testing.abstraction.OAuth2Tester
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.readToMap
-import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils.withBearerToken
 import com.labijie.infra.oauth2.testing.configuration.OAuth2TestServerAutoConfiguration
 import com.labijie.infra.utils.ShortId
 import com.labijie.infra.utils.logger
@@ -45,6 +44,8 @@ import kotlin.test.assertTrue
 @ImportAutoConfiguration(classes = [SecurityFilterAutoConfiguration::class])
 class OAuth2ServerTester : OAuth2Tester() {
 
+
+    val ENDPOINT_INTROSPECT ="/oauth2/introspect"
 //    @Autowired
 //    private lateinit var context: WebApplicationContext
 
@@ -265,7 +266,7 @@ class OAuth2ServerTester : OAuth2Tester() {
         params.add("token_type_hint", "Bearer")
 
         val result = mockMvc.perform(
-            post(OAuth2Constants.ENDPOINT_INTROSPECT)
+            post(ENDPOINT_INTROSPECT)
                 .params(params)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(

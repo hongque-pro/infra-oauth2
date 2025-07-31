@@ -5,6 +5,7 @@
 package com.labijie.infra.oauth2.aot
 
 import com.labijie.infra.oauth2.AccessToken
+import com.labijie.infra.oauth2.IUnauthorizedController
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.configuration.IgnoreCsrfConfigure
@@ -30,6 +31,7 @@ class Oauth2CommonsRuntimeHintsRegistrar : RuntimeHintsRegistrar {
         }
         hints.reflection().registerType(OAuth2Utils::class.java)
         hints.reflection().registerType(IgnoreCsrfConfigure::class.java)
+        hints.reflection().registerType(IUnauthorizedController::class.java)
 
         hints.resources().registerPattern("git-info/git.properties")
     }

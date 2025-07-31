@@ -3,7 +3,7 @@ package com.labijie.infra.oauth2.resource.configuration
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.resource.ActuatorAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
-import com.labijie.infra.oauth2.resource.ResourceServerUnauthorizedController
+import com.labijie.infra.oauth2.resource.controller.ResourceServerUnauthorizedController
 import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
@@ -24,7 +24,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.TypeDescriptor
 import org.springframework.core.convert.converter.Converter
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2TokenValidator
 import org.springframework.security.oauth2.core.converter.ClaimConversionService
@@ -35,7 +34,6 @@ import java.io.IOException
 import java.security.interfaces.RSAPublicKey
 
 
-@EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(ResourceServerProperties::class)
 @AutoConfigureAfter(OAuth2ResourceServerAutoConfiguration::class)

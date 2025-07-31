@@ -12,8 +12,11 @@ import com.labijie.infra.oauth2.testing.component.OAuth2TestingUtils
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.crypto.password.PasswordEncoder
 
+@EnableWebSecurity
 @ImportAutoConfiguration(
     CachingAutoConfiguration::class,
     OAuth2DependenciesAutoConfiguration::class,

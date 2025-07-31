@@ -1,8 +1,4 @@
-/**
- * @author Anders Xiao
- * @date 2024-06-14
- */
-package com.labijie.infra.oauth2.resource
+package com.labijie.infra.oauth2.resource.controller
 
 import com.labijie.infra.oauth2.IUnauthorizedController
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
@@ -15,15 +11,19 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-
-@RestController
+/**
+ * @author Anders Xiao
+ * @date 2024-06-14
+ */
 @RequestMapping("/oauth2")
 class ResourceServerUnauthorizedController: ApplicationContextAware, IUnauthorizedController {
     private lateinit var applicationContext: ApplicationContext
 
     @GetMapping("/unauthorized")
     fun default(httpServletRequest: HttpServletRequest, httpServletResponse: HttpServletResponse) {
-        OAuth2ExceptionHandler.getInstance(applicationContext).handle(httpServletRequest, httpServletResponse, AccessDeniedException("Authorization is required to access the resource."))
+        OAuth2ExceptionHandler.Companion.getInstance(applicationContext).handle(httpServletRequest, httpServletResponse,
+            AccessDeniedException("Authorization is required to access the resource.")
+        )
     }
 
     override fun setApplicationContext(applicationContext: ApplicationContext) {

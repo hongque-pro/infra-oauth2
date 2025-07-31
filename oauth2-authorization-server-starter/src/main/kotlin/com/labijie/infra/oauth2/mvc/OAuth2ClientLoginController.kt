@@ -26,9 +26,7 @@ import org.springframework.web.bind.annotation.*
  * @Date: 2025/7/24
  *
  */
-@Suppress("SpringJavaInjectionPointsAutowiringInspection")
-@RestController
-@RequestMapping("/oauth2/logins")
+@RequestMapping("/login")
 @Validated
 class OAuth2ClientLoginController(
     private val oAuth2ClientProviderService: IOAuth2ClientProviderService,
@@ -58,7 +56,7 @@ class OAuth2ClientLoginController(
         list
     }
 
-    @GetMapping("/standard")
+    @GetMapping("/providers/oauth2")
     fun standardClients(): OAuth2ClientsResponse {
         clients.filter {
             oAuth2ClientProviderService.findByName(it.provider) != null
@@ -66,7 +64,7 @@ class OAuth2ClientLoginController(
         return OAuth2ClientsResponse(registeredClientRepository != null, clients)
     }
 
-    @GetMapping("/oidc")
+    @GetMapping("/providers/id-token")
     fun oidcClients(): OidcClientsResponse {
         val providers = openIdTokenService.allProviders()
 
@@ -76,7 +74,7 @@ class OAuth2ClientLoginController(
 
 
     @ClientRequired
-    @PostMapping("/oidc/{provider}")
+    @PostMapping("/id-token/{provider}")
     fun oidcLogin(
         @PathVariable("provider") provider: String,
         @RequestBody(required = true) @Valid request: OidcLoginRequest,

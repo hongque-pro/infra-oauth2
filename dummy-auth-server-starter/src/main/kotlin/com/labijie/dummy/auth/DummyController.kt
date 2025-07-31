@@ -5,6 +5,7 @@ import com.labijie.infra.oauth2.OAuth2ServerUtils.toAccessToken
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
+import jakarta.annotation.security.PermitAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -25,6 +26,12 @@ class DummyController {
 
     @GetMapping("/permitAll")
     fun permitAll(): String {
+        return "ok"
+    }
+
+    @PermitAll
+    @GetMapping("/permitAllAnno")
+    fun permitAllAttribute(): String {
         return "ok"
     }
 
