@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.client
 
+import com.labijie.infra.oauth2.StandardOidcUser
 import com.labijie.infra.oauth2.client.extension.IOpenIDConnectProvider
 
 /**

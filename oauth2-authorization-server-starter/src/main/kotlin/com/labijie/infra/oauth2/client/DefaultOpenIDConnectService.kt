@@ -1,17 +1,18 @@
 package com.labijie.infra.oauth2.client
 
 import com.labijie.infra.oauth2.OAuth2Utils.toClaimSet
+import com.labijie.infra.oauth2.StandardOidcUser
+import com.labijie.infra.oauth2.StandardOidcUser.Companion.getInfo
+import com.labijie.infra.oauth2.StandardOidcUser.Companion.setInfo
 import com.labijie.infra.oauth2.client.OpenIdJwtDecoder.Companion.fromUri
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties
-import com.labijie.infra.oauth2.client.converter.StandardOidcUserInfoConverter
 import com.labijie.infra.oauth2.client.exception.InvalidOAuth2ClientProviderException
 import com.labijie.infra.oauth2.client.exception.InvalidOAuth2ClientTokenException
 import com.labijie.infra.oauth2.client.extension.IOidcUserConverter
 import com.labijie.infra.oauth2.client.extension.IOpenIDConnectProvider
 import com.labijie.infra.utils.ifNullOrBlank
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames
@@ -187,7 +188,7 @@ class DefaultOpenIDConnectService(
             provider.lowercase(),
             id,
             token,
-            clientId = if (clientId.isNullOrBlank()) null else clientId
+            registrationId = if (clientId.isNullOrBlank()) null else clientId
         )
         val converter = converters[provider.lowercase()]
         val claimSet = token.jwtClaimsSet.toClaimSet()

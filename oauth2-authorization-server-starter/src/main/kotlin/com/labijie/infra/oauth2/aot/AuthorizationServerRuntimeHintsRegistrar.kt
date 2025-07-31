@@ -2,8 +2,8 @@ package com.labijie.infra.oauth2.aot
 
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationToken
-import com.labijie.infra.oauth2.client.StandardOidcUser
-import com.labijie.infra.oauth2.client.StandardOidcUserInfo
+import com.labijie.infra.oauth2.StandardOidcUser
+import com.labijie.infra.oauth2.StandardOidcUserInfo
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties
 import com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties
@@ -14,7 +14,6 @@ import com.labijie.infra.oauth2.configuration.TokenProperties
 import com.labijie.infra.oauth2.filter.ClientRequired
 import com.labijie.infra.oauth2.mvc.CheckTokenController
 import com.labijie.infra.oauth2.mvc.OAuth2ClientLoginController
-import com.labijie.infra.oauth2.mvc.OidcLoginRequest
 import com.labijie.infra.oauth2.serialization.jackson.*
 import org.springframework.aot.hint.MemberCategory
 import org.springframework.aot.hint.RuntimeHints

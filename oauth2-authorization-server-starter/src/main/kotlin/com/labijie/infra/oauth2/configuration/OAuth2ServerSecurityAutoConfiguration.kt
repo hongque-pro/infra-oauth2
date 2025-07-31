@@ -1,15 +1,16 @@
 package com.labijie.infra.oauth2.configuration
 
-import com.labijie.infra.oauth2.matcher.ControllerClassRequestMatcher
 import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
 import com.labijie.infra.oauth2.IUnauthorizedController
 import com.labijie.infra.oauth2.client.DelegatingAuthorizationCodeTokenResponseClient
 import com.labijie.infra.oauth2.client.DelegatingOAuth2UserService
 import com.labijie.infra.oauth2.client.extension.IOAuth2LoginCustomizer
 import com.labijie.infra.oauth2.client.web.HttpCookieOAuth2AuthorizationRequestRepository
+import com.labijie.infra.oauth2.matcher.ControllerClassRequestMatcher
 import com.labijie.infra.oauth2.mvc.AuthServerUnauthorizedController
 import com.labijie.infra.oauth2.mvc.CheckTokenController
 import com.labijie.infra.oauth2.mvc.OAuth2ClientLoginController
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest
@@ -46,6 +47,7 @@ class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
         private const val RESOURCE_SERVER_AUTO_CONFIG_CLASS =
             "com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration"
     }
+
 
     private lateinit var applicationContext: ApplicationContext
 
@@ -88,9 +90,35 @@ class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
         private val clientRegistrationRepository: ClientRegistrationRepository? = null,
         @param: Autowired(required = false)
         private var oauth2AuthorizationRequestRepository: AuthorizationRequestRepository<OAuth2AuthorizationRequest>? = null
-    ) : ApplicationContextAware, IResourceServerHttpSecurityConfigurer {
+    ) : ApplicationContextAware, IResourceServerHttpSecurityConfigurer, InitializingBean {
 
         private lateinit var applicationContext: ApplicationContext
+
+
+        private lateinit var authorizationCodeTokenResponseClient: DelegatingAuthorizationCodeTokenResponseClient
+        private lateinit var oauth2UserService: DelegatingOAuth2UserService
+
+
+        override fun afterPropertiesSet() {
+            authorizationCodeTokenResponseClient = DelegatingAuthorizationCodeTokenResponseClient().apply {
+                setApplicationContext(applicationContext)
+            }
+            oauth2UserService = DelegatingOAuth2UserService().apply {
+                setApplicationContext(applicationContext)
+            }
+        }
+
+//        @Bean
+//        @ConditionalOnMissingBean(IOAuth2UserQueryService::class)
+//        fun defaultOAuth2UserQueryService(
+//            oauth2UserInfoLoader: IOAuth2UserInfoLoader
+//        ): DefaultOAuth2UserQueryService {
+//            return DefaultOAuth2UserQueryService(
+//                oauth2UserInfoLoader,
+//                authorizationCodeTokenResponseClient,
+//                oauth2UserService
+//            )
+//        }
 
 
         override fun configure(http: HttpSecurity) {
@@ -99,17 +127,13 @@ class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
                     oauth2AuthorizationRequestRepository ?: HttpCookieOAuth2AuthorizationRequestRepository()
                 http.oauth2Login {
                     it.tokenEndpoint { endpoint ->
-                        endpoint.accessTokenResponseClient(DelegatingAuthorizationCodeTokenResponseClient().apply {
-                            setApplicationContext(applicationContext)
-                        })
+                        endpoint.accessTokenResponseClient(authorizationCodeTokenResponseClient)
                     }
                     it.authorizationEndpoint { endpoint ->
                         endpoint.authorizationRequestRepository(requestRepository)
                     }
                     it.userInfoEndpoint { endpoint ->
-                        endpoint.userService(DelegatingOAuth2UserService().apply {
-                            setApplicationContext(applicationContext)
-                        })
+                        endpoint.userService(oauth2UserService)
                     }
                     oauth2LoginCustomizers.orderedStream().forEach { customizer ->
                         customizer.customize(it)
@@ -172,5 +196,6 @@ class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
                 .applyCommonsPolicy(serverProperties.disableCsrf)
                 .build()
         }
+
     }
 }

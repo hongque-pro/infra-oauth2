@@ -36,7 +36,7 @@ class OpenIdTokenServiceTester {
         val service = DefaultOpenIDConnectService(DefaultOAuth2ClientProviderService())
         val user = service.decodeToken(OAuth2ClientProviderNames.APPLE, appleIdToken, appleAuthCode, ignoreExpiration = true)
 
-        assertTrue(user.emailVerified)
+        assert(user.emailVerified == true)
         assert(!user.email.isNullOrBlank())
     }
 }

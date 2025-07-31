@@ -188,7 +188,7 @@ class TwoFactorSignInHelper(
     fun signIn(
         client: RegisteredClient,
         user: ITwoFactorUserDetails,
-        twoFactorGranted: Boolean,
+        twoFactorGranted: Boolean = false,
         scopes: Set<String>? = null,
         request: HttpServletRequest? = null
     ): OAuth2AccessTokenAuthenticationToken {

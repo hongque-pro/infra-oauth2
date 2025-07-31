@@ -1,6 +1,6 @@
 package com.labijie.infra.oauth2.client.converter
 
-import com.labijie.infra.oauth2.client.StandardOidcUserInfo
+import com.labijie.infra.oauth2.StandardOidcUserInfo
 import com.labijie.infra.oauth2.client.extension.IOidcUserConverter
 import com.nimbusds.openid.connect.sdk.claims.ClaimsSet
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames

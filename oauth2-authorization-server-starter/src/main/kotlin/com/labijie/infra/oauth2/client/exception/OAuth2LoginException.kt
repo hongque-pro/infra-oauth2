@@ -1,7 +1,7 @@
 package com.labijie.infra.oauth2.client.exception
 
 import com.labijie.infra.oauth2.OAuth2ClientAuthenticationException
-import com.labijie.infra.oauth2.client.StandardOidcUserInfo
+import com.labijie.infra.oauth2.StandardOidcUserInfo
 import org.springframework.security.oauth2.core.OAuth2Error
 
 /**

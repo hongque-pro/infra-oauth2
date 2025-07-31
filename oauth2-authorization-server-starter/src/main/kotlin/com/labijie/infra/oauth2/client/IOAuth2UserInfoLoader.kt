@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.client
 
+import com.labijie.infra.oauth2.StandardOidcUser
 import com.nimbusds.openid.connect.sdk.claims.ClaimsSet
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.core.user.OAuth2User

@@ -3,13 +3,18 @@ package com.labijie.infra.oauth2.configuration
 import com.labijie.caching.ICacheManager
 import com.labijie.infra.oauth2.IIdentityService
 import com.labijie.infra.oauth2.OAuth2ServerUtils
+import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
+import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
+import com.labijie.infra.oauth2.component.DefaultOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.customizer.TwoFactorJwtCustomizer
 import com.labijie.infra.oauth2.filter.ClientDetailsArgumentResolver
 import com.labijie.infra.oauth2.filter.ClientDetailsInterceptorAdapter
 import com.labijie.infra.oauth2.resolver.PasswordPrincipalResolver
 import com.labijie.infra.oauth2.serialization.kryo.OAuth2KryoCacheDataSerializerCustomizer
 import com.labijie.infra.oauth2.service.CachingOAuth2AuthorizationService
+import com.labijie.infra.oauth2.service.DefaultOAuth2ServerOidcTokenService
 import com.labijie.infra.oauth2.service.DefaultUserService
+import com.labijie.infra.oauth2.service.IOAuth2ServerOidcTokenService
 import com.labijie.infra.oauth2.service.OAuth2Initializer
 import com.labijie.infra.utils.ifNullOrBlank
 import com.labijie.infra.utils.logger
@@ -49,22 +54,26 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
 
     private lateinit var springContext: ApplicationContext
 
-//    @Bean
-//    @Order(Ordered.HIGHEST_PRECEDENCE)
-//    @Throws(Exception::class)
-//    fun overrideAuthorizationServerSecurityFilterChain(
-//        http: HttpSecurity,
-//        serverProperties: OAuth2ServerProperties): SecurityFilterChain {
-//        // @formatter:off
-//        val authorizationServerConfigurer =
-//            OAuth2AuthorizationServerConfigurer.authorizationServer()
-//        http
-//            .securityMatcher(authorizationServerConfigurer.endpointsMatcher)
-//            .applyCommonsPolicy(serverProperties.disableCsrf)
-//
-//        return http.build()
-//    }
 
+    @Bean
+    @ConditionalOnMissingBean(IOAuth2ServerRSAKeyPair::class)
+    fun oauth2ServerRSAKeyPair(
+        properties: OAuth2ServerProperties,
+        @Autowired(required = false) secretsStore: IOAuth2ServerSecretsStore?
+    ): IOAuth2ServerRSAKeyPair {
+        return DefaultOAuth2ServerRSAKeyPair(properties, secretsStore)
+    }
+
+
+    @Bean
+    @ConditionalOnMissingBean(IOAuth2ServerOidcTokenService::class)
+    fun defaultServerOidcTokenService(
+        properties: OAuth2ServerProperties,
+        serverRSAKeyPair: IOAuth2ServerRSAKeyPair
+    ): DefaultOAuth2ServerOidcTokenService {
+
+        return DefaultOAuth2ServerOidcTokenService(serverRSAKeyPair, properties)
+    }
 
     @Bean
     @ConditionalOnMissingBean(UserDetailsService::class)
@@ -152,15 +161,16 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
     @Bean
     @ConditionalOnMissingBean(AuthorizationServerSettings::class)
     fun authorizationServerSettings(
+        environment: Environment,
         properties: OAuth2ServerProperties,
-        environment: Environment
     ): AuthorizationServerSettings {
 
-        val issuser = environment.getProperty("spring.security.oauth2.authorizationserver.issuer")
+        //val issuser = environment.getProperty("spring.security.oauth2.authorizationserver.issuer")
 
+        val iss = properties.issuer
         return AuthorizationServerSettings.builder().let { builder ->
-            issuser?.let {
-                builder.issuer(it)
+            iss?.let {
+                builder.issuer(iss.toString())
             } ?: builder
         }
             .build()

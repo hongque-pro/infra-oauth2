@@ -7,7 +7,6 @@ import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthentication
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
 import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
-import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
 import com.labijie.infra.oauth2.component.OAuth2ObjectMapperProcessor
 import com.labijie.infra.oauth2.customizer.InfraClaimsContextCustomizer
 import com.labijie.infra.oauth2.customizer.InfraOAuth2JwtTokenCustomizer
@@ -19,7 +18,6 @@ import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -60,10 +58,6 @@ class OAuth2ServerAutoConfiguration(
         }
     }
 
-    @Bean
-    fun oauth2ServerRSAKeyPair(@Autowired(required = false) secretsStore: IOAuth2ServerSecretsStore?): IOAuth2ServerRSAKeyPair {
-        return OAuth2ServerRSAKeyPair(serverProperties, secretsStore)
-    }
 
     @Bean
     fun jwkSource(keyGetter: IOAuth2ServerRSAKeyPair): JWKSource<SecurityContext> {
@@ -218,6 +212,7 @@ class OAuth2ServerAutoConfiguration(
     }
 
 
+
     @Bean
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     fun checkTokenController(jwtCodec: IOAuth2ServerJwtCodec): CheckTokenController {
@@ -234,6 +229,14 @@ class OAuth2ServerAutoConfiguration(
 
 
             override fun run(vararg args: String?) {
+
+                if (settings.issuer.isNullOrBlank()) {
+                    logger.warn(
+                        "OAuth2 server issuer not set. Configure follow key to fix this:\n" +
+                                OAuth2ServerProperties.ISSUER_KEY_PROPERTY_PATH
+                    )
+                }
+
                 JacksonHelper.defaultObjectMapper.registerModules(OAuth2CommonsJacksonModule())
                 JacksonHelper.webCompatibilityMapper.registerModules(OAuth2CommonsJacksonModule())
 

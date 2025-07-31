@@ -1,5 +1,7 @@
 package com.labijie.infra.oauth2.client
 
+import com.labijie.infra.oauth2.StandardOidcUser
+import com.labijie.infra.oauth2.StandardOidcUser.Companion.setInfo
 import com.labijie.infra.oauth2.client.converter.AppleOidcUserConverter
 import com.labijie.infra.oauth2.client.converter.DiscordOidcUserConverter
 import com.labijie.infra.oauth2.client.converter.GithubOidcUserConverter
@@ -12,7 +14,6 @@ import net.minidev.json.JSONObject
 import org.slf4j.LoggerFactory
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.core.user.OAuth2User
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenClaimNames
 
 /**
  *
@@ -42,7 +43,7 @@ class DefaultOAuth2UserInfoLoader(
         }
     }
 
-    private fun loadCore(provider: OAuth2ClientProvider, claimsSet: ClaimsSet, clientId: String? = null): StandardOidcUser {
+    private fun loadCore(provider: OAuth2ClientProvider, claimsSet: ClaimsSet, registrationId: String? = null): StandardOidcUser {
         val userid = claimsSet.getStringClaim(provider.userNameAttribute)
 
         if (userid.isNullOrBlank()) {
@@ -55,9 +56,7 @@ class DefaultOAuth2UserInfoLoader(
 
 
         val info = converter.convert(claimsSet)
-        val client = clientId ?: claimsSet.getStringListClaim(OAuth2TokenClaimNames.AUD)?.firstOrNull()
-
-        val user = StandardOidcUser(provider.name, userid, clientId = client)
+        val user = StandardOidcUser(provider.name, userid, registrationId = registrationId)
         user.setInfo(info)
         return user
     }

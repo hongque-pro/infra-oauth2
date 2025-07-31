@@ -2,8 +2,8 @@ package com.labijie.infra.oauth2.mvc
 
 import com.labijie.infra.oauth2.AccessToken
 import com.labijie.infra.oauth2.OAuth2ServerUtils.toAccessToken
+import com.labijie.infra.oauth2.StandardOidcUser.Companion.getInfo
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
-import com.labijie.infra.oauth2.client.DefaultOAuth2ClientProviderService
 import com.labijie.infra.oauth2.client.IOAuth2ClientProviderService
 import com.labijie.infra.oauth2.client.IOidcLoginHandler
 import com.labijie.infra.oauth2.client.IOpenIDConnectService

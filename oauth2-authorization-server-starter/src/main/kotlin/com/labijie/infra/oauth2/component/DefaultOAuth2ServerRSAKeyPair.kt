@@ -1,23 +1,22 @@
-/**
- * @author Anders Xiao
- * @date 2024-06-12
- */
-package com.labijie.infra.oauth2.configuration
+package com.labijie.infra.oauth2.component
 
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.RsaUtils
-import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
-import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
+import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.nimbusds.jose.jwk.RSAKey
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
-import java.util.*
+import java.util.Base64
+import java.util.UUID
 
-
-internal class OAuth2ServerRSAKeyPair(
+/**
+ * @author Anders Xiao
+ * @date 2024-06-12
+ */
+class DefaultOAuth2ServerRSAKeyPair(
     private val serverProperties: OAuth2ServerProperties,
-    private val secretsStore: IOAuth2ServerSecretsStore?
+    private val secretsStore: IOAuth2ServerSecretsStore? = null
 ) : IOAuth2ServerRSAKeyPair {
 
     private var useDefaultRsaKey =
@@ -44,10 +43,10 @@ internal class OAuth2ServerRSAKeyPair(
         } else {
             val privateKey =
                 OAuth2Utils.loadContent(serverProperties.token.jwt.rsa.privateKey, RsaUtils::getPrivateKey)
-                    ?: throw IllegalArgumentException("${OAuth2ServerProperties.PRIVATE_KEY_PROPERTY_PATH} is an invalid private rsa key.")
+                    ?: throw IllegalArgumentException("${OAuth2ServerProperties.Companion.PRIVATE_KEY_PROPERTY_PATH} is an invalid private rsa key.")
             val publicKey =
                 OAuth2Utils.loadContent(serverProperties.token.jwt.rsa.publicKey, RsaUtils::getPublicKey)
-                    ?: throw IllegalArgumentException("${OAuth2ServerProperties.PUBLIC_KEY_PROPERTY_PATH} is an invalid public rsa key.")
+                    ?: throw IllegalArgumentException("${OAuth2ServerProperties.Companion.PUBLIC_KEY_PROPERTY_PATH} is an invalid public rsa key.")
             KeyPair(publicKey, privateKey)
         }
         val publicKey: RSAPublicKey = kp.public as RSAPublicKey
