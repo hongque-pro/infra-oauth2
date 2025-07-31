@@ -11,5 +11,5 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes
  *
  */
 class InvalidIdTokenException(message: String? = null, cause: Throwable? = null) :
-    OAuth2AuthenticationException(OAuth2Error(OAuth2ErrorCodes.INVALID_TOKEN, "Invalid ID token", null), message) {
+    OAuth2AuthenticationException(OAuth2Error(OAuth2ErrorCodes.INVALID_TOKEN, "Invalid ID token", null), message, cause) {
 }

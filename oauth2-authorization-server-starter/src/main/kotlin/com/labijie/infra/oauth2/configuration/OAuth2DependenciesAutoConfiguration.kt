@@ -161,7 +161,6 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
     @Bean
     @ConditionalOnMissingBean(AuthorizationServerSettings::class)
     fun authorizationServerSettings(
-        environment: Environment,
         properties: OAuth2ServerProperties,
     ): AuthorizationServerSettings {
 
@@ -211,7 +210,6 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
         fun cachingOAuth2AuthorizationService(
             jdbcTemplate: JdbcTemplate,
             registeredClientRepository: RegisteredClientRepository,
-            properties: OAuth2ServerProperties
         ): JdbcOAuth2AuthorizationService {
             return JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository)
         }

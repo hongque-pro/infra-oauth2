@@ -83,7 +83,7 @@ class DefaultOAuth2ServerOidcTokenService(
         val issuer = claims.issuer
 
         if(issuer != serverProperties.issuer?.toString()) {
-
+            throw InvalidIdTokenException("Invalid issuer claim")
         }
 
         return StandardOidcUser.createFromClaimSet(claims.toClaimSet())

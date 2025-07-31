@@ -49,9 +49,7 @@ import org.springframework.security.web.SecurityFilterChain
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(OAuth2DependenciesAutoConfiguration::class)
 @Import(OAuth2ObjectMapperProcessor::class)
-class OAuth2ServerAutoConfiguration(
-    private val serverProperties: OAuth2ServerProperties
-) {
+class OAuth2ServerAutoConfiguration {
     companion object {
         private val logger: Logger by lazy {
             LoggerFactory.getLogger(OAuth2ServerAutoConfiguration::class.java)

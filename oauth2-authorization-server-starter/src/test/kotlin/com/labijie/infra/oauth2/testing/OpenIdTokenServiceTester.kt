@@ -1,13 +1,12 @@
 package com.labijie.infra.oauth2.testing
 
 import com.labijie.infra.oauth2.client.DefaultOAuth2ClientProviderService
+import com.labijie.infra.oauth2.client.DefaultOpenIDConnectService
 import com.labijie.infra.oauth2.client.InfraOAuth2CommonsProviders
 import com.labijie.infra.oauth2.client.OAuth2ClientProviderNames
-import com.labijie.infra.oauth2.client.DefaultOpenIDConnectService
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
 /**
  *
