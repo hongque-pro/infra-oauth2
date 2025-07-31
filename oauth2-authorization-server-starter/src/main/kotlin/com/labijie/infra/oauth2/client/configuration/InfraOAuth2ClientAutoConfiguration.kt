@@ -7,6 +7,7 @@ import com.labijie.infra.oauth2.client.extension.IOpenIDConnectProvider
 import com.labijie.infra.oauth2.client.provider.apple.AppleAuthorizationCodeTokenResponseClient
 import com.labijie.infra.oauth2.client.provider.apple.AppleOAuth2UserService
 import com.labijie.infra.oauth2.mvc.OAuth2ClientLoginController
+import com.labijie.infra.oauth2.service.IOAuth2ServerOidcTokenService
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -110,9 +111,11 @@ class InfraOAuth2ClientAutoConfiguration {
         infraOAuth2ClientProperties: InfraOAuth2ClientProperties,
         openIdTokenService: IOpenIDConnectService,
         signInHelper: TwoFactorSignInHelper,
+        serverOidcTokenService: IOAuth2ServerOidcTokenService,
         @Autowired(required = false) oidcLoginHandler: IOidcLoginHandler?
     ): OAuth2ClientLoginController {
         return OAuth2ClientLoginController(
+            serverOidcTokenService,
             oauth2ClientProviderService,
             signInHelper,
             registeredClientRepository,

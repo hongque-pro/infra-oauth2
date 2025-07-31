@@ -11,29 +11,32 @@ import org.springframework.security.oauth2.core.OAuth2Error
  * @Date: 2025/7/26
  *
  */
-class OidcLoginResponse {
+class OidcLoginResult {
 
     private val signInUser: ITwoFactorUserDetails?
 
     private val error: OAuth2Error?
 
     companion object {
-        val OidcLoginResponse.isSuccess: Boolean get() = signInUser != null
+        val OidcLoginResult.isSuccess: Boolean get() = signInUser != null
 
-        val OidcLoginResponse.isFailure: Boolean get() = signInUser == null
+        val OidcLoginResult.isFailure: Boolean get() = signInUser == null
 
-        fun OidcLoginResponse.getOrElse(onFailure: (exception: OAuth2AuthenticationException) -> ITwoFactorUserDetails): ITwoFactorUserDetails {
+        fun OidcLoginResult.getUser(): ITwoFactorUserDetails {
+            return getOrElse { throw it }
+        }
 
+        fun OidcLoginResult.getOrElse(onFailure: (exception: OAuth2AuthenticationException) -> ITwoFactorUserDetails): ITwoFactorUserDetails {
             if (signInUser != null) return signInUser
             return onFailure(OAuth2AuthenticationException(error!!))
         }
 
-        fun success(signedInUser: ITwoFactorUserDetails): OidcLoginResponse = OidcLoginResponse(signedInUser)
+        fun success(signedInUser: ITwoFactorUserDetails): OidcLoginResult = OidcLoginResult(signedInUser)
 
-        fun failure(errorCode: String, errorDescription: String? = null, uri: String? = null): OidcLoginResponse =
-            OidcLoginResponse(errorCode, errorDescription, uri)
+        fun failure(errorCode: String, errorDescription: String? = null, uri: String? = null): OidcLoginResult =
+            OidcLoginResult(errorCode, errorDescription, uri)
 
-        fun accountNotRegistered(): OidcLoginResponse = OidcLoginResponse(
+        fun accountNotRegistered(): OidcLoginResult = OidcLoginResult(
             OAuth2ClientErrorCodes.OAUTH2_ACCOUNT_NOT_REGISTERED,
             "OAuth2 user must be registered as an application account."
         )

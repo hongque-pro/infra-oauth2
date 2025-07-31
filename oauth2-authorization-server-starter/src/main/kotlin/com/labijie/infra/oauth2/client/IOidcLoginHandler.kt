@@ -2,7 +2,7 @@ package com.labijie.infra.oauth2.client
 
 import com.labijie.infra.oauth2.StandardOidcUser
 import com.labijie.infra.oauth2.mvc.OidcLoginRequest
-import com.labijie.infra.oauth2.mvc.OidcLoginResponse
+import com.labijie.infra.oauth2.mvc.OidcLoginResult
 
 /**
  *
@@ -11,5 +11,5 @@ import com.labijie.infra.oauth2.mvc.OidcLoginResponse
  *
  */
 interface IOidcLoginHandler {
-    fun handle(user: StandardOidcUser, request: OidcLoginRequest): OidcLoginResponse
+    fun handle(user: StandardOidcUser, request: OidcLoginRequest): OidcLoginResult
 }
