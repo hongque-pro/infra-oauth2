@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.filter
 
+import com.labijie.infra.oauth2.OAuth2Utils.writeOAuth2Error
 import com.labijie.infra.oauth2.extractClientIdAndSecretFromHeader
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -23,7 +24,6 @@ import java.time.Instant
 class ClientDetailsInterceptorAdapter(private val registeredClientRepository: RegisteredClientRepository) :
     HandlerInterceptor {
 
-    private val errorConverter = OAuth2ErrorHttpMessageConverter()
 
     companion object {
         private val error = OAuth2Error(OAuth2ErrorCodes.INVALID_CLIENT, "Client authentication failed.", "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1")
@@ -36,7 +36,7 @@ class ClientDetailsInterceptorAdapter(private val registeredClientRepository: Re
             if (annotation != null) {
                 val (clientId, secret) = extractClientIdAndSecretFromHeader(request)
                 if (clientId.isBlank()) {
-                    writeError(response)
+                    response.writeOAuth2Error(error, HttpStatus.UNAUTHORIZED)
                     return false
                 } else {
                     val clientDetail = registeredClientRepository.findByClientId(clientId)
@@ -44,7 +44,7 @@ class ClientDetailsInterceptorAdapter(private val registeredClientRepository: Re
                             ?: Long.MAX_VALUE) < Instant.now().epochSecond) || !clientDetail.clientSecret.orEmpty()
                             .equals(secret, ignoreCase = false)
                     ) {
-                        writeError(response)
+                        response.writeOAuth2Error(error, HttpStatus.UNAUTHORIZED)
                         return false
                     }
                     ClientDetailsHolder.setContext(clientDetail)
@@ -54,14 +54,6 @@ class ClientDetailsInterceptorAdapter(private val registeredClientRepository: Re
         return true
     }
 
-    private fun writeError(response: HttpServletResponse) {
-        val serverResponse = ServletServerHttpResponse(response)
-        serverResponse.setStatusCode(HttpStatus.UNAUTHORIZED)
-
-        errorConverter.write(
-            error, null, serverResponse
-        )
-    }
 
     override fun afterCompletion(
         request: HttpServletRequest,

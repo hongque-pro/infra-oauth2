@@ -1,11 +1,12 @@
 package com.labijie.infra.oauth2
 
-import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.utils.ifNullOrBlank
 import com.labijie.infra.utils.logger
-import org.springframework.http.HttpHeaders
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.springframework.context.ApplicationContext
 import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
+import org.springframework.http.server.ServletServerHttpResponse
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.InsufficientAuthenticationException
@@ -13,12 +14,9 @@ import org.springframework.security.core.AuthenticationException
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.oauth2.core.OAuth2Error
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes
+import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter
 import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
-import org.springframework.context.ApplicationContext
-import org.springframework.http.ResponseEntity
 import org.springframework.security.web.csrf.CsrfException
 
 /**
@@ -27,41 +25,20 @@ import org.springframework.security.web.csrf.CsrfException
  * @Date: 2021/12/23
  * @Description:
  */
-class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandler, AccessDeniedHandler {
-    companion object {
-
-        @JvmStatic
-        private var instance: OAuth2ExceptionHandler? = null
-
-        @JvmStatic
-        private val LOCK = Any()
-
-        @JvmStatic
-        fun getInstance(applicationContext: ApplicationContext?): OAuth2ExceptionHandler
-        {
-            if(instance == null) {
-                synchronized(LOCK) {
-                    if(instance == null) {
-                        instance = OAuth2ExceptionHandler()
-                    }
-                }
-            }
-            val i = instance!!
-            if(applicationContext != null && applicationContext != i.applicationContext) {
-                i.applicationContext = applicationContext
-            }
-            return i
-        }
-    }
+object OAuth2ExceptionHandler : AuthenticationFailureHandler, AccessDeniedHandler {
 
     private var applicationContext: ApplicationContext? = null
+
+    fun setApplicationContext(applicationContext: ApplicationContext?) {
+        this.applicationContext = applicationContext
+    }
 
     override fun onAuthenticationFailure(
         request: HttpServletRequest,
         response: HttpServletResponse,
         exception: AuthenticationException
     ) {
-        writeError(request, response, exception, HttpStatus.UNAUTHORIZED)
+        writeError(response, exception, HttpStatus.UNAUTHORIZED, request)
     }
 
     override fun handle(
@@ -69,19 +46,18 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
         response: HttpServletResponse,
         accessDeniedException: AccessDeniedException
     ) {
-        //Access Denied
-        writeError(request, response, accessDeniedException, HttpStatus.FORBIDDEN)
+        writeError(response, accessDeniedException, HttpStatus.FORBIDDEN, request)
     }
 
     private val errorWriter by lazy {
         applicationContext?.getBeansOfType(IOAuthErrorWriter::class.java)?.values?.firstOrNull()
     }
 
-    private data class NormalizedError(val error: OAuth2Error, val status: HttpStatus, val details: Map<String, Any>? = null)
+    private data class NormalizedError(val error: OAuth2Error, val status: HttpStatus)
 
-    private fun writeError(request: HttpServletRequest,response: HttpServletResponse, ex: Exception, httpStatus: HttpStatus) {
+    fun writeError(response: HttpServletResponse, ex: Exception, httpStatus: HttpStatus, request: HttpServletRequest? = null) {
 
-        val (error, status, details) = when (ex) {
+        val (error, status) = when (ex) {
             is BadCredentialsException -> {
                 NormalizedError(
                     OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT, "User name or password is incorrect.", null),
@@ -94,7 +70,7 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
             }
 
             is OAuth2ClientAuthenticationException-> {
-                NormalizedError(ex.error, httpStatus, ex.details)
+                NormalizedError(ex.error, httpStatus)
             }
 
             is OAuth2AuthenticationException -> {
@@ -129,29 +105,27 @@ class OAuth2ExceptionHandler private constructor() : AuthenticationFailureHandle
 
         val writer = errorWriter
         if(writer != null) {
-            writer.writeErrorResponse(request, response, error, details)
+            writer.writeErrorResponse(request, response, error)
             response.status = status.value()
             return
         }
 
-        val errorMessage: MutableMap<String, Any> = mutableMapOf(
-            "error" to error.errorCode,
-            "error_description" to error.description.ifNullOrBlank { "OAuth2 authenticate failed." }
+
+        response.writeOAuth2Error(error, status)
+    }
+
+
+
+    private val errorConverter = OAuth2ErrorHttpMessageConverter()
+
+
+    private fun HttpServletResponse.writeOAuth2Error(error: OAuth2Error, status: HttpStatus) {
+        val serverResponse = ServletServerHttpResponse(this)
+        serverResponse.setStatusCode(status)
+
+        errorConverter.write(
+            error, null, serverResponse
         )
-
-        details?.let {
-            errorMessage.putIfAbsent("details", details)
-        }
-
-        if (!error.uri.isNullOrBlank()) {
-            errorMessage["error_uri"] = error.uri
-        }
-
-        val message = JacksonHelper.defaultObjectMapper.writeValueAsString(errorMessage)
-        response.status = status.value()
-        response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        response.characterEncoding = Charsets.UTF_8.name()
-        response.writer.write(message)
     }
 
 

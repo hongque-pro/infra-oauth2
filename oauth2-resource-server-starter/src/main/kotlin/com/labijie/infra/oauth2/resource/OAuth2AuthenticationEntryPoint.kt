@@ -14,14 +14,14 @@ import org.springframework.context.ApplicationContext
  * @Date: 2021/12/23
  * @Description:
  */
-class OAuth2AuthenticationEntryPoint(private val applicationContext: ApplicationContext) : AuthenticationEntryPoint {
+class OAuth2AuthenticationEntryPoint() : AuthenticationEntryPoint {
     private val bearerTokenAuthenticationEntryPoint = BearerTokenAuthenticationEntryPoint()
 
     override fun commence(
         request: HttpServletRequest, response: HttpServletResponse,
         authException: AuthenticationException
     ) {
-        OAuth2ExceptionHandler.getInstance(applicationContext).onAuthenticationFailure(request, response, authException)
-        bearerTokenAuthenticationEntryPoint.commence(request, response, authException)
+        OAuth2ExceptionHandler.onAuthenticationFailure(request, response, authException)
+        //bearerTokenAuthenticationEntryPoint.commence(request, response, authException)
     }
 }

@@ -39,7 +39,7 @@ fun HttpSecurity.applyCommonsPolicy(disableCSRF: Boolean): HttpSecurity {
         .httpBasic {
             it.disable()
         }.sessionManagement {
-            it.sessionCreationPolicy(SessionCreationPolicy.NEVER)
+            it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             it.disable()
         }
 }

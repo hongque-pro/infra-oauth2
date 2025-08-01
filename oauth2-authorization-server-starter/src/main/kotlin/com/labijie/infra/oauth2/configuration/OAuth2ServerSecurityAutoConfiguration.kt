@@ -1,13 +1,11 @@
 package com.labijie.infra.oauth2.configuration
 
 import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
-import com.labijie.infra.oauth2.IUnauthorizedController
 import com.labijie.infra.oauth2.client.DelegatingAuthorizationCodeTokenResponseClient
 import com.labijie.infra.oauth2.client.DelegatingOAuth2UserService
 import com.labijie.infra.oauth2.client.extension.IOAuth2LoginCustomizer
 import com.labijie.infra.oauth2.client.web.HttpCookieOAuth2AuthorizationRequestRepository
 import com.labijie.infra.oauth2.matcher.ControllerClassRequestMatcher
-import com.labijie.infra.oauth2.mvc.AuthServerUnauthorizedController
 import com.labijie.infra.oauth2.mvc.CheckTokenController
 import com.labijie.infra.oauth2.mvc.OAuth2ClientLoginController
 import org.springframework.beans.factory.InitializingBean
@@ -17,7 +15,6 @@ import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointR
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass
 import org.springframework.boot.autoconfigure.security.SecurityProperties
 import org.springframework.context.ApplicationContext
@@ -28,13 +25,13 @@ import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
-import org.springframework.security.web.util.matcher.OrRequestMatcher
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 
 
@@ -51,22 +48,25 @@ class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
 
     private lateinit var applicationContext: ApplicationContext
 
-    @Bean("oauth2ServerControllersFilterChain")
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    fun oauth2ServerControllersFilterChain(
-        http: HttpSecurity,
-        requestMappingHandlerMapping: RequestMappingHandlerMapping,
-    ): SecurityFilterChain {
+    @Autowired
+    private lateinit var requestMappingHandlerMapping: RequestMappingHandlerMapping
 
-        val serverControllerMatcher = ControllerClassRequestMatcher(
+    private val controllerMatcher by lazy {
+        ControllerClassRequestMatcher(
             requestMappingHandlerMapping,
             CheckTokenController::class.java,
             OAuth2ClientLoginController::class.java
         )
+    }
 
-        val endpoints = OrRequestMatcher(serverControllerMatcher)
+    @Bean("oauth2ServerControllersFilterChain")
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    fun oauth2ServerControllersFilterChain(
+        http: HttpSecurity
+    ): SecurityFilterChain {
+
         return http
-            .securityMatcher(endpoints)
+            .securityMatcher(controllerMatcher)
             .authorizeHttpRequests {
                 it.anyRequest().permitAll()
             }
@@ -145,14 +145,6 @@ class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
         }
 
 
-        @Bean
-        @Order(Ordered.LOWEST_PRECEDENCE)
-        @ConditionalOnMissingBean(IUnauthorizedController::class)
-        fun authServerUnauthorizedController(): AuthServerUnauthorizedController {
-
-            return AuthServerUnauthorizedController()
-        }
-
         override fun setApplicationContext(applicationContext: ApplicationContext) {
             this.applicationContext = applicationContext
         }
@@ -187,7 +179,7 @@ class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
             val settings = http
                 .securityMatcher("/**")
                 .authorizeHttpRequests { authorize ->
-                    authorize.requestMatchers("/oauth2/unauthorized").permitAll()
+                    authorize.requestMatchers("/oauth2/unauthorized", "/error").permitAll()
                     authorize.anyRequest().authenticated()
                 }
 

@@ -1,9 +1,11 @@
 package com.labijie.infra.oauth2.resource.configuration
 
-import com.labijie.infra.oauth2.*
+import com.labijie.infra.oauth2.ITokenIntrospectParser
+import com.labijie.infra.oauth2.OAuth2Constants
+import com.labijie.infra.oauth2.OAuth2Utils
+import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.resource.ActuatorAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
-import com.labijie.infra.oauth2.resource.controller.ResourceServerUnauthorizedController
 import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
 import com.labijie.infra.oauth2.resource.resolver.BearTokenPrincipalResolver
 import com.labijie.infra.oauth2.resource.resolver.BearTokenValueResolver
@@ -67,11 +69,6 @@ class ResourceServerAutoConfiguration(
 
     private var defaultPubKeyUsed = false
 
-    @Bean
-    @ConditionalOnMissingBean(IUnauthorizedController::class)
-    fun resourceServerUnauthorizedController(): ResourceServerUnauthorizedController {
-        return ResourceServerUnauthorizedController()
-    }
 
     @Bean
     @ConditionalOnMissingBean(JwtAuthenticationConverter::class)

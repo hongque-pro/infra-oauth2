@@ -3,6 +3,7 @@ package com.labijie.infra.oauth2.matcher
 import com.labijie.infra.oauth2.buildMatchers
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.web.util.matcher.RequestMatcher
+import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 
 /**
@@ -17,6 +18,16 @@ class ControllerClassRequestMatcher(
 ) : RequestMatcher {
 
     private val controllerClasses = controllerClass.toSet()
+
+    init {
+
+        controllerClass.forEach {
+            if(it.getAnnotation(RestController::class.java) == null)
+            {
+                throw IllegalStateException("Controller in ControllerClassRequestMatcher  must be annotated with ${RestController::class.java}")
+            }
+        }
+    }
 
     private fun getUrlsFromController(mapping: RequestMappingHandlerMapping): Collection<RequestMatcher> {
         val mappings = mapping.handlerMethods ?: mapOf()

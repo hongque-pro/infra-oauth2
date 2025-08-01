@@ -1,8 +1,6 @@
 package com.labijie.infra.oauth2.mvc
 
-import com.labijie.infra.oauth2.AccessToken
 import com.labijie.infra.oauth2.OAuth2ServerUtils.toAccessToken
-import com.labijie.infra.oauth2.StandardOidcUser.Companion.getInfo
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
 import com.labijie.infra.oauth2.client.IOAuth2ClientProviderService
 import com.labijie.infra.oauth2.client.IOidcLoginHandler
@@ -10,9 +8,7 @@ import com.labijie.infra.oauth2.client.IOpenIDConnectService
 import com.labijie.infra.oauth2.client.OAuth2ClientErrorCodes
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.exception.InvalidOAuth2ClientProviderException
-import com.labijie.infra.oauth2.client.exception.OAuth2LoginException
 import com.labijie.infra.oauth2.filter.ClientRequired
-import com.labijie.infra.oauth2.mvc.OidcLoginResult.Companion.getOrElse
 import com.labijie.infra.oauth2.mvc.OidcLoginResult.Companion.getUser
 import com.labijie.infra.oauth2.mvc.OidcLoginResult.Companion.isSuccess
 import com.labijie.infra.oauth2.service.IOAuth2ServerOidcTokenService
@@ -32,13 +28,14 @@ import java.time.Duration
  * @Date: 2025/7/24
  *
  */
+@RestController
 @RequestMapping("/login")
 @Validated
 class OAuth2ClientLoginController(
     private val oauth2ServerOidcTokenService: IOAuth2ServerOidcTokenService,
     private val oauth2ClientProviderService: IOAuth2ClientProviderService,
     private val signInHelper: TwoFactorSignInHelper,
-    private val registeredClientRepository: RegisteredClientRepository? = null,
+    private val registeredClientRepository: RegisteredClientRepository?,
     private val oauth2ClientProperties: InfraOAuth2ClientProperties,
     private val oidcLoginHandler: IOidcLoginHandler?,
     private val openIdTokenService: IOpenIDConnectService,
@@ -51,10 +48,11 @@ class OAuth2ClientLoginController(
         iterable?.let {
             it.forEach { client ->
                 if (client is ClientRegistration) {
+                    val provider = oauth2ClientProviderService.findByName(client.registrationId)
                     val c = OAuth2ClientProviderEntry(
-                        client.registrationId,
-                        client.clientName,
-                        "${OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI}/${client.registrationId}"
+                        provider?.name ?: client.registrationId,
+                        "${OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI}/${client.registrationId}",
+                        default = provider != null,
                     )
                     list.add(c)
                 }
@@ -63,21 +61,20 @@ class OAuth2ClientLoginController(
         list
     }
 
-    @GetMapping("/providers/oauth2")
-    fun standardClients(): OAuth2ClientsResponse {
+    @GetMapping("/providers")
+    fun standardClients(): OAuth2ProvidersResponse {
         clients.filter {
             oauth2ClientProviderService.findByName(it.provider) != null
         }
-        return OAuth2ClientsResponse(registeredClientRepository != null, clients)
-    }
 
-    @GetMapping("/providers/oidc")
-    fun oidcClients(): OidcClientsResponse {
         val providers = openIdTokenService.allProviders()
 
-        return OidcClientsResponse(oidcLoginHandler != null && oauth2ClientProperties.oidcLoginEnabled, providers)
-    }
+        val oidc = OidcClientsInfo(oidcLoginHandler != null && oauth2ClientProperties.oidcLoginEnabled, providers)
 
+        val oauth2 = OAuth2ClientsInfo(registeredClientRepository != null, clients)
+
+        return OAuth2ProvidersResponse(oauth2, oidc)
+    }
 
 
     @ClientRequired

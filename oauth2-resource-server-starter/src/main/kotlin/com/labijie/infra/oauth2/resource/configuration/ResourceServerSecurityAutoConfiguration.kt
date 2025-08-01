@@ -4,8 +4,8 @@ import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
 import com.labijie.infra.oauth2.buildMatchers
 import com.labijie.infra.oauth2.configuration.applyCommonsPolicy
-import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
+import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.component.CookieSupportedBearerTokenResolver
 import com.labijie.infra.oauth2.resource.component.IOAuth2TokenCookieDecoder
 import com.labijie.infra.oauth2.resource.component.RequestMatcherPostProcessor
@@ -24,7 +24,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 
@@ -65,14 +64,12 @@ class ResourceServerSecurityAutoConfiguration(
         configurers: ObjectProvider<IResourceServerHttpSecurityConfigurer>
     ): SecurityFilterChain {
 
-
-
         //http.cors(Customizer.withDefaults())
         val settings = http
             .securityMatcher("/**")
             .authorizeHttpRequests { authorize ->
                 authorize.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                authorize.requestMatchers("/oauth2/unauthorized").permitAll()
+                authorize.requestMatchers("/oauth2/unauthorized", "/error").permitAll()
                 val permitAllMatchers = getPermitAllMatcher()
                 if(permitAllMatchers.isNotEmpty()) {
                     authorize.requestMatchers(*permitAllMatchers.toTypedArray()).permitAll()
@@ -96,10 +93,10 @@ class ResourceServerSecurityAutoConfiguration(
                 this.setAllowUriQueryParameter(resourceServerProperties.bearerTokenResolver.allowUriQueryParameter)
                 this.setAllowFormEncodedBodyParameter(resourceServerProperties.bearerTokenResolver.allowFormEncodedBodyParameter)
             })
-            obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint(applicationContext))
+            obj.authenticationEntryPoint(OAuth2AuthenticationEntryPoint())
         }
         settings.exceptionHandling {
-            it.accessDeniedHandler(OAuth2ExceptionHandler.getInstance(this.applicationContext))
+            it.accessDeniedHandler(OAuth2ExceptionHandler)
         }
 
         configurers.orderedStream().forEach { configurer ->
@@ -112,8 +109,8 @@ class ResourceServerSecurityAutoConfiguration(
             it.permitAll()
             it.disable()
         }
-            .applyCommonsPolicy(serverProperties.disableCsrf)
-            .build()
+        .applyCommonsPolicy(serverProperties.disableCsrf)
+        .build()
     }
 
     fun applyJwtConfiguration(

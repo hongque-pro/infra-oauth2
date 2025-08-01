@@ -142,7 +142,7 @@ class OAuth2ServerAutoConfiguration {
             http: HttpSecurity,
             serverProperties: OAuth2ServerProperties,
             clientRepository: RegisteredClientRepository,
-            authorizationService: OAuth2AuthorizationService,
+            authorizationService: OAuth2AuthorizationService
         ): SecurityFilterChain {
 
 
@@ -169,14 +169,17 @@ class OAuth2ServerAutoConfiguration {
                         }
                 }
                 .authorizationEndpoint { authorizationEndpoint ->
-                    authorizationEndpoint.errorResponseHandler(OAuth2ExceptionHandler.getInstance(this.springContext))
+                    authorizationEndpoint.errorResponseHandler(OAuth2ExceptionHandler)
                 }
                 .tokenEndpoint {
                     it.accessTokenRequestConverter(resourceOwnerPasswordAuthenticationConverter)
                     it.authenticationProvider(resourceOwnerPasswordAuthenticationProvider)
                 }
 
-            http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
+//            val controllerMatcher = ControllerClassRequestMatcher(requestMappingHandlerMapping, OAuth2ClientLoginController::class.java)
+//
+//            val endPoints = OrRequestMatcher(authorizationServerConfigurer.endpointsMatcher,controllerMatcher)
+                http.securityMatcher(authorizationServerConfigurer.endpointsMatcher)
                 .authorizeHttpRequests {
                     it.requestMatchers(HttpMethod.OPTIONS).permitAll()
                     it.anyRequest().authenticated()
@@ -191,7 +194,7 @@ class OAuth2ServerAutoConfiguration {
                     it.disable()
                 }
                 .exceptionHandling {
-                    it.accessDeniedHandler(OAuth2ExceptionHandler.getInstance(this.springContext))
+                    it.accessDeniedHandler(OAuth2ExceptionHandler)
                 }
 
             logger.info("OAuth2 authorization server configured.")

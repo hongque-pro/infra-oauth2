@@ -7,5 +7,7 @@ package com.labijie.infra.oauth2.mvc
  *
  */
 data class OAuth2ClientProviderEntry(
-    val provider: String, val name: String, val authorizeUri: String
+    val provider: String,
+    val authorizeUri: String,
+    val default: Boolean
 )

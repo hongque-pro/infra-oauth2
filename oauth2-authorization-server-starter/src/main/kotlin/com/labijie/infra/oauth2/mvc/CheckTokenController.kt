@@ -21,13 +21,6 @@ class CheckTokenController(
             CheckTokenResult(false)
         }
     }
-
-    @RequestMapping("/aa/{od}")
-    fun t(
-        @PathVariable("od") od: String,
-    ): String {
-        return ""
-    }
 }
 
 data class CheckTokenResult(val active: Boolean)

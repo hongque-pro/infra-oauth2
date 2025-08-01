@@ -1,25 +1,26 @@
 package com.labijie.infra.oauth2
 
 import com.labijie.infra.utils.throwIfNecessary
-import com.nimbusds.jose.jwk.JWKSelector
-import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jose.jwk.OctetSequenceKey
-import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.openid.connect.sdk.claims.ClaimsSet
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import net.minidev.json.JSONObject
 import org.springframework.context.ApplicationContext
 import org.springframework.core.io.ClassPathResource
+import org.springframework.http.HttpStatus
+import org.springframework.http.server.ServletServerHttpResponse
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
+import org.springframework.security.oauth2.core.OAuth2Error
+import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter
 import java.io.File
 import java.net.URL
 import java.util.*
 import java.util.stream.Collectors
-import javax.crypto.SecretKey
-import javax.crypto.spec.SecretKeySpec
 
 
 /**
@@ -28,6 +29,13 @@ import javax.crypto.spec.SecretKeySpec
  * @date 2019-07-04
  */
 object OAuth2Utils {
+
+    fun HttpServletResponse.writeOAuth2Error(error: OAuth2Error, status: HttpStatus, request: HttpServletRequest? = null) {
+        val serverResponse = ServletServerHttpResponse(this)
+        serverResponse.setStatusCode(status)
+
+        OAuth2ExceptionHandler.writeError(this, OAuth2AuthenticationException(error), status)
+    }
 
     private lateinit var principalResolvers: List<IPrincipalResolver>
     private lateinit var tokeValueResolvers: List<ITokenValueResolver>

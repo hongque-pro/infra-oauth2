@@ -6,7 +6,7 @@ package com.labijie.infra.oauth2.mvc
  * @Date: 2025/7/25
  *
  */
-data class OAuth2ClientsResponse(
+data class OAuth2ClientsInfo(
     var enabled: Boolean,
     var providers: List<OAuth2ClientProviderEntry> = emptyList(),
 )
