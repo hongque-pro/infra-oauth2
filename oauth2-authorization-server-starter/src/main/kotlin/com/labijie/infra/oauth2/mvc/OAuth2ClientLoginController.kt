@@ -13,6 +13,7 @@ import com.labijie.infra.oauth2.mvc.OidcLoginResult.Companion.getUser
 import com.labijie.infra.oauth2.mvc.OidcLoginResult.Companion.isSuccess
 import com.labijie.infra.oauth2.service.IOAuth2ServerOidcTokenService
 import jakarta.validation.Valid
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter
 import org.springframework.security.oauth2.core.OAuth2Error
@@ -37,6 +38,7 @@ class OAuth2ClientLoginController(
     private val signInHelper: TwoFactorSignInHelper,
     private val registeredClientRepository: RegisteredClientRepository?,
     private val oauth2ClientProperties: InfraOAuth2ClientProperties,
+    @param:Autowired(required = false)
     private val oidcLoginHandler: IOidcLoginHandler?,
     private val openIdTokenService: IOpenIDConnectService,
 ) {
@@ -61,15 +63,17 @@ class OAuth2ClientLoginController(
         list
     }
 
+    private val oidcLoginProviders by lazy {
+        oauth2ClientProperties.oidcLogin.keys
+    }
+
     @GetMapping("/providers")
     fun standardClients(): OAuth2ProvidersResponse {
         clients.filter {
             oauth2ClientProviderService.findByName(it.provider) != null
         }
 
-        val providers = openIdTokenService.allProviders()
-
-        val oidc = OidcClientsInfo(oidcLoginHandler != null && oauth2ClientProperties.oidcLoginEnabled, providers)
+        val oidc = OidcClientsInfo(oidcLoginHandler != null && oauth2ClientProperties.oidcLoginEnabled, oidcLoginProviders)
 
         val oauth2 = OAuth2ClientsInfo(registeredClientRepository != null, clients)
 
@@ -85,13 +89,13 @@ class OAuth2ClientLoginController(
         client: RegisteredClient
     ): OidcLoginResultResponse {
 
-        if(oidcLoginHandler == null || !oauth2ClientProperties.oidcLoginEnabled) {
+        if (oidcLoginHandler == null || !oauth2ClientProperties.oidcLoginEnabled) {
             throw InvalidOAuth2ClientProviderException(provider)
         }
 
         val user = openIdTokenService.decodeToken(provider, request.idToken, request.authorizationCode, request.nonce)
 
-        if(user.username.isNullOrBlank()) {
+        if (user.username.isNullOrBlank()) {
             request.attributes?.get("username")?.let {
                 user.username = user.username
             }
@@ -99,7 +103,7 @@ class OAuth2ClientLoginController(
 
         val result = oidcLoginHandler.handle(user, request)
 
-        val response = if(result.isSuccess) {
+        val response = if (result.isSuccess) {
             val auth = signInHelper.signIn(client, result.getUser(), false)
             OidcLoginResultResponse(accessToken = auth.toAccessToken())
         } else {
