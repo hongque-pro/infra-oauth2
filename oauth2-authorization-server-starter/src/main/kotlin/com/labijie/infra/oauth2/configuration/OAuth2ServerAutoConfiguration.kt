@@ -3,6 +3,7 @@ package com.labijie.infra.oauth2.configuration
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
+import com.labijie.infra.oauth2.OAuth2ServerUtils.getIssuerOrDefault
 import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
@@ -71,7 +72,8 @@ class OAuth2ServerAutoConfiguration {
         settings: AuthorizationServerSettings,
         jwkSource: JWKSource<SecurityContext>
     ): OAuth2ServerJwtCodec {
-        return OAuth2ServerJwtCodec(settings.issuer, jwkSource)
+        val issuer = settings.getIssuerOrDefault()
+        return OAuth2ServerJwtCodec(issuer, jwkSource)
     }
 
     @Bean
@@ -140,9 +142,9 @@ class OAuth2ServerAutoConfiguration {
         @Order(Ordered.HIGHEST_PRECEDENCE)
         fun authorizationServerSecurityFilterChain(
             http: HttpSecurity,
-            serverProperties: OAuth2ServerProperties,
             clientRepository: RegisteredClientRepository,
-            authorizationService: OAuth2AuthorizationService
+            authorizationService: OAuth2AuthorizationService,
+            commonsProperties: OAuth2ServerCommonsProperties,
         ): SecurityFilterChain {
 
 
@@ -201,7 +203,7 @@ class OAuth2ServerAutoConfiguration {
 
             return http.formLogin {
                 it.disable()
-            }.applyCommonsPolicy(serverProperties.disableCsrf).build()
+            }.applyCommonsPolicy(commonsProperties).build()
         }
 
 
@@ -265,18 +267,10 @@ class OAuth2ServerAutoConfiguration {
                 information.appendLine(settings.tokenRevocationEndpoint)
                 information.appendLine(settings.authorizationEndpoint)
                 information.appendLine(settings.authorizationEndpoint)
+                information.appendLine()
                 information.appendLine("Use the configuration below to configure your resource server:")
-                information.appendLine(
-                    """
-                    spring:
-                      security:
-                        oauth2:
-                          resourceserver:
-                            jwt:
-                              issuer-uri: ${settings.issuer}
-                              jwk-set-uri: http://localhost:${serverProperties.port ?: 8080}${settings.jwkSetEndpoint}
-                """.trimIndent()
-                )
+                information.appendLine("spring.security.oauth2.resourceserver.jwt.issuer-uri: ${settings.issuer}")
+                information.appendLine("spring.security.oauth2.resourceserver.jwt.jwk-set-uri: http://localhost:${serverProperties.port ?: 8080}${settings.jwkSetEndpoint}")
 
                 logger.info(information.toString())
             }

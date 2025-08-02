@@ -3,6 +3,7 @@ package com.labijie.infra.oauth2.testing.configuration
 import com.labijie.caching.configuration.CachingAutoConfiguration
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.configuration.InfraOidcUserConverterAutoConfiguration
+import com.labijie.infra.oauth2.configuration.InfraOAuth2CommonsAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerSecurityAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 
 @EnableWebSecurity
 @ImportAutoConfiguration(
+    InfraOAuth2CommonsAutoConfiguration::class,
     CachingAutoConfiguration::class,
     OAuth2DependenciesAutoConfiguration::class,
     OAuth2ServerAutoConfiguration::class,

@@ -1,7 +1,5 @@
-package com.labijie.infra.oauth2.resource
+package com.labijie.infra.oauth2
 
-import com.labijie.infra.oauth2.OAuth2Constants
-import com.labijie.infra.oauth2.TwoFactorPrincipal
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor

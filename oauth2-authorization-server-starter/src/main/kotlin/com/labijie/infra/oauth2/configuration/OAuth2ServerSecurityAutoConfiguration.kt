@@ -15,7 +15,6 @@ import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointR
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass
 import org.springframework.boot.autoconfigure.security.SecurityProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -25,7 +24,6 @@ import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest
@@ -165,28 +163,6 @@ class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
                     .ignoreCSRF()
                 return http.build()
             }
-        }
-
-
-        @Bean
-        @Order(Ordered.LOWEST_PRECEDENCE - 1)
-        @ConditionalOnMissingClass(RESOURCE_SERVER_AUTO_CONFIG_CLASS)
-        fun oauth2ServerSecurityFilterChain(
-            serverProperties: OAuth2ServerProperties,
-            http: HttpSecurity
-        ): SecurityFilterChain {
-
-            val settings = http
-                .securityMatcher("/**")
-                .authorizeHttpRequests { authorize ->
-                    authorize.requestMatchers("/oauth2/unauthorized", "/error").permitAll()
-                    authorize.anyRequest().authenticated()
-                }
-
-            configure(settings)
-            return settings
-                .applyCommonsPolicy(serverProperties.disableCsrf)
-                .build()
         }
 
     }

@@ -5,7 +5,9 @@ import com.labijie.infra.oauth2.component.DefaultOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.labijie.infra.oauth2.exception.InvalidIdTokenException
 import com.labijie.infra.oauth2.service.DefaultOAuth2ServerOidcTokenService
+import com.labijie.infra.oauth2.service.IOAuth2ServerOidcTokenService
 import org.junit.jupiter.api.assertThrows
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import java.lang.Thread.sleep
 import java.time.Duration
 import java.util.UUID
@@ -21,7 +23,10 @@ import kotlin.test.assertEquals
 class ServerOidcTokenServiceTester {
 
     private val properties = OAuth2ServerProperties()
-    private val service = DefaultOAuth2ServerOidcTokenService(DefaultOAuth2ServerRSAKeyPair(properties), properties)
+    private val service: IOAuth2ServerOidcTokenService = DefaultOAuth2ServerOidcTokenService(
+        DefaultOAuth2ServerRSAKeyPair(properties),
+        AuthorizationServerSettings.builder().build()
+    )
 
     fun assertOidcUsersEqual(expected: StandardOidcUser, actual: StandardOidcUser) {
         assertEquals(expected.provider, actual.provider, "provider mismatch")

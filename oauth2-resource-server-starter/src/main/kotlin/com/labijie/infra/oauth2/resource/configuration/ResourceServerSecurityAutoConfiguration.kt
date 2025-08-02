@@ -3,6 +3,7 @@ package com.labijie.infra.oauth2.resource.configuration
 import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
 import com.labijie.infra.oauth2.buildMatchers
+import com.labijie.infra.oauth2.configuration.OAuth2ServerCommonsProperties
 import com.labijie.infra.oauth2.configuration.applyCommonsPolicy
 import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
@@ -61,7 +62,8 @@ class ResourceServerSecurityAutoConfiguration(
     fun resourceServerSecurityChain(
         http: HttpSecurity,
         serverProperties: ResourceServerProperties,
-        configurers: ObjectProvider<IResourceServerHttpSecurityConfigurer>
+        configurers: ObjectProvider<IResourceServerHttpSecurityConfigurer>,
+        commonsProperties: OAuth2ServerCommonsProperties
     ): SecurityFilterChain {
 
         //http.cors(Customizer.withDefaults())
@@ -109,7 +111,7 @@ class ResourceServerSecurityAutoConfiguration(
             it.permitAll()
             it.disable()
         }
-        .applyCommonsPolicy(serverProperties.disableCsrf)
+        .applyCommonsPolicy(commonsProperties)
         .build()
     }
 

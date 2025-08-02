@@ -4,6 +4,7 @@ import com.labijie.infra.oauth2.ITokenIntrospectParser
 import com.labijie.infra.oauth2.OAuth2Constants
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.RsaUtils
+import com.labijie.infra.oauth2.configuration.InfraOAuth2CommonsAutoConfiguration
 import com.labijie.infra.oauth2.resource.ActuatorAuthorizationConfigurer
 import com.labijie.infra.oauth2.resource.LocalOpaqueTokenIntrospector
 import com.labijie.infra.oauth2.resource.component.IResourceServerSecretsStore
@@ -38,7 +39,7 @@ import java.security.interfaces.RSAPublicKey
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(ResourceServerProperties::class)
-@AutoConfigureAfter(OAuth2ResourceServerAutoConfiguration::class)
+@AutoConfigureAfter(OAuth2ResourceServerAutoConfiguration::class, InfraOAuth2CommonsAutoConfiguration::class)
 @AutoConfigureOrder(1)
 class ResourceServerAutoConfiguration(
     private val resourceServerProperties: ResourceServerProperties,

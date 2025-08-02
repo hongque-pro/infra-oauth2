@@ -4,7 +4,7 @@ import com.labijie.infra.oauth2.OAuth2Constants
 import com.labijie.infra.oauth2.IPrincipalResolver
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.isWellKnownClaim
-import com.labijie.infra.oauth2.resource.TwoFactorAuthenticatedPrincipal
+import com.labijie.infra.oauth2.TwoFactorAuthenticatedPrincipal
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken
 
@@ -21,6 +21,10 @@ class BearTokenPrincipalResolver : IPrincipalResolver {
 
     override fun resolvePrincipal(authentication: Authentication): TwoFactorPrincipal {
         val token = authentication as AbstractOAuth2TokenAuthenticationToken<*>
+
+        if (token.principal is TwoFactorPrincipal) {
+            return token.principal as TwoFactorPrincipal
+        }
 
         if (token.principal is TwoFactorAuthenticatedPrincipal) {
             val principal = token.principal as TwoFactorAuthenticatedPrincipal

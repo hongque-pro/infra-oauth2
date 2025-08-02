@@ -41,18 +41,6 @@
   ],
   "properties":[
     {
-      "name":"infra.oauth2.authorization-server.issuer",
-      "type": "java.net.URI",
-      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
-      "defaultValue": "https://localhost:8080"
-    },
-    {
-      "name":"infra.oauth2.authorization-server.disable-csrf",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
-      "defaultValue": true
-    },
-    {
       "name":"infra.oauth2.authorization-server.client-repository",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",

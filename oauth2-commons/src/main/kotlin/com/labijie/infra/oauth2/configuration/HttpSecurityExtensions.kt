@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository
 import org.springframework.security.web.util.matcher.RequestMatcher
 
 /**
@@ -24,14 +25,20 @@ fun HttpSecurity.ignoreCSRF(): HttpSecurity {
      }
 }
 
-fun HttpSecurity.applyCommonsPolicy(disableCSRF: Boolean): HttpSecurity {
+fun HttpSecurity.applyCommonsPolicy(commonsProperties: OAuth2ServerCommonsProperties): HttpSecurity {
 
-    val http = if (disableCSRF) {
-        //使用 disable 单元测试任然需要验证 csrf
-        this.csrf { it.requireCsrfProtectionMatcher(EMPTY_REQUEST_MATCHER) }
-    } else {
-        this.csrf {
-            it.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+    val settings = commonsProperties.csrf
+    val http = this.csrf {
+        if(commonsProperties.csrf.disabled) {
+            it.requireCsrfProtectionMatcher(EMPTY_REQUEST_MATCHER)
+            it.ignoringRequestMatchers(ANY_REQUEST_MATCHER)
+            it.disable()
+        }else {
+            when(settings.repository) {
+                CsrfRepository.Cookie -> it.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                CsrfRepository.Session -> it.csrfTokenRepository(HttpSessionCsrfTokenRepository())
+            }
+
         }
     }
 

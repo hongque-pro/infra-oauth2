@@ -5,6 +5,7 @@ import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.configuration.InfraOidcUserConverterAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
+import com.labijie.infra.oauth2.configuration.OAuth2ServerCommonsProperties
 import com.labijie.infra.oauth2.configuration.OAuth2ServerSecurityAutoConfiguration
 import com.labijie.infra.oauth2.testing.component.OAuth2SignInTestingListener
 import com.labijie.infra.oauth2.testing.component.TestingIdentityService
@@ -36,8 +37,9 @@ class OAuth2TestServerAutoConfiguration {
         @Order(SecurityProperties.BASIC_AUTH_ORDER)
         fun testServerChain(http: HttpSecurity): DefaultSecurityFilterChain? {
             return http
+
                 .csrf { it.disable() }
-                .securityMatcher("/test/**")
+                .securityMatcher("/**")
                 .authorizeHttpRequests { authorize ->
                     authorize.requestMatchers("/test/fake-login").permitAll()
                     authorize.anyRequest().authenticated()
@@ -47,6 +49,7 @@ class OAuth2TestServerAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ImportAutoConfiguration(
+        OAuth2ServerCommonsProperties::class,
         OAuth2DependenciesAutoConfiguration::class,
         OAuth2ServerAutoConfiguration::class,
         OAuth2ServerSecurityAutoConfiguration::class,

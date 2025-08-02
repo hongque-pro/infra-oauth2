@@ -1,0 +1,33 @@
+{
+  "groups": [
+    {
+      "name": "infra.oauth2",
+      "type": "com.labijie.infra.oauth2.configuration.OAuth2ServerCommonsProperties",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerCommonsProperties"
+    },
+    {
+      "name": "infra.oauth2.csrf",
+      "type": "com.labijie.infra.oauth2.configuration.CsrfSettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerCommonsProperties",
+      "sourceMethod": "getCsrf()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "infra.oauth2.csrf.disabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.CsrfSettings",
+      "defaultValue": true
+    },
+    {
+      "name": "infra.oauth2.csrf.repository",
+      "type": "com.labijie.infra.oauth2.configuration.CsrfRepository",
+      "sourceType": "com.labijie.infra.oauth2.configuration.CsrfSettings",
+      "defaultValue": "cookie"
+    }
+  ],
+  "hints": [],
+  "ignored": {
+    "properties": []
+  }
+}

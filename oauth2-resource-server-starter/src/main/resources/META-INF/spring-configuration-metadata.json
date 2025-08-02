@@ -50,12 +50,6 @@
       "sourceType": "com.labijie.infra.oauth2.configuration.RSASettings",
       "description": "verify a jwt's validity window (prevent server clock drift )",
       "defaultValue": "1m"
-    },
-    {
-      "name":"infra.oauth2.resource-server.disable-csrf",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.labijie.infra.oauth2.resource.configuration.ResourceServerProperties",
-      "defaultValue": true
     }
   ]
 }

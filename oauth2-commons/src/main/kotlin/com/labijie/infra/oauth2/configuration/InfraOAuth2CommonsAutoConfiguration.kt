@@ -4,6 +4,7 @@ import com.labijie.infra.oauth2.OAuth2ExceptionHandler
 import com.labijie.infra.oauth2.mvc.OAuth2ServerCommonsController
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
@@ -18,6 +19,7 @@ import org.springframework.core.Ordered
  */
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
+@EnableConfigurationProperties(OAuth2ServerCommonsProperties::class)
 class InfraOAuth2CommonsAutoConfiguration: ApplicationContextAware {
 
     @Bean

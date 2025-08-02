@@ -8,6 +8,8 @@ infra:
           apple:
             audience-set:
         oidc-login-enabled: true
+      issuer: "https://test.api"
+      disable-csrf:
 
   caching:
     provider: memory
@@ -19,6 +21,7 @@ infra:
 server:
   port: 8089
   forward-headers-strategy: framework
+
 
 logging:
   level:
@@ -35,10 +38,6 @@ spring:
     username: sa
     password: password
     driverClassName: org.h2.Driver
-  security:
-    oauth2:
-      authorizationserver:
-        issuer: https://test.api
 
 
 

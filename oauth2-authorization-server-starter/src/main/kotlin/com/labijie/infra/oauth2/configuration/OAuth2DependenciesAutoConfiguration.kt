@@ -3,6 +3,7 @@ package com.labijie.infra.oauth2.configuration
 import com.labijie.caching.ICacheManager
 import com.labijie.infra.oauth2.IIdentityService
 import com.labijie.infra.oauth2.OAuth2ServerUtils
+import com.labijie.infra.oauth2.OAuth2ServerUtils.getIssuerOrDefault
 import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
 import com.labijie.infra.oauth2.component.DefaultOAuth2ServerRSAKeyPair
@@ -56,6 +57,21 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
 
 
     @Bean
+    @ConditionalOnMissingBean(AuthorizationServerSettings::class)
+    fun authorizationServerSettings(
+        properties: OAuth2ServerProperties,
+        environment: Environment
+    ): AuthorizationServerSettings {
+
+        val issuer = environment.getProperty("spring.security.oauth2.authorizationserver.issuer")
+            .ifNullOrBlank { OAuth2ServerUtils.DEFAULT_ISSUER }
+        return AuthorizationServerSettings.builder()
+            .issuer(issuer)
+            .build()
+    }
+
+
+    @Bean
     @ConditionalOnMissingBean(IOAuth2ServerRSAKeyPair::class)
     fun oauth2ServerRSAKeyPair(
         properties: OAuth2ServerProperties,
@@ -68,11 +84,11 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
     @Bean
     @ConditionalOnMissingBean(IOAuth2ServerOidcTokenService::class)
     fun defaultServerOidcTokenService(
-        properties: OAuth2ServerProperties,
+        serverSettings: AuthorizationServerSettings,
         serverRSAKeyPair: IOAuth2ServerRSAKeyPair
     ): DefaultOAuth2ServerOidcTokenService {
 
-        return DefaultOAuth2ServerOidcTokenService(serverRSAKeyPair, properties)
+        return DefaultOAuth2ServerOidcTokenService(serverRSAKeyPair, serverSettings)
     }
 
     @Bean
@@ -156,23 +172,6 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
         override fun addInterceptors(registry: InterceptorRegistry) {
             registry.addInterceptor(ClientDetailsInterceptorAdapter(registeredClientRepository))
         }
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(AuthorizationServerSettings::class)
-    fun authorizationServerSettings(
-        properties: OAuth2ServerProperties,
-    ): AuthorizationServerSettings {
-
-        //val issuser = environment.getProperty("spring.security.oauth2.authorizationserver.issuer")
-
-        val iss = properties.issuer
-        return AuthorizationServerSettings.builder().let { builder ->
-            iss?.let {
-                builder.issuer(iss.toString())
-            } ?: builder
-        }
-            .build()
     }
 
     @Configuration(proxyBeanMethods = false)

@@ -18,6 +18,7 @@ object JwtUtils {
     }
 
     fun accessTokenClaims(
+        issuer: String,
         registeredClient: RegisteredClient,
         subject: String?,
         authorizedScopes: Set<String>?
@@ -31,6 +32,7 @@ object JwtUtils {
 //            claimsBuilder.issuer(issuer)
 //        }
         claimsBuilder
+            .issuer(issuer)
             .subject(subject)
             .audience(Collections.singletonList(registeredClient.clientId))
             .issuedAt(issuedAt)
@@ -44,8 +46,10 @@ object JwtUtils {
     }
 
     fun idTokenClaims(
+        issuer: String,
         registeredClient: RegisteredClient,
-        issuer: String?, subject: String?, nonce: String?
+        subject: String?,
+        nonce: String?
     ): JwtClaimsSet.Builder {
         val issuedAt = Instant.now()
         // TODO Allow configuration for ID Token time-to-live
@@ -53,10 +57,9 @@ object JwtUtils {
 
         // @formatter:off
         val claimsBuilder = JwtClaimsSet.builder()
-        if (StringUtils.hasText(issuer)) {
-            claimsBuilder.issuer(issuer)
-        }
+
         claimsBuilder
+            .issuer(issuer)
             .subject(subject)
             .audience(Collections.singletonList(registeredClient.clientId))
             .issuedAt(issuedAt)

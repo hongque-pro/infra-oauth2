@@ -14,6 +14,8 @@ import com.labijie.infra.oauth2.configuration.TokenProperties
 import com.labijie.infra.oauth2.filter.ClientRequired
 import com.labijie.infra.oauth2.mvc.CheckTokenController
 import com.labijie.infra.oauth2.mvc.OAuth2ClientLoginController
+import com.labijie.infra.oauth2.mvc.OidcLoginResult
+import com.labijie.infra.oauth2.mvc.OidcLoginResultResponse
 import com.labijie.infra.oauth2.serialization.jackson.*
 import org.springframework.aot.hint.MemberCategory
 import org.springframework.aot.hint.RuntimeHints

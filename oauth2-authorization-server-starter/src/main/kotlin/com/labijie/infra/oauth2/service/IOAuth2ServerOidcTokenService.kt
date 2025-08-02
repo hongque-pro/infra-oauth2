@@ -10,6 +10,6 @@ import java.time.Duration
  *
  */
 interface IOAuth2ServerOidcTokenService {
-    fun encode(user: StandardOidcUser, expiration: Duration): String
+    fun encode(user: StandardOidcUser, expiration: Duration, clientId: String? = null): String
     fun decode(idToken: String, ignoreExpiration: Boolean = false): StandardOidcUser
 }

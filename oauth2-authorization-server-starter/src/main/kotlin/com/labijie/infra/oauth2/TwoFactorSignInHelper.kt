@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2
 
+import com.labijie.infra.oauth2.OAuth2ServerUtils.getIssuerOrDefault
 import com.labijie.infra.oauth2.OAuth2ServerUtils.getScopes
 import com.labijie.infra.oauth2.authentication.JwtUtils
 import com.labijie.infra.oauth2.customizer.TwoFactorGrantedAuthentication
@@ -21,9 +22,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.*
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
-import org.springframework.security.oauth2.jwt.JwsHeader
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtClaimNames
-import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
@@ -35,10 +35,10 @@ import org.springframework.security.oauth2.server.authorization.context.Authoriz
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
 import org.springframework.security.web.util.UrlUtils
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
-import org.springframework.web.util.UriComponentsBuilder
 import java.security.Principal
 
 /**
@@ -79,34 +79,19 @@ class TwoFactorSignInHelper(
         context.getBean(AuthorizationServerSettings::class.java)
     }
 
+    private val tokenGenerator by lazy {
+        context.getBean(OAuth2TokenGenerator::class.java)
+
+    }
 
 
     protected class DefaultAuthorizationServerContext(
-        private val authorizationServerSettings: AuthorizationServerSettings,
-        private val request: HttpServletRequest? = null
+        private val authorizationServerSettings: AuthorizationServerSettings
     ) : AuthorizationServerContext {
 
-        private fun getIssuer(request: HttpServletRequest): String {
-            val iss = authorizationServerSettings.issuer
-            if(iss.isNullOrBlank()) {
-                val cleanUrl = request.getCleanRequestUrl()
-                // @formatter:off
-                return UriComponentsBuilder.fromUriString(cleanUrl)
-                    .replacePath(request.contextPath)
-                    .fragment(null)
-                    .build()
-                    .toUriString()
-            }
-            return iss
-        }
-
-
         override fun getIssuer(): String {
-            if (!authorizationServerSettings.issuer.isNullOrBlank()) return authorizationServerSettings.issuer
-
-            val req = request ?: (RequestContextHolder.currentRequestAttributes() as? ServletRequestAttributes)?.request
-
-            return req?.let { getIssuer(it) } ?: "http://localhost"
+            val issuer = authorizationServerSettings.getIssuerOrDefault()
+            return issuer
         }
 
         override fun getAuthorizationServerSettings(): AuthorizationServerSettings {
@@ -244,6 +229,28 @@ class TwoFactorSignInHelper(
         }
     }
 
+    private fun generateJwtAccessToken(
+        registeredClient: RegisteredClient,
+        principal: Authentication,
+        scopes: Set<String>,
+        serverContext: AuthorizationServerContext
+    ): Jwt {
+        val headersBuilder = JwtUtils.headers()
+        val claimsBuilder = JwtUtils.accessTokenClaims(serverContext.issuer, registeredClient, principal.name, scopes)
+
+        val context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
+            .registeredClient(registeredClient)
+            .authorizationServerContext(serverContext)
+            .principal(principal)
+            .authorizedScopes(scopes)
+            .tokenType(OAuth2TokenType.ACCESS_TOKEN)
+            .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
+            .build()
+
+        return jwtGenerator.generate(context)
+            ?: throw IllegalStateException("Failed to generate JWT access token.")
+    }
+
 
     private fun signInCore(
         registeredClient: RegisteredClient,
@@ -263,25 +270,10 @@ class TwoFactorSignInHelper(
                 authorizedScopes = scopes
             }
 
-            val serverCtx = AuthorizationServerContextHolder.getContext() ?: DefaultAuthorizationServerContext(authorizationServerSettings, request)
+            val serverCtx = AuthorizationServerContextHolder.getContext() ?: DefaultAuthorizationServerContext(authorizationServerSettings)
 
-            val headersBuilder: JwsHeader.Builder = JwtUtils.headers()
-            val claimsBuilder: JwtClaimsSet.Builder = JwtUtils.accessTokenClaims(
-                registeredClient, registeredClient.clientId, authorizedScopes
-            )
-            val context = JwtEncodingContext.with(headersBuilder, claimsBuilder)
-                .registeredClient(registeredClient)
-                .authorizationServerContext(serverCtx)
-                .principal(userAuthentication)
-                .authorizedScopes(authorizedScopes)
-                .tokenType(OAuth2TokenType.ACCESS_TOKEN)
-                .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)
-                //.authorizationGrant(resourceOwnerPasswordAuthentication)
-                .build()
+            val jwtAccessToken = generateJwtAccessToken(registeredClient, userAuthentication, authorizedScopes, serverCtx)
 
-
-            val jwtAccessToken =
-                jwtGenerator.generate(context) ?: throw IllegalStateException("NULL generated by Jwt generator.")
             val claims = jwtAccessToken.claims
             // Use the scopes after customizing the token
             authorizedScopes = jwtAccessToken.getScopes()
@@ -313,6 +305,7 @@ class TwoFactorSignInHelper(
             }
             val authorization = authorizationBuilder.build()
             authorizationService.save(authorization)
+
             if (LOGGER.isDebugEnabled) {
                 LOGGER.debug("OAuth2Authorization saved successfully")
             }

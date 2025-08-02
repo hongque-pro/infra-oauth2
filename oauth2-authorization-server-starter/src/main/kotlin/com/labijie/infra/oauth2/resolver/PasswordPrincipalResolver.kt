@@ -1,6 +1,9 @@
 package com.labijie.infra.oauth2.resolver
 
-import com.labijie.infra.oauth2.*
+import com.labijie.infra.oauth2.IPrincipalResolver
+import com.labijie.infra.oauth2.ITwoFactorUserDetails
+import com.labijie.infra.oauth2.OAuth2ServerUtils.toPrincipal
+import com.labijie.infra.oauth2.TwoFactorPrincipal
 import org.springframework.security.core.Authentication
 
 class PasswordPrincipalResolver : IPrincipalResolver {
@@ -21,12 +24,6 @@ class PasswordPrincipalResolver : IPrincipalResolver {
     override fun resolvePrincipal(authentication: Authentication): TwoFactorPrincipal {
         val user = findPrinciple(authentication)  as ITwoFactorUserDetails
 
-        return TwoFactorPrincipal(
-            user.getUserId(),
-            user.username,
-            user.getTokenAttributes().getOrDefault(OAuth2Constants.CLAIM_TWO_FACTOR, "false").toBoolean(),
-            user.authorities.toMutableList(),
-            user.getTokenAttributes().filter { !isWellKnownClaim(it.key) }
-        )
+        return user.toPrincipal()
     }
 }

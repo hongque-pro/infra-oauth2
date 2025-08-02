@@ -1,17 +1,19 @@
 package com.labijie.infra.oauth2.service
 
+import com.labijie.infra.oauth2.OAuth2ServerUtils.getIssuerOrDefault
 import com.labijie.infra.oauth2.OAuth2Utils.toClaimSet
 import com.labijie.infra.oauth2.StandardOidcUser
 import com.labijie.infra.oauth2.StandardOidcUser.Companion.toAttributes
 import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
-import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
 import com.labijie.infra.oauth2.exception.InvalidIdTokenException
+import com.labijie.infra.utils.ifNullOrBlank
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.crypto.RSASSASigner
 import com.nimbusds.jose.crypto.RSASSAVerifier
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -23,18 +25,19 @@ import java.util.*
  *
  */
 class DefaultOAuth2ServerOidcTokenService(
-    private val  serverKeyPair: IOAuth2ServerRSAKeyPair,
-    private val serverProperties: OAuth2ServerProperties) : IOAuth2ServerOidcTokenService {
+    private val serverKeyPair: IOAuth2ServerRSAKeyPair,
+    private val settings: AuthorizationServerSettings) : IOAuth2ServerOidcTokenService {
 
     override fun encode(
         user: StandardOidcUser,
-        expiration: Duration
+        expiration: Duration,
+        clientId: String?,
     ): String {
         val exp = Instant.now().plusMillis(expiration.toMillis())
         val claims = JWTClaimsSet.Builder()
             .subject(user.userId)
-            .issuer(serverProperties.issuer?.toString())
-            .audience("your-client-id")
+            .issuer(settings.getIssuerOrDefault())
+            .audience(clientId.ifNullOrBlank { user.provider })
             .apply {
                 user.toAttributes().forEach {
                     claim(it.key, it.value)
@@ -82,7 +85,7 @@ class DefaultOAuth2ServerOidcTokenService(
 
         val issuer = claims.issuer
 
-        if(issuer != serverProperties.issuer?.toString()) {
+        if(issuer != settings.getIssuerOrDefault()) {
             throw InvalidIdTokenException("Invalid issuer claim")
         }
 

@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2
 
 import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
+import com.labijie.infra.utils.ifNullOrBlank
 import org.springframework.security.oauth2.core.*
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.core.oidc.OidcIdToken
@@ -10,6 +11,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
 import org.springframework.util.StringUtils
 import java.security.MessageDigest
@@ -192,5 +194,26 @@ object OAuth2ServerUtils {
 
     fun JwtClaimsSet.getScopes(): Set<String> {
         return this.claims.getScopes()
+    }
+
+    fun ITwoFactorUserDetails.toPrincipal(): TwoFactorPrincipal {
+        return TwoFactorPrincipal(
+            getUserId(),
+            username,
+            getTokenAttributes().getOrDefault(OAuth2Constants.CLAIM_TWO_FACTOR, "false").toBoolean(),
+            authorities.toMutableList(),
+            getTokenAttributes().filter { !isWellKnownClaim(it.key) }
+        )
+    }
+
+//    fun OAuth2ServerProperties.getIssuerOrDefault(): String {
+//        val issuer = this.issuer?.toString()
+//        return issuer.ifNullOrBlank { "http://localhost" }
+//    }
+
+    internal const val DEFAULT_ISSUER = "http://localhost"
+
+    fun AuthorizationServerSettings.getIssuerOrDefault(): String {
+        return this.issuer.ifNullOrBlank { DEFAULT_ISSUER }
     }
 }

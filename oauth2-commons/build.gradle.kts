@@ -1,3 +1,7 @@
+//infra {
+//    useSpringConfigurationProcessor("3.5.3")
+//}
+//
 
 dependencies {
     api("com.labijie.infra:commons-core:${Versions.infraCommons}")
