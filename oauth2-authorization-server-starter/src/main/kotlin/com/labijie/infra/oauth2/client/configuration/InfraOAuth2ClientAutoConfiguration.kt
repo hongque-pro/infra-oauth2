@@ -65,8 +65,6 @@ class InfraOAuth2ClientAutoConfiguration {
         clientRegistrationRepository: ClientRegistrationRepository?,
         oauth2ClientProviderService: IOAuth2ClientProviderService,
         infraOAuth2ClientProperties: InfraOAuth2ClientProperties,
-        @Autowired(required = false)
-        restClient: RestClient? = null,
         restClientBuilder: RestClient.Builder,
         providers: ObjectProvider<IOpenIDConnectProvider>
     ): IOpenIDConnectService {
@@ -76,7 +74,7 @@ class InfraOAuth2ClientAutoConfiguration {
             oauth2UserInfoLoader,
             oauth2ClientProviderService,
             infraOAuth2ClientProperties,
-            restClient,
+            null,
             restClientBuilder
         ).apply {
             providers.orderedStream().forEach {
