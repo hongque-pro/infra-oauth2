@@ -87,7 +87,7 @@ class OAuth2ClientLoginController(
         @PathVariable("provider") provider: String,
         @RequestBody(required = true) @Valid request: OidcLoginRequest,
         client: RegisteredClient
-    ): OidcLoginResultResponse {
+    ): OAuth2ClientLoginResponse {
 
         if (oidcLoginHandler == null || !oauth2ClientProperties.oidcLoginEnabled) {
             throw InvalidOAuth2ClientProviderException(provider)
@@ -105,11 +105,11 @@ class OAuth2ClientLoginController(
 
         val response = if (result.isSuccess) {
             val auth = signInHelper.signIn(client, result.getUser(), false)
-            OidcLoginResultResponse(accessToken = auth.toAccessToken())
+            OAuth2ClientLoginResponse.success(auth.toAccessToken())
         } else {
             val error = result.errorOrNull() ?: OAuth2Error(OAuth2ClientErrorCodes.INVALID_OIDC_TOKEN)
             val idToken = oauth2ServerOidcTokenService.encode(user, Duration.ofMinutes(15))
-            OidcLoginResultResponse(error.errorCode, error.description, idToken = idToken)
+            OAuth2ClientLoginResponse.error(error.errorCode, idToken, error.description)
         }
 
         return response
