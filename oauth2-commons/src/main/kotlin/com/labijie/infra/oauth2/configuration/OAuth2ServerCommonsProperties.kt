@@ -12,5 +12,5 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
 @ConfigurationProperties("infra.oauth2")
 class OAuth2ServerCommonsProperties {
     @NestedConfigurationProperty
-    var csrf: CsrfSettings = CsrfSettings()
+    val csrf: CsrfSettings = CsrfSettings()
 }

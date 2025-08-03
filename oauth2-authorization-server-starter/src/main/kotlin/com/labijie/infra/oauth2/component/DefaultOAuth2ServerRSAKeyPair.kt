@@ -3,12 +3,12 @@ package com.labijie.infra.oauth2.component
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.RsaUtils
 import com.labijie.infra.oauth2.configuration.OAuth2ServerProperties
+import com.labijie.infra.utils.logger
 import com.nimbusds.jose.jwk.RSAKey
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
-import java.util.Base64
-import java.util.UUID
+import java.util.*
 
 /**
  * @author Anders Xiao
@@ -19,22 +19,34 @@ class DefaultOAuth2ServerRSAKeyPair(
     private val secretsStore: IOAuth2ServerSecretsStore? = null
 ) : IOAuth2ServerRSAKeyPair {
 
-    private var useDefaultRsaKey =
-        serverProperties.token.jwt.rsa.privateKey.isBlank() || serverProperties.token.jwt.rsa.publicKey.isBlank()
+    private val rsaConfigured by lazy {
+        val default = serverProperties.token.jwt.rsa.privateKey.isBlank() || serverProperties.token.jwt.rsa.publicKey.isBlank()
+        if(serverProperties.token.jwt.rsa.privateKey.isBlank()) {
+            logger.warn("RSA private key is missing for oauth2 server.")
+        }
+        if(serverProperties.token.jwt.rsa.publicKey.isBlank()) {
+            logger.warn("RSA public key is missing for oauth2 server.")
+        }
+
+        default
+    }
+
 
     private var keyId = UUID.randomUUID().toString()
 
     override fun isDefaultKeys(): Boolean {
-        return useDefaultRsaKey
+        return rsaConfigured || secretsStore != null
     }
 
     private val keySet: RSAKeySet by lazy {
+
+
+
         val kp = if (secretsStore != null) {
             val pub = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey(serverProperties))
             val pri = RsaUtils.getPrivateKey(secretsStore.getRsaPrivateKey(serverProperties))
-            useDefaultRsaKey = false
             KeyPair(pub, pri)
-        } else if (useDefaultRsaKey) {
+        } else if (rsaConfigured) {
             serverProperties.token.jwt.rsa.privateKey =
                 Base64.getEncoder().encodeToString(RsaUtils.defaultKeyPair.private.encoded)
             serverProperties.token.jwt.rsa.publicKey =

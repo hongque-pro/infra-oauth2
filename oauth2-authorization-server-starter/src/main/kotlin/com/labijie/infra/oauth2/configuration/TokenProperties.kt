@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
  * @author Anders Xiao
  * @date 2019-02-23
  */
-class TokenProperties {
-        @NestedConfigurationProperty
-        var jwt:JwtSettings = JwtSettings()
-}
+data class TokenProperties(
+    @NestedConfigurationProperty
+    val jwt: JwtSettings = JwtSettings()
+)

@@ -1,15 +1,14 @@
 infra:
   oauth2:
     authorization-server:
-      client:
-        oidc-login:
-          google:
-            audience-set:
-          apple:
-            audience-set:
-        oidc-login-enabled: true
-      issuer: "https://test.api"
-      disable-csrf:
+      oauth2-client:
+        oidc-login-enabled: false
+      create-jdbc-schema: false
+      token:
+        jwt:
+          rsa:
+            private-key: "aaa"
+
 
   caching:
     provider: memory

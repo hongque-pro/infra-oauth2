@@ -23,13 +23,13 @@ data class OAuth2ServerProperties(
     var scopeValidationEnabled: Boolean = false,
     var createJdbcSchema: Boolean = false,
 //    var issuer: URI? = null
-) {
-    companion object {
-        const val PRIVATE_KEY_PROPERTY_PATH = "infra.oauth2.token.jwt.rsa.private-key"
-        const val PUBLIC_KEY_PROPERTY_PATH = "infra.oauth2.token.jwt.rsa.public-key"
-        //const val AUTHORIZATION_SERVICE_PROPERTY_PATH = "infra.oauth2.authorization-service"
-        const val AUTHORIZATION_SERVICE_PROPERTY_PATH = "spring.security.oauth2.authorizationserver.issuer"
 
-        const val ISSUER_KEY_PROPERTY_PATH = "infra.oauth2.authorization-server.issuer"
+) {
+
+    companion object {
+        const val PRIVATE_KEY_PROPERTY_PATH = "infra.oauth2.authorization-server.token.jwt.rsa.private-key"
+        const val PUBLIC_KEY_PROPERTY_PATH = "infra.oauth2.authorization-server.token.jwt.rsa.public-key"
+
+        const val ISSUER_KEY_PROPERTY_PATH = "spring.security.oauth2.authorizationserver.issuer"
     }
 }

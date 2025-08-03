@@ -8,11 +8,12 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
  * @author Anders Xiao
  * @date 2019-02-23
  */
-class JwtSettings {
+data class JwtSettings(
     @NestedConfigurationProperty
     val rsa: RSASettings = RSASettings()
-}
+)
 
 data class RSASettings(
     var privateKey: String = "",
-    var publicKey: String = "")
+    var publicKey: String = ""
+)
