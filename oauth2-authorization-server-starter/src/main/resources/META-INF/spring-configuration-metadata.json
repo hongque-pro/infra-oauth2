@@ -50,6 +50,11 @@
       "name": "spring.security.oauth2.client.registration.apple",
       "type": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties",
       "sourceType": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.token.jwt.rsa",
+      "type": "com.labijie.infra.oauth2.configuration.RSASettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.JwtSettings"
     }
   ],
   "properties": [
@@ -130,11 +135,6 @@
       "defaultValue": false
     },
     {
-      "name": "infra.oauth2.authorization-server.token.jwt.rsa",
-      "type": "com.labijie.infra.oauth2.configuration.RSASettings",
-      "sourceType": "com.labijie.infra.oauth2.configuration.JwtSettings"
-    },
-    {
       "name": "spring.security.oauth2.client.registration.apple.key-id",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties"
@@ -154,6 +154,16 @@
       "name": "spring.security.oauth2.client.registration.apple.team-id",
       "type": "java.lang.String",
       "sourceType": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.token.jwt.rsa.private-key",
+      "type": "com.labijie.infra.oauth2.configuration.RSASettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.JwtSettings"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.token.jwt.rsa.public-key",
+      "type": "com.labijie.infra.oauth2.configuration.RSASettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.JwtSettings"
     }
   ],
   "hints": [
