@@ -1,9 +1,7 @@
 package com.labijie.infra.oauth2.configuration
 
-import com.nimbusds.oauth2.sdk.id.Issuer
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
-import java.net.URI
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,10 +16,10 @@ data class OAuth2ServerProperties(
     @NestedConfigurationProperty
     val authorizationService: AuthorizationServiceProperties = AuthorizationServiceProperties(),
 
-    @NestedConfigurationProperty
-    val defaultClient: DefaultClientProperties = DefaultClientProperties(),
 
-    var clientRepository: String = "memory",
+    @NestedConfigurationProperty
+    val serverClient: OAuth2ServerClientProperties = OAuth2ServerClientProperties(),
+
     var scopeValidationEnabled: Boolean = false,
     var createJdbcSchema: Boolean = false,
 //    var issuer: URI? = null

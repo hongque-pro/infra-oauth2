@@ -17,7 +17,6 @@ import org.springframework.jdbc.datasource.init.ScriptException
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import javax.sql.DataSource
 
@@ -69,10 +68,12 @@ class OAuth2Initializer(
                     DatabasePopulatorUtils.execute(populator, this.dataSource)
                 }
             }
-            if (serverProperties.defaultClient.enabled && serverProperties.defaultClient.clientId.isNotBlank()) {
+            val defaultClient = serverProperties.serverClient.defaultClient
+
+            if (defaultClient.enabled && defaultClient.clientId.isNotBlank()) {
                 clientRepository?.let {
                     clientRepository.saveDefaultClientRegistrationIfNotExisted(serverProperties)
-                    logger.info("Default oauth2 client (id: ${serverProperties.defaultClient.clientId}, secret: ${serverProperties.defaultClient.secret}) added.")
+                    logger.info("Default oauth2 client (id: ${defaultClient.clientId}, secret: ${defaultClient.secret}) added.")
                 }
             }
 
@@ -91,7 +92,8 @@ class OAuth2Initializer(
     private fun RegisteredClientRepository.saveDefaultClientRegistrationIfNotExisted(
         properties: OAuth2ServerProperties
     ): Boolean {
-        if (properties.defaultClient.enabled) {
+        val defaultClient = properties.serverClient.defaultClient
+        if (defaultClient.enabled) {
             val registeredClient = OAuth2ServerUtils.createDefaultClientRegistration(properties)
             val id = registeredClient.id
             val clientId = registeredClient.clientId
@@ -99,7 +101,7 @@ class OAuth2Initializer(
             if (dbRegisteredClient == null) {
                 this.save(registeredClient)
 
-                logger.info("Default client with client id '${properties.defaultClient.clientId}', secret '${properties.defaultClient.secret}' has been created.")
+                logger.info("Default client with client id '${defaultClient.clientId}', secret '${defaultClient.secret}' has been created.")
                 return true
             }
 

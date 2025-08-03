@@ -25,16 +25,16 @@ object OAuth2ServerUtils {
 
     fun createDefaultClientRegistration(properties: OAuth2ServerProperties): RegisteredClient {
 
-        val tokenSettings = TokenSettings.builder().accessTokenTimeToLive(properties.defaultClient.accessTokenExpiration)
-            .refreshTokenTimeToLive(properties.defaultClient.refreshTokenExpiration)
-            .reuseRefreshTokens(properties.defaultClient.reuseRefreshToken)
+        val tokenSettings = TokenSettings.builder().accessTokenTimeToLive(properties.serverClient.defaultClient.accessTokenExpiration)
+            .refreshTokenTimeToLive(properties.serverClient.defaultClient.refreshTokenExpiration)
+            .reuseRefreshTokens(properties.serverClient.defaultClient.reuseRefreshToken)
             .build()
 
 
-        return RegisteredClient.withId(properties.defaultClient.clientId)
-            .clientId(properties.defaultClient.clientId)
+        return RegisteredClient.withId(properties.serverClient.defaultClient.clientId)
+            .clientId(properties.serverClient.defaultClient.clientId)
             .clientName("infra_default")
-            .clientSecret(properties.defaultClient.secret)
+            .clientSecret(properties.serverClient.defaultClient.secret)
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(OAuth2Utils.PASSWORD_GRANT_TYPE)

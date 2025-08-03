@@ -1,0 +1,245 @@
+{
+  "groups": [
+    {
+      "name": "infra.oauth2.authorization-server",
+      "type": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.authorization-service",
+      "type": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "sourceMethod": "getAuthorizationService()"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client",
+      "type": "com.labijie.infra.oauth2.configuration.OAuth2ServerClientProperties",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "sourceMethod": "getAuthorizationService()"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.default-client",
+      "type": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerClientProperties",
+      "sourceMethod": "getDefaultClient()"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.oauth2-client",
+      "type": "com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties",
+      "sourceType": "com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.default-client",
+      "type": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "sourceMethod": "getDefaultClient()"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.token",
+      "type": "com.labijie.infra.oauth2.configuration.TokenProperties",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "sourceMethod": "getToken()"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.token.jwt",
+      "type": "com.labijie.infra.oauth2.configuration.JwtSettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.TokenProperties",
+      "sourceMethod": "getJwt()"
+    },
+    {
+      "name": "spring.security.oauth2.client.registration.apple",
+      "type": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties",
+      "sourceType": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "infra.oauth2.authorization-server.authorization-service.caching-region",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.authorization-service.provider",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties",
+      "defaultValue": "caching"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.repository",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerClientProperties",
+      "defaultValue": "memory"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.oauth2-client.oidc-login",
+      "type": "java.util.Map<java.lang.String,com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties>",
+      "sourceType": "com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.oauth2-client.oidc-login-enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "infra.oauth2.authorization-server.create-jdbc-schema",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.default-client.access-token-expiration",
+      "type": "java.time.Duration",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "defaultValue": "1h"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.default-client.client-id",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "defaultValue": "app"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.default-client.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.default-client.refresh-token-expiration",
+      "type": "java.time.Duration",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "defaultValue": "7d"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.default-client.reuse-refresh-token",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.default-client.secret",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.configuration.DefaultClientProperties",
+      "defaultValue": "!QAZ@WSX"
+    },
+    {
+      "name": "infra.oauth2.authorization-server.scope-validation-enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.labijie.infra.oauth2.configuration.OAuth2ServerProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "infra.oauth2.authorization-server.token.jwt.rsa",
+      "type": "com.labijie.infra.oauth2.configuration.RSASettings",
+      "sourceType": "com.labijie.infra.oauth2.configuration.JwtSettings"
+    },
+    {
+      "name": "spring.security.oauth2.client.registration.apple.key-id",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties"
+    },
+    {
+      "name": "spring.security.oauth2.client.registration.apple.private-rsa-key",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties"
+    },
+    {
+      "name": "spring.security.oauth2.client.registration.apple.secret-validity",
+      "type": "java.time.Duration",
+      "sourceType": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties",
+      "defaultValue": "30s"
+    },
+    {
+      "name": "spring.security.oauth2.client.registration.apple.team-id",
+      "type": "java.lang.String",
+      "sourceType": "com.labijie.infra.oauth2.client.configuration.AppleOAuth2ClientRegistrationProperties"
+    }
+  ],
+  "hints": [
+    {
+      "name": "spring.security.oauth2.client.registration.keys",
+      "values": [
+        {
+          "value": "facebook"
+        },
+        {
+          "value": "google"
+        },
+        {
+          "value": "okta"
+        },
+        {
+          "value": "github"
+        },
+        {
+          "value": "apple"
+        },
+        {
+          "value": "microsoft"
+        },
+        {
+          "value": "discord"
+        }
+      ]
+    },
+    {
+      "name": "infra.oauth2.authorization-server.server-client.repository",
+      "values": [
+        {
+          "value": "jdbc",
+          "description": "jdbc oauth2 client repository."
+        },
+        {
+          "value": "memory",
+          "description": "in memory oauth2 client repository."
+        }
+      ]
+    },
+    {
+      "name": "infra.oauth2.authorization-server.authorization-service.provider",
+      "values": [
+        {
+          "value": "caching",
+          "description": "jdbc oauth2 authorization service."
+        },
+        {
+          "value": "jdbc",
+          "description": "jdbc oauth2 authorization service."
+        },
+        {
+          "value": "memory",
+          "description": "in memory oauth2 authorization service."
+        }
+      ]
+    },
+    {
+      "name": "infra.oauth2.authorization-server.oauth2-client.oidc-login.keys",
+      "values": [
+        {
+          "value": "apple"
+        },
+        {
+          "value": "google"
+        },
+        {
+          "value": "microsoft"
+        }
+      ]
+    },
+    {
+      "name": "infra.oauth2.authorization-server.oauth2-client.oidc-login.values",
+      "providers": [
+        {
+          "name": "handle-as",
+          "parameters": {
+            "target": "com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties"
+          }
+        }
+      ]
+    }
+  ],
+  "ignored": {
+    "properties": []
+  }
+}

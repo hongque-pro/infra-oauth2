@@ -90,7 +90,7 @@ class AppleAuthorizationCodeTokenResponseClient(
         client.providerDetails.configurationMetadata
 
         val now = Instant.now()
-        val exp = now.plusSeconds(properties.secretValiditySeconds.toLong())
+        val exp = now.plusSeconds(properties.secretValidity.seconds.coerceAtLeast(1))
 
 
 

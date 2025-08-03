@@ -107,8 +107,8 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
         @ConditionalOnMissingBean(RegisteredClientRepository::class)
         @ConditionalOnBean(JdbcTemplate::class)
         @ConditionalOnProperty(
-            prefix = "infra.oauth2",
-            name = ["client-repository"],
+            prefix = "infra.oauth2.authorization-server.server-client",
+            name = ["repository"],
             havingValue = "jdbc",
             matchIfMissing = false
         )
@@ -119,8 +119,8 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
         @Bean
         @ConditionalOnMissingBean(RegisteredClientRepository::class)
         @ConditionalOnProperty(
-            prefix = "infra.oauth2",
-            name = ["client-repository"],
+            prefix = "infra.oauth2.authorization-server.server-client",
+            name = ["repository"],
             havingValue = "memory",
             matchIfMissing = true
         )

@@ -8,5 +8,4 @@ package com.labijie.infra.oauth2.configuration
 class AuthorizationServiceProperties{
     var provider: String = "caching"
     var cachingRegion: String? = null
-    var cachingSerializer: String? = null
 }

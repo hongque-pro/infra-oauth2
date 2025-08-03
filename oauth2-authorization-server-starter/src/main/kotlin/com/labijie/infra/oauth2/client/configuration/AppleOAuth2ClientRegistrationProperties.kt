@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.client.configuration
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import java.time.Duration
 
 /**
  *
@@ -10,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  */
 @ConfigurationProperties("spring.security.oauth2.client.registration.apple")
 class AppleOAuth2ClientRegistrationProperties {
-    var secretValiditySeconds = 30
+    var secretValidity = Duration.ofSeconds(30)
     var teamId: String = ""
     var keyId: String = ""
     var privateRsaKey: String = ""
