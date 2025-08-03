@@ -11,15 +11,8 @@ object OAuth2Constants {
     const val ENDPOINT_CHECK_TOKEN ="/oauth2/check-token"
     const val UNAUTHORIZED_ENDPOINT ="/oauth2/unauthorized"
 
-    const val GRANT_TYPE_PASSWORD = "password"
-    const val GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code"
-    const val GRANT_TYPE_REFRESH_TOKEN = "refresh_token"
-    const val GRANT_TYPE_IMPLICIT = "implicit"
-    const val GRANT_TYPE_CLIENT_CREDENTIALS = "client_credentials"
-
     const val CLAIM_TWO_FACTOR = "two_factor_granted"
 
-    //    const val CLAIM_ATTACHED_FIELD_PREFIX = "__att_"
     const val CLAIM_USER_ID = "user_id"
     const val CLAIM_ROLES = "roles"
     const val CLAIM_AUTHORITIES = "authorities"

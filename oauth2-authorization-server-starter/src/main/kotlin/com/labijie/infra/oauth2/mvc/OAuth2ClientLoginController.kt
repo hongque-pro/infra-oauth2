@@ -15,10 +15,10 @@ import com.labijie.infra.oauth2.service.IOAuth2ServerOidcTokenService
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.oauth2.client.registration.ClientRegistration
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter
 import org.springframework.security.oauth2.core.OAuth2Error
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import java.time.Duration
@@ -36,7 +36,7 @@ class OAuth2ClientLoginController(
     private val oauth2ServerOidcTokenService: IOAuth2ServerOidcTokenService,
     private val oauth2ClientProviderService: IOAuth2ClientProviderService,
     private val signInHelper: TwoFactorSignInHelper,
-    private val registeredClientRepository: RegisteredClientRepository?,
+    private val registeredClientRepository: ClientRegistrationRepository?,
     private val oauth2ClientProperties: InfraOAuth2ClientProperties,
     @param:Autowired(required = false)
     private val oidcLoginHandler: IOidcLoginHandler?,

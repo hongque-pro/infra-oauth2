@@ -20,7 +20,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.web.client.RestClient
 
 /**
@@ -107,7 +106,7 @@ class InfraOAuth2ClientAutoConfiguration {
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     fun oidcLoginController(
         oauth2ClientProviderService: IOAuth2ClientProviderService,
-        @Autowired(required = false) registeredClientRepository: RegisteredClientRepository?,
+        @Autowired(required = false) registeredClientRepository: ClientRegistrationRepository?,
         infraOAuth2ClientProperties: InfraOAuth2ClientProperties,
         openIdTokenService: IOpenIDConnectService,
         signInHelper: TwoFactorSignInHelper,
