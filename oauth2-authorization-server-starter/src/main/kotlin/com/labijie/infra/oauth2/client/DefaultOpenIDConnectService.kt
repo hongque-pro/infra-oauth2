@@ -30,18 +30,20 @@ class DefaultOpenIDConnectService(
     private val userInfoLoader: IOAuth2UserInfoLoader,
     private val oauth2ClientProviderService: IOAuth2ClientProviderService,
     infraOAuth2ClientProperties: InfraOAuth2ClientProperties,
+    restClient: RestClient? = null,
     restClientBuilder: RestClient.Builder? = null,
 ) : IOpenIDConnectService {
 
+    private val restClient: RestClient = restClient ?: (restClientBuilder?.build() ?: RestClient.builder().build())
+
     //for unit test
-    constructor(providerService: IOAuth2ClientProviderService, restClientBuilder: RestClient.Builder? = null) : this(
+    constructor(providerService: IOAuth2ClientProviderService, restClient: RestClient? = null, restClientBuilder: RestClient.Builder? = null) : this(
         null,
         DefaultOAuth2UserInfoLoader(providerService),
         providerService,
         InfraOAuth2ClientProperties(),
+        restClient,
         restClientBuilder)
-
-    private val restClient: RestClient = restClientBuilder?.build() ?: RestClient.builder().build()
 
 
     val supportDecoders: MutableMap<String, OpenIdJwtDecoder> = mutableMapOf()
