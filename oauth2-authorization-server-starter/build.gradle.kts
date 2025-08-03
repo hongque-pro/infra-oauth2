@@ -1,6 +1,6 @@
 infra {
     useKotlinSerializationPlugin()
-    useSpringConfigurationProcessor()
+    //useSpringConfigurationProcessor()
 }
 
 dependencies {
