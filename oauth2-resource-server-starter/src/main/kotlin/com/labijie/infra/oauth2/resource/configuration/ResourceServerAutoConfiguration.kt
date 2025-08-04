@@ -131,6 +131,7 @@ class ResourceServerAutoConfiguration(
             )
     }
 
+    private  var appliedIssuer: String? = null
 
     @Bean
     @ConditionalOnMissingBean(JwtDecoder::class)
@@ -165,6 +166,7 @@ class ResourceServerAutoConfiguration(
         val converter = createJwtClaimSetConverter()
         decoder.setClaimSetConverter(converter)
 
+        appliedIssuer = springResourceProperties.jwt.issuerUri.orEmpty()
         logger.info("OAuth2 resource server jwt decoder applied (issuer: ${springResourceProperties.jwt.issuerUri.ifNullOrBlank { "<empty>" }}).")
 
         return decoder
@@ -174,9 +176,20 @@ class ResourceServerAutoConfiguration(
     @Bean
     fun afterOauth2ResourceServerRunner(): CommandLineRunner {
         return CommandLineRunner {
+            val info = StringBuilder()
+                .appendLine("OAuth2 resource server started.")
+                .apply {
+                    appliedIssuer?.let {
+                        appendLine("OAuth2 issuer: ${it.ifNullOrBlank { "<empty>" }}\n")
+                    }
+                }
+            logger.warn(info.toString())
+
+
             if (defaultPubKeyUsed) {
                 val warn = StringBuilder()
                     .appendLine("The oauth2 resource server uses a built-in public key for token decoding, which can be a security issue.")
+                    .appendLine("Configure one of following properties can be fix this warning:")
                     .appendLine("Configure one of following properties can be fix this warning:")
                     .appendLine("  1. ${ResourceServerProperties.PUBLIC_KEY_CONFIG_PATH} (pem content/file path/classpath resource)")
                     .appendLine("  2. spring.security.oauth2.resourceserver.jwt.public-key-location (resource path)")

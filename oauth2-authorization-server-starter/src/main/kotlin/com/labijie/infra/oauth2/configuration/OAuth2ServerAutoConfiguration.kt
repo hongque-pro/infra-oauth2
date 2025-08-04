@@ -257,7 +257,7 @@ class OAuth2ServerAutoConfiguration {
 
                 val information = StringBuilder()
                 information.appendLine("OAuth2 authorization server started.")
-                information.appendLine("OAuth2 issuer: ${settings.issuer.ifNullOrBlank { "<null>" }}")
+                information.appendLine("OAuth2 authorization server issuer: ${settings.issuer.ifNullOrBlank { "<null>" }}")
                 information.appendLine()
                 information.appendLine("The following endpoints are already active:")
                 information.appendLine(settings.jwkSetEndpoint)
