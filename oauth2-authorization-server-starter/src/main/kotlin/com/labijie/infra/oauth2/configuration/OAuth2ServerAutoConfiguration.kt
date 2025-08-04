@@ -8,7 +8,6 @@ import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthentication
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
 import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
-import com.labijie.infra.oauth2.component.OAuth2ObjectMapperProcessor
 import com.labijie.infra.oauth2.customizer.InfraClaimsContextCustomizer
 import com.labijie.infra.oauth2.customizer.InfraOAuth2JwtTokenCustomizer
 import com.labijie.infra.oauth2.mvc.CheckTokenController
@@ -29,7 +28,6 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
@@ -49,7 +47,6 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(OAuth2DependenciesAutoConfiguration::class)
-@Import(OAuth2ObjectMapperProcessor::class)
 class OAuth2ServerAutoConfiguration {
     companion object {
         private val logger: Logger by lazy {
