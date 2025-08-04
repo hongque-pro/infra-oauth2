@@ -13,7 +13,10 @@ import com.labijie.infra.oauth2.resource.component.RequestMatcherPostProcessor
 import jakarta.annotation.security.PermitAll
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
+import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
@@ -35,6 +38,8 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  *
  */
 @Configuration(proxyBeanMethods = false)
+@AutoConfigureAfter(ResourceServerAutoConfiguration::class)
+@AutoConfigureBefore(OAuth2ResourceServerAutoConfiguration::class)
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 class ResourceServerSecurityAutoConfiguration(
     @param: Autowired(required = false)

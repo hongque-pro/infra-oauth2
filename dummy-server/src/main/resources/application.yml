@@ -4,10 +4,6 @@ infra:
       oauth2-client:
         oidc-login-enabled: false
       create-jdbc-schema: false
-      token:
-        jwt:
-          rsa:
-            private-key: "aaa"
 
 
   caching:

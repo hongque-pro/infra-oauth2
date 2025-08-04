@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
@@ -38,8 +39,9 @@ import java.security.interfaces.RSAPublicKey
 
 
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(ResourceServerProperties::class)
-@AutoConfigureAfter(OAuth2ResourceServerAutoConfiguration::class, InfraOAuth2CommonsAutoConfiguration::class)
+@EnableConfigurationProperties(ResourceServerProperties::class, OAuth2ResourceServerProperties::class)
+@AutoConfigureAfter(InfraOAuth2CommonsAutoConfiguration::class)
+@AutoConfigureBefore(OAuth2ResourceServerAutoConfiguration::class)
 @AutoConfigureOrder(1)
 class ResourceServerAutoConfiguration(
     private val resourceServerProperties: ResourceServerProperties,
@@ -133,7 +135,8 @@ class ResourceServerAutoConfiguration(
     @Bean
     @ConditionalOnMissingBean(JwtDecoder::class)
     fun jwtDecoder(
-        @Autowired(required = false) secretsStore: IResourceServerSecretsStore?,
+        @Autowired(required = false)
+        secretsStore: IResourceServerSecretsStore?,
         springResourceProperties: OAuth2ResourceServerProperties,
         serverProperties: ResourceServerProperties
     ): JwtDecoder {
