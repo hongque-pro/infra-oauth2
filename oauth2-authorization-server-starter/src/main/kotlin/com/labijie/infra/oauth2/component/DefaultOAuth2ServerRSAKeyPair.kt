@@ -41,7 +41,11 @@ class DefaultOAuth2ServerRSAKeyPair(
             if (privateKey is RSAPrivateCrtKey) {
                 val keyFactory = KeyFactory.getInstance("RSA")
                 val spec = RSAPublicKeySpec(privateKey.modulus, privateKey.publicExponent)
-                keyFactory.generatePublic(spec) as? RSAPublicKey
+                val gen = keyFactory.generatePublic(spec) as? RSAPublicKey
+                gen?.let {
+                    logger.warn("Public key generated from rsa private key for oauth2 server")
+                }
+                gen
             } else null
         } catch (e: Throwable) {
             logger.warn("Could not generate public key from rsa private key for oauth2 server", e)
