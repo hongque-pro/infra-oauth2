@@ -265,7 +265,6 @@ class OAuth2ServerAutoConfiguration {
                 information.appendLine(settings.tokenIntrospectionEndpoint)
                 information.appendLine(settings.tokenRevocationEndpoint)
                 information.appendLine(settings.authorizationEndpoint)
-                information.appendLine(settings.authorizationEndpoint)
                 information.appendLine()
                 information.appendLine("Use the configuration below to configure your resource server:")
                 information.appendLine("spring.security.oauth2.resourceserver.jwt.issuer-uri: ${settings.issuer}")
