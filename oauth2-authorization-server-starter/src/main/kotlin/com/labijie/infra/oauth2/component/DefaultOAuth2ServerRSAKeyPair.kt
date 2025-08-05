@@ -25,10 +25,10 @@ class DefaultOAuth2ServerRSAKeyPair(
 ) : IOAuth2ServerRSAKeyPair {
 
     private val rsaConfigured by lazy {
-        if(serverProperties.token.jwt.rsa.privateKey.isBlank()) {
+        if (serverProperties.token.jwt.rsa.privateKey.isBlank()) {
             logger.warn("RSA private key is missing for oauth2 server.")
             false
-        }else {
+        } else {
             true
         }
     }
@@ -42,27 +42,25 @@ class DefaultOAuth2ServerRSAKeyPair(
                 val keyFactory = KeyFactory.getInstance("RSA")
                 val spec = RSAPublicKeySpec(privateKey.modulus, privateKey.publicExponent)
                 keyFactory.generatePublic(spec) as? RSAPublicKey
-            }else null
-        }
-        catch (e: Throwable) {
+            } else null
+        } catch (e: Throwable) {
             logger.warn("Could not generate public key from rsa private key for oauth2 server", e)
             null
         }
     }
 
     override fun isDefaultKeys(): Boolean {
-        return rsaConfigured || secretsStore != null
+        return !rsaConfigured && secretsStore == null
     }
 
     private val keySet: RSAKeySet by lazy {
-
 
 
         val kp = if (secretsStore != null) {
             val pub = RsaUtils.getPublicKey(secretsStore.getRsaPublicKey(serverProperties))
             val pri = RsaUtils.getPrivateKey(secretsStore.getRsaPrivateKey(serverProperties))
             KeyPair(pub, pri)
-        } else if (!rsaConfigured) {
+        } else if (!rsaConfigured) { //使用默认密钥对
             serverProperties.token.jwt.rsa.privateKey =
                 Base64.getEncoder().encodeToString(RsaUtils.defaultKeyPair.private.encoded)
             serverProperties.token.jwt.rsa.publicKey =
@@ -72,9 +70,9 @@ class DefaultOAuth2ServerRSAKeyPair(
             val privateKey =
                 OAuth2Utils.loadContent(serverProperties.token.jwt.rsa.privateKey, RsaUtils::getPrivateKey)
                     ?: throw IllegalArgumentException("${OAuth2ServerProperties.Companion.PRIVATE_KEY_PROPERTY_PATH} is an invalid private rsa key.")
-            val publicKey = if(serverProperties.token.jwt.rsa.publicKey.isBlank()) {
+            val publicKey = if (serverProperties.token.jwt.rsa.publicKey.isBlank()) {
                 loadPublicKeyFromPrivateKey(privateKey)
-            }else {
+            } else {
                 OAuth2Utils.loadContent(serverProperties.token.jwt.rsa.publicKey, RsaUtils::getPublicKey)
                     ?: throw IllegalArgumentException("${OAuth2ServerProperties.Companion.PUBLIC_KEY_PROPERTY_PATH} is an invalid public rsa key.")
             }
