@@ -24,6 +24,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties
 import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.TypeDescriptor
@@ -42,7 +44,7 @@ import java.security.interfaces.RSAPublicKey
 @EnableConfigurationProperties(ResourceServerProperties::class, OAuth2ResourceServerProperties::class)
 @AutoConfigureAfter(InfraOAuth2CommonsAutoConfiguration::class)
 @AutoConfigureBefore(OAuth2ResourceServerAutoConfiguration::class)
-@AutoConfigureOrder(1)
+@AutoConfigureOrder(AutoConfigureOrder.DEFAULT_ORDER + 10) //Need after OAuth2DependenciesAutoConfiguration
 class ResourceServerAutoConfiguration(
     private val resourceServerProperties: ResourceServerProperties,
 ) {
@@ -175,28 +177,36 @@ class ResourceServerAutoConfiguration(
 
     @Bean
     fun afterOauth2ResourceServerRunner(): CommandLineRunner {
-        return CommandLineRunner {
-            val info = StringBuilder()
-                .appendLine("OAuth2 resource server started.")
-                .apply {
-                    appliedIssuer?.let {
-                        appendLine("OAuth2 issuer: ${it.ifNullOrBlank { "<empty>" }}\n")
+        return object: CommandLineRunner, ApplicationContextAware {
+            private lateinit var applicationContext: ApplicationContext
+
+            override fun run(vararg args: String?) {
+                val info = StringBuilder()
+                    .appendLine("OAuth2 resource server started.")
+                    .apply {
+                        appliedIssuer?.let {
+                            appendLine("OAuth2 issuer: ${it.ifNullOrBlank { "<empty>" }}\n")
+                        }
                     }
+                logger.warn(info.toString())
+
+
+                if (defaultPubKeyUsed) {
+                    val warn = StringBuilder()
+                        .appendLine("The oauth2 resource server uses a built-in public key for token decoding, which can be a security issue.")
+                        .appendLine("Configure one of following properties can be fix this warning:")
+                        .appendLine("Configure one of following properties can be fix this warning:")
+                        .appendLine("  1. ${ResourceServerProperties.PUBLIC_KEY_CONFIG_PATH} (pem content/file path/classpath resource)")
+                        .appendLine("  2. spring.security.oauth2.resourceserver.jwt.public-key-location (resource path)")
+                        .appendLine("  3. spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
+                        .appendLine("  4. implement a bean that inherits from IResourceServerSecretsStore interface")
+                        .toString()
+                    logger.warn(warn)
                 }
-            logger.warn(info.toString())
+            }
 
-
-            if (defaultPubKeyUsed) {
-                val warn = StringBuilder()
-                    .appendLine("The oauth2 resource server uses a built-in public key for token decoding, which can be a security issue.")
-                    .appendLine("Configure one of following properties can be fix this warning:")
-                    .appendLine("Configure one of following properties can be fix this warning:")
-                    .appendLine("  1. ${ResourceServerProperties.PUBLIC_KEY_CONFIG_PATH} (pem content/file path/classpath resource)")
-                    .appendLine("  2. spring.security.oauth2.resourceserver.jwt.public-key-location (resource path)")
-                    .appendLine("  3. spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
-                    .appendLine("  4. implement a bean that inherits from IResourceServerSecretsStore interface")
-                    .toString()
-                logger.warn(warn)
+            override fun setApplicationContext(applicationContext: ApplicationContext) {
+                this.applicationContext = applicationContext
             }
         }
     }
