@@ -43,7 +43,7 @@ class DefaultOAuth2ServerRSAKeyPair(
                 val spec = RSAPublicKeySpec(privateKey.modulus, privateKey.publicExponent)
                 val gen = keyFactory.generatePublic(spec) as? RSAPublicKey
                 gen?.let {
-                    logger.warn("Public key generated from rsa private key for oauth2 server")
+                    logger.info("Public key generated from rsa private key for oauth2 server")
                 }
                 gen
             } else null
