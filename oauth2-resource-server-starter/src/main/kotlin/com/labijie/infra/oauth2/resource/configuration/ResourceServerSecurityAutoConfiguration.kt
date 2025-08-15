@@ -51,14 +51,17 @@ class ResourceServerSecurityAutoConfiguration(
 
     private lateinit var applicationContext: ApplicationContext
 
-
     private fun getPermitAllMatcher(): List<RequestMatcher> {
         val requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping::class.java)
         val handlerMethodMap = requestMappingHandlerMapping.handlerMethods
         return handlerMethodMap.flatMap { (key, value) ->
-            value.method.getDeclaredAnnotation(PermitAll::class.java)?.let { permitAll ->
+            if(value.method.getDeclaredAnnotation(PermitAll::class.java) != null ||
+                value.method.declaringClass.getAnnotation(PermitAll::class.java) != null) {
                 key.buildMatchers()
-            } ?: emptyList()
+            }
+            else {
+                emptyList()
+            }
         }
     }
 
