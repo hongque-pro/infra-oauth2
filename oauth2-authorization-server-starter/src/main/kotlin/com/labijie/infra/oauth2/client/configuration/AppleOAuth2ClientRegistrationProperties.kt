@@ -11,7 +11,7 @@ import java.time.Duration
  */
 @ConfigurationProperties("spring.security.oauth2.client.registration.apple")
 class AppleOAuth2ClientRegistrationProperties {
-    var secretValidity = Duration.ofSeconds(30)
+    var secretValidity: Duration = Duration.ofSeconds(30)
     var teamId: String = ""
     var keyId: String = ""
     var privateRsaKey: String = ""
