@@ -287,4 +287,31 @@ class RemoteServerTester() {
             Assertions.assertEquals(u, attachedFields[t]?.toString())
         }
     }
+
+    @Test
+    fun testRefreshToken() {
+        val resp = this.performTokenAction()
+        val map = resp.readToMap()
+        val rt = map["refresh_token"]
+
+
+        assertNotNull(rt)
+
+        val basicSec = Base64.getEncoder().encodeToString("${DummyConstants.clientId}:${DummyConstants.clientSecret}".toByteArray(Charsets.UTF_8))
+
+            val refreshed = resetClient.post().uri {
+                it.path(defaultOAuth2ServerSettings.tokenEndpoint)
+                    .build()
+            }
+            .header(HttpHeaders.AUTHORIZATION, "Basic $basicSec")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .body("grant_type=refresh_token&refresh_token=$rt")
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .toEntity<String>()
+
+        val refreshToken = refreshed.readToMap(true)
+        refreshed.assertOk()
+
+    }
 }

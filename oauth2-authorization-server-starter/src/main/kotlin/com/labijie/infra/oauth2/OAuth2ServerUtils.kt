@@ -23,6 +23,22 @@ import java.util.concurrent.TimeUnit
 
 object OAuth2ServerUtils {
 
+    internal fun <T> List<T>.toArrayList(): ArrayList<T> {
+        return if(this.isEmpty()) {
+            ArrayList(0)
+        }else {
+            ArrayList(this)
+        }
+    }
+
+    internal fun <K, V> Map<K,V>.toHashMap(): HashMap<K, V> {
+        return if(this.isEmpty()) {
+            HashMap(0)
+        }else {
+            HashMap(this)
+        }
+    }
+
     fun createDefaultClientRegistration(properties: OAuth2ServerProperties): RegisteredClient {
 
         val tokenSettings = TokenSettings.builder().accessTokenTimeToLive(properties.serverClient.defaultClient.accessTokenExpiration)

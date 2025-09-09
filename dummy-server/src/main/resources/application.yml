@@ -7,7 +7,7 @@ infra:
 
 
   caching:
-    provider: memory
+    provider: redis
     redis:
       regions:
         default:

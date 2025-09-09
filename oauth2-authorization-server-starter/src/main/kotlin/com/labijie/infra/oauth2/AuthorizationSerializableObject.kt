@@ -2,6 +2,8 @@ package com.labijie.infra.oauth2
 
 import com.labijie.infra.oauth2.AccessTokenSerializableObject.Companion.asPlain
 import com.labijie.infra.oauth2.AccessTokenSerializableObject.Companion.asSerializable
+import com.labijie.infra.oauth2.OAuth2ServerUtils.toArrayList
+import com.labijie.infra.oauth2.OAuth2ServerUtils.toHashMap
 import com.labijie.infra.oauth2.TokenSerializableObject.Companion.asPlain
 import com.labijie.infra.oauth2.TokenSerializableObject.Companion.asSerializable
 import com.labijie.infra.oauth2.UserSerializableObject.Companion.asPlain
@@ -23,6 +25,8 @@ internal data class UserSerializableObject(
     var attachedFields: Map<String, String> = emptyMap()
 ) {
     companion object {
+
+
         fun UserPlainObject.asSerializable() = UserSerializableObject(
             userid = this.userid,
             username = this.username,
@@ -31,7 +35,7 @@ internal data class UserSerializableObject(
             accountNonExpired = this.accountNonExpired,
             accountNonLocked = this.accountNonLocked,
             twoFactorEnabled = this.twoFactorEnabled,
-            authorities = this.authorities.toList(),
+            authorities = this.authorities,
             attachedFields = this.attachedFields,
         )
         fun UserSerializableObject.asPlain() = UserPlainObject(
@@ -42,8 +46,8 @@ internal data class UserSerializableObject(
             accountNonExpired = this.accountNonExpired,
             accountNonLocked = this.accountNonLocked,
             twoFactorEnabled = this.twoFactorEnabled,
-            authorities = this.authorities.toTypedArray(),
-            attachedFields = this.attachedFields
+            authorities = this.authorities.toArrayList(),
+            attachedFields = this.attachedFields.toHashMap()
         )
     }
 }
@@ -60,7 +64,7 @@ internal class AuthorizationSerializableObject {
     var oidcIdToken: TokenSerializableObject? = null
     var refreshToken: TokenSerializableObject? = null
     var user: UserSerializableObject? = null
-    var scopes: Set<String> = emptySet()
+    var scopes: HashSet<String> = HashSet(0)
 
 
     companion object {

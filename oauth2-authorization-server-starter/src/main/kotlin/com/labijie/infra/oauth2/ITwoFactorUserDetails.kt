@@ -2,6 +2,8 @@ package com.labijie.infra.oauth2
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.labijie.infra.oauth2.OAuth2ServerUtils.toArrayList
+import com.labijie.infra.oauth2.OAuth2ServerUtils.toHashMap
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
@@ -48,8 +50,8 @@ fun ITwoFactorUserDetails.toPlainObject(): UserPlainObject {
         this.isAccountNonExpired,
         this.isAccountNonLocked,
         this.isTwoFactorEnabled(),
-        this.authorities.map { it.authority }.toTypedArray(),
-        HashMap(this.getTokenAttributes())
+        this.authorities.map { it.authority }.toArrayList(),
+        this.getTokenAttributes().toHashMap()
     )
 }
 

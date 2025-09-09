@@ -21,7 +21,7 @@ class AuthorizationPlainObject {
 
     //var attributes: ByteArray? = null
     var state: String? = null
-    var scopes: Set<String> = emptySet()
+    var scopes: HashSet<String> = HashSet(0)
     var authorizationCodeToken: TokenPlainObject? = null
     var accessToken: AccessTokenPlainObject? = null
     var oidcIdToken: TokenPlainObject? = null

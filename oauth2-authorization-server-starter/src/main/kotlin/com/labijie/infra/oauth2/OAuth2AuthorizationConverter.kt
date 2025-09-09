@@ -214,7 +214,7 @@ class OAuth2AuthorizationConverter private constructor() {
         plainObject.clientId = authorization.registeredClientId
         plainObject.principalName = authorization.principalName
         plainObject.grantType = authorization.authorizationGrantType.value
-        plainObject.scopes = authorization.authorizedScopes
+        plainObject.scopes = authorization.authorizedScopes.toHashSet()
 
         authorization.attributes[Principal::class.java.name]?.let {
 

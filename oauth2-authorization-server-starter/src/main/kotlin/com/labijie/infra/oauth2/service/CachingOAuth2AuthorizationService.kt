@@ -82,7 +82,7 @@ class CachingOAuth2AuthorizationService(
                 //cache.remove(key, region = this.cachingRegion)
                 keys.add((key))
             }
-            cache.removeMulti(keys)
+            cache.removeMulti(keys, region = cachingRegion)
         }
     }
 

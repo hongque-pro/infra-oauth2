@@ -9,8 +9,8 @@ class UserPlainObject(
     var accountNonExpired:Boolean = false,
     var accountNonLocked:Boolean = false,
     var twoFactorEnabled: Boolean = false,
-    var authorities: Array<String> = emptyArray(),
-    var attachedFields: Map<String, String> = emptyMap()
+    var authorities: ArrayList<String> = ArrayList(0),
+    var attachedFields: HashMap<String, String> = HashMap(0)
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -26,7 +26,7 @@ class UserPlainObject(
         if (userid != other.userid) return false
         if (username != other.username) return false
         if (password != other.password) return false
-        if (!authorities.contentEquals(other.authorities)) return false
+        if (authorities != other.authorities) return false
         if (attachedFields != other.attachedFields) return false
 
         return true
@@ -41,9 +41,10 @@ class UserPlainObject(
         result = 31 * result + userid.hashCode()
         result = 31 * result + username.hashCode()
         result = 31 * result + password.hashCode()
-        result = 31 * result + authorities.contentHashCode()
+        result = 31 * result + authorities.hashCode()
         result = 31 * result + attachedFields.hashCode()
         return result
     }
+
 
 }
