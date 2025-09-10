@@ -12,7 +12,7 @@ infra:
       regions:
         default:
           url: redis://localhost:6379/1
-          serializer: kotlin-protobuf
+          serializer: kryo
 server:
   port: 8089
   forward-headers-strategy: framework

@@ -101,7 +101,7 @@ class CachingOAuth2AuthorizationService(
                 cache.get<AuthorizationPlainObject>(key, region = this.cachingRegion)
             } else if (OAuth2ParameterNames.STATE == tokenType.value) {
                 val key = getSateCacheKey(token)
-                val tokenId = cache.get<String>(key)
+                val tokenId = cache.get<String>(key, region = this.cachingRegion)
                 if (!tokenId.isNullOrBlank()) {
                     val tk = getAccessTokenCacheKey(tokenId)
                     cache.get<AuthorizationPlainObject>(tk, region = this.cachingRegion)

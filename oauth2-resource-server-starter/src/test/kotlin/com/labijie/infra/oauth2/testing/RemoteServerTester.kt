@@ -23,6 +23,7 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.ResponseErrorHandler
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.toEntity
+import java.net.URI
 import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -288,30 +289,43 @@ class RemoteServerTester() {
         }
     }
 
+    private fun RestClient.performRefreshToken(refreshToken: String, clientIdAndSecretBase64: String): ResponseEntity<String> {
+        return this.post().uri {
+            it.path(defaultOAuth2ServerSettings.tokenEndpoint)
+                .build()
+        }
+            .header(HttpHeaders.AUTHORIZATION, "Basic $clientIdAndSecretBase64")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .body("grant_type=refresh_token&refresh_token=$refreshToken")
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .toEntity<String>()
+    }
+
     @Test
     fun testRefreshToken() {
         val resp = this.performTokenAction()
         val map = resp.readToMap()
-        val rt = map["refresh_token"]
-
+        val rt = map["refresh_token"]?.toString()
 
         assertNotNull(rt)
 
         val basicSec = Base64.getEncoder().encodeToString("${DummyConstants.clientId}:${DummyConstants.clientSecret}".toByteArray(Charsets.UTF_8))
 
-            val refreshed = resetClient.post().uri {
-                it.path(defaultOAuth2ServerSettings.tokenEndpoint)
-                    .build()
-            }
-            .header(HttpHeaders.AUTHORIZATION, "Basic $basicSec")
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-            .body("grant_type=refresh_token&refresh_token=$rt")
-            .accept(MediaType.APPLICATION_JSON)
-            .retrieve()
-            .toEntity<String>()
+        val refreshed = resetClient.performRefreshToken(rt, basicSec)
+
 
         val refreshToken = refreshed.readToMap(true)
         refreshed.assertOk()
 
+    }
+
+    @Test
+    fun testRefresh() {
+        val refreshed = RestClient.builder().baseUrl(URI.create("https://account.videobot.fun")).build()
+            .performRefreshToken("01aa8567-410d-42b1-9a34-c2feb2eec7f7", "bW9iaWxlLWFwcDphaSRjaW5leSpAMjAyNA==")
+
+        val refreshToken = refreshed.readToMap(true)
+        refreshed.assertOk()
     }
 }

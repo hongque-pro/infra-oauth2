@@ -37,6 +37,7 @@ class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
         hints.reflection().registerType(TypeReference.of("com.labijie.caching.ICacheManager"))
         hints.reflection().registerType(TypeReference.of("kotlinx.serialization.KSerializer"))
         hints.reflection().registerType(TypeReference.of("com.labijie.caching.redis.configuration.RedisCachingAutoConfiguration"))
+        hints.reflection().registerType(TypeReference.of("com.esotericsoftware.kryo.Kryo"))
 
         hints.reflection().registerTypes(
             listOf(

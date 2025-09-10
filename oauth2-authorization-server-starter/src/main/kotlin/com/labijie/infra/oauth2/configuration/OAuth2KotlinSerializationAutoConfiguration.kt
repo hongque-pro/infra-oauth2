@@ -31,7 +31,6 @@ class OAuth2KotlinSerializationAutoConfiguration {
     fun oauth2KotlinCacheDataSerializerCustomizer(): OAuth2KotlinCacheDataSerializerCustomizer {
 
         logger.info("OAuth2 kotlin serialization customizer loaded.")
-
         return OAuth2KotlinCacheDataSerializerCustomizer()
     }
 }

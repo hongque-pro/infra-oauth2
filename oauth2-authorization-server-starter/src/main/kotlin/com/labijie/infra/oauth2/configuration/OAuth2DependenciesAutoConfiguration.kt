@@ -3,22 +3,17 @@ package com.labijie.infra.oauth2.configuration
 import com.labijie.caching.ICacheManager
 import com.labijie.infra.oauth2.IIdentityService
 import com.labijie.infra.oauth2.OAuth2ServerUtils
-import com.labijie.infra.oauth2.OAuth2ServerUtils.getIssuerOrDefault
+import com.labijie.infra.oauth2.component.DefaultOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
-import com.labijie.infra.oauth2.component.DefaultOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.customizer.TwoFactorJwtCustomizer
 import com.labijie.infra.oauth2.filter.ClientDetailsArgumentResolver
 import com.labijie.infra.oauth2.filter.ClientDetailsInterceptorAdapter
 import com.labijie.infra.oauth2.resolver.PasswordPrincipalResolver
-import com.labijie.infra.oauth2.serialization.kryo.OAuth2KryoCacheDataSerializerCustomizer
-import com.labijie.infra.oauth2.service.CachingOAuth2AuthorizationService
-import com.labijie.infra.oauth2.service.DefaultOAuth2ServerOidcTokenService
-import com.labijie.infra.oauth2.service.DefaultUserService
-import com.labijie.infra.oauth2.service.IOAuth2ServerOidcTokenService
-import com.labijie.infra.oauth2.service.OAuth2Initializer
+import com.labijie.infra.oauth2.service.*
 import com.labijie.infra.utils.ifNullOrBlank
 import com.labijie.infra.utils.logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
@@ -55,6 +50,12 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
 
     private lateinit var springContext: ApplicationContext
 
+
+    companion object {
+        private val logger by lazy {
+            LoggerFactory.getLogger("com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration")
+        }
+    }
 
     @Bean
     @ConditionalOnMissingBean(AuthorizationServerSettings::class)
@@ -147,14 +148,6 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder()
     }
 
-
-    @Configuration
-    @ConditionalOnClass(name = ["com.labijie.caching.redis.configuration.RedisCachingAutoConfiguration"])
-    class OAuth2KryoConfiguration {
-        @Bean
-        fun oauth2KryoCacheDataSerializerCustomizer(): OAuth2KryoCacheDataSerializerCustomizer =
-            OAuth2KryoCacheDataSerializerCustomizer()
-    }
 
 
     @Configuration
