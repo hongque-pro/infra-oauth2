@@ -5,9 +5,12 @@ import com.labijie.infra.oauth2.OAuth2ServerUtils.toAccessToken
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.TwoFactorPrincipal
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
+import com.labijie.infra.oauth2.filter.ClientRequired
 import jakarta.annotation.security.PermitAll
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -17,10 +20,19 @@ import org.springframework.web.bind.annotation.RestController
 class DummyController {
     @Autowired
     private lateinit var signInHelper: TwoFactorSignInHelper
-    
+
     @PostMapping("/sign-2f")
     fun twoFacSignIn(): AccessToken {
         val token = signInHelper.signInTwoFactor().toAccessToken()
+        return token
+    }
+
+    @ClientRequired
+    @PostMapping("/fake-login/{username}")
+    fun login(
+        @PathVariable("username") username: String,
+        client: RegisteredClient): AccessToken {
+        val token = signInHelper.signIn(client.id, username).toAccessToken()
         return token
     }
 

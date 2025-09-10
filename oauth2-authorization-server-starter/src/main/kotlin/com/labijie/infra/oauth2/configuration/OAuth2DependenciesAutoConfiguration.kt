@@ -151,12 +151,9 @@ class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
 
 
     @Configuration
-    @ConditionalOnBean(RegisteredClientRepository::class)
+    @AutoConfigureAfter(RegisteredClientRepositoryAutoConfiguration::class)
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-    protected class ClientDetailsArgumentResolverAutoConfiguration : WebMvcConfigurer {
-
-        @Autowired
-        private lateinit var registeredClientRepository: RegisteredClientRepository
+    protected class ClientDetailsArgumentResolverAutoConfiguration(private val registeredClientRepository: RegisteredClientRepository) : WebMvcConfigurer {
 
         override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {
             resolvers.add(ClientDetailsArgumentResolver(registeredClientRepository))

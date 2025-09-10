@@ -21,5 +21,6 @@ class DummyResourceConfigurer : IResourceAuthorizationConfigurer {
             .requestMatchers("/test/role-aa-test").hasRole("aa")
             .requestMatchers("/test/role-bb-test").hasRole("bb")
             .requestMatchers("/test/permitAll").permitAll()
+            .requestMatchers("/test/fake-login/*").permitAll()
     }
 }

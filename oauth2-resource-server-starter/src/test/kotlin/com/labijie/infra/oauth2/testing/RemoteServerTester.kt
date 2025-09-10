@@ -33,7 +33,7 @@ class RemoteServerTester() {
 
     companion object {
         private fun <T> ResponseEntity<T>.assertOk(): ResponseEntity<T> {
-            assert(this.statusCode.value() == 200 ) { "Excepted status ok, but got ${this.statusCode}\n\nbody: ${this.body}" }
+            assert(this.statusCode.value() == 200) { "Excepted status ok, but got ${this.statusCode}\n\nbody: ${this.body}" }
             return this
         }
 
@@ -43,12 +43,20 @@ class RemoteServerTester() {
         }
 
         private fun <T> ResponseEntity<T>.assetStatus(status: HttpStatus): ResponseEntity<T> {
-            assertEquals(status.value(), this.statusCode.value(), "Excepted status ${status.value()}, but got ${this.statusCode.value()}\n\nbody: ${this.body}")
+            assertEquals(
+                status.value(),
+                this.statusCode.value(),
+                "Excepted status ${status.value()}, but got ${this.statusCode.value()}\n\nbody: ${this.body}"
+            )
             return this
         }
 
         private fun <T> ResponseEntity<T>.assetStatus(code: Int): ResponseEntity<T> {
-            assertEquals(code, this.statusCode.value(), "Excepted status ${code}, but got ${this.statusCode.value()}\n\nbody: ${this.body}")
+            assertEquals(
+                code,
+                this.statusCode.value(),
+                "Excepted status ${code}, but got ${this.statusCode.value()}\n\nbody: ${this.body}"
+            )
             return this
         }
     }
@@ -59,7 +67,8 @@ class RemoteServerTester() {
         }
     }
 
-    private val resetClient = RestClient.builder().defaultStatusHandler(NoErrorHandler).baseUrl("http://localhost:8089").build()
+    private val resetClient =
+        RestClient.builder().defaultStatusHandler(NoErrorHandler).baseUrl("http://localhost:8089").build()
 
     protected val defaultOAuth2ServerSettings = AuthorizationServerSettings.builder().build()
 
@@ -69,23 +78,29 @@ class RemoteServerTester() {
             val map = JacksonHelper.deserializeMap(body.toByteArray(Charsets.UTF_8), String::class, Any::class)
             if (logResult) {
                 val pretty = JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map)
-                val log = arrayOf(System.lineSeparator(), "[Json Response]", pretty).joinToString(System.lineSeparator())
-                logger.debug(log)
+                val log =
+                    arrayOf(System.lineSeparator(), "[Json Response]", pretty).joinToString(System.lineSeparator())
+                println(log)
             }
             map
         } ?: emptyMap()
     }
 
 
-
     @Throws(Exception::class)
-    private fun obtainAccessToken(username: String = DummyConstants.username, password: String = DummyConstants.userPassword): String? {
+    private fun obtainAccessToken(
+        username: String = DummyConstants.username,
+        password: String = DummyConstants.userPassword
+    ): String? {
         val result = performTokenAction(username, password)
 
         val map = result.readToMap()
         val json = map["access_token"]?.toString()
 
-        logger.debug(System.lineSeparator() + JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map))
+        logger.debug(
+            System.lineSeparator() + JacksonHelper.defaultObjectMapper.writerWithDefaultPrettyPrinter()
+                .writeValueAsString(map)
+        )
         return json
     }
 
@@ -93,7 +108,9 @@ class RemoteServerTester() {
         username: String = DummyConstants.username,
         password: String = DummyConstants.userPassword,
         clientId: String = DummyConstants.clientId,
-        clientSecret: String = DummyConstants.clientSecret): ResponseEntity<String> {
+        clientSecret: String = DummyConstants.clientSecret,
+        url: String? = null
+    ): ResponseEntity<String> {
 
 
         val params: MultiValueMap<String, String> = LinkedMultiValueMap()
@@ -102,9 +119,11 @@ class RemoteServerTester() {
         params.add("username", username)
         params.add("password", password)
 
+        val client = url?.let { RestClient.builder().baseUrl(URI.create(url)).build() } ?: resetClient
+
         EventTestSubscription.resetFireCount()
         val resp = try {
-            resetClient.post().uri {
+            client.post().uri {
                 it.path(defaultOAuth2ServerSettings.tokenEndpoint)
                     .queryParam("grant_type", "password")
                     .queryParam("scope", DummyConstants.scope)
@@ -264,7 +283,6 @@ class RemoteServerTester() {
     }
 
 
-
     @Test
     fun testPrincipal() {
         val tokenValue = this.performTokenValue()
@@ -289,7 +307,10 @@ class RemoteServerTester() {
         }
     }
 
-    private fun RestClient.performRefreshToken(refreshToken: String, clientIdAndSecretBase64: String): ResponseEntity<String> {
+    private fun RestClient.performRefreshToken(
+        refreshToken: String,
+        clientIdAndSecretBase64: String
+    ): ResponseEntity<String> {
         return this.post().uri {
             it.path(defaultOAuth2ServerSettings.tokenEndpoint)
                 .build()
@@ -310,7 +331,8 @@ class RemoteServerTester() {
 
         assertNotNull(rt)
 
-        val basicSec = Base64.getEncoder().encodeToString("${DummyConstants.clientId}:${DummyConstants.clientSecret}".toByteArray(Charsets.UTF_8))
+        val basicSec = Base64.getEncoder()
+            .encodeToString("${DummyConstants.clientId}:${DummyConstants.clientSecret}".toByteArray(Charsets.UTF_8))
 
         val refreshed = resetClient.performRefreshToken(rt, basicSec)
 
@@ -321,11 +343,30 @@ class RemoteServerTester() {
     }
 
     @Test
-    fun testRefresh() {
-        val refreshed = RestClient.builder().baseUrl(URI.create("https://account.videobot.fun")).build()
-            .performRefreshToken("01aa8567-410d-42b1-9a34-c2feb2eec7f7", "bW9iaWxlLWFwcDphaSRjaW5leSpAMjAyNA==")
+    fun testLoginAndRefreshToken() {
+
+        val basicSec = Base64.getEncoder()
+            .encodeToString("${DummyConstants.clientId}:${DummyConstants.clientSecret}".toByteArray(Charsets.UTF_8))
+
+        val login = resetClient.post().uri {
+            it.path("/test/fake-login/${DummyConstants.username}").build()
+        }
+            .header(HttpHeaders.AUTHORIZATION, "Basic $basicSec")
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .toEntity<String>()
+
+        val map = login.readToMap()
+        val rt = map["refresh_token"]?.toString()
+
+        assertNotNull(rt)
+
+
+        val refreshed = resetClient.performRefreshToken(rt, basicSec)
 
         val refreshToken = refreshed.readToMap(true)
+        assertNotNull(refreshToken["access_token"])
         refreshed.assertOk()
+
     }
 }

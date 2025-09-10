@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType
 import org.springframework.security.oauth2.core.oidc.OidcIdToken
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
 import java.security.Principal
 import kotlin.jvm.java
 
@@ -38,6 +39,8 @@ class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
         hints.reflection().registerType(TypeReference.of("kotlinx.serialization.KSerializer"))
         hints.reflection().registerType(TypeReference.of("com.labijie.caching.redis.configuration.RedisCachingAutoConfiguration"))
         hints.reflection().registerType(TypeReference.of("com.esotericsoftware.kryo.Kryo"))
+
+        hints.reflection().registerType(RegisteredClient::class.java)
 
         hints.reflection().registerTypes(
             listOf(
