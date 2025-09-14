@@ -3,10 +3,7 @@ package com.labijie.infra.oauth2.testing.configuration
 import com.labijie.caching.configuration.CachingAutoConfiguration
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.configuration.InfraOidcUserConverterAutoConfiguration
-import com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
-import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
-import com.labijie.infra.oauth2.configuration.OAuth2ServerCommonsProperties
-import com.labijie.infra.oauth2.configuration.OAuth2ServerSecurityAutoConfiguration
+import com.labijie.infra.oauth2.configuration.*
 import com.labijie.infra.oauth2.testing.component.OAuth2SignInTestingListener
 import com.labijie.infra.oauth2.testing.component.TestingIdentityService
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
@@ -19,15 +16,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.DefaultSecurityFilterChain
 
+
 @Configuration
-@ImportAutoConfiguration(CachingAutoConfiguration::class)
+@ImportAutoConfiguration(CachingAutoConfiguration::class, InfraOAuth2CommonsAutoConfiguration::class)
 class OAuth2TestServerAutoConfiguration {
-
-//    @Bean
-//    fun dummyClientDetailServiceFactory(): TestingClientDetailServiceFactory {
-//        return TestingClientDetailServiceFactory()
-//    }
-
 
 
     @Configuration(proxyBeanMethods = false)
@@ -49,7 +41,6 @@ class OAuth2TestServerAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ImportAutoConfiguration(
-        OAuth2ServerCommonsProperties::class,
         OAuth2DependenciesAutoConfiguration::class,
         OAuth2ServerAutoConfiguration::class,
         OAuth2ServerSecurityAutoConfiguration::class,

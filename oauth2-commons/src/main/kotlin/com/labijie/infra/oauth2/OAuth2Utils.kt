@@ -16,7 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.oauth2.core.OAuth2Error
-import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter
 import java.io.File
 import java.net.URL
 import java.util.*
@@ -29,6 +28,26 @@ import java.util.stream.Collectors
  * @date 2019-07-04
  */
 object OAuth2Utils {
+
+    /**
+     * Default oauth2 server endpoints.
+     *
+     * @see org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
+     */
+    object DefaultServerEndpoints {
+        const val AUTHORIZATION = "/oauth2/authorize"
+        const val PUSHED_AUTHORIZATION_REQUEST = "/oauth2/par"
+        const val DEVICE_AUTHORIZATION = "/oauth2/device_authorization"
+        const val DEVICE_VERIFICATION = "/oauth2/device_verification"
+        const val TOKEN = "/oauth2/token"
+        const val JWK_SET = "/oauth2/jwks"
+        const val TOKEN_REVOCATION = "/oauth2/revoke"
+        const val TOKEN_INTROSPECTION = "/oauth2/introspect"
+        const val OIDC_CLIENT_REGISTRATION = "/connect/register"
+        const val OIDC_USER_INFO = "/userinfo"
+        const val OIDC_LOGOUT_ENDPOINT = "/connect/logout"
+    }
+
 
     fun HttpServletResponse.writeOAuth2Error(error: OAuth2Error, status: HttpStatus, request: HttpServletRequest? = null) {
         val serverResponse = ServletServerHttpResponse(this)

@@ -1,4 +1,3 @@
-com.labijie.infra.oauth2.configuration.OAuth2ServerBeanPostProcessorAutoConfiguration
 com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
 com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
 com.labijie.infra.oauth2.configuration.OAuth2ServerSecurityAutoConfiguration

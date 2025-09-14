@@ -12,7 +12,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType
 
 
-class OAuth2CommonsJacksonModule : SimpleModule("infra.oauth2.commons") {
+class OAuth2CommonsJacksonModule private constructor() : SimpleModule("infra.oauth2.commons") {
     init {
         this.addSerializer(AccessToken::class.java, AccessTokenSerializer())
         this.addDeserializer(AccessToken::class.java, AccessTokenDeserializer())
@@ -28,5 +28,9 @@ class OAuth2CommonsJacksonModule : SimpleModule("infra.oauth2.commons") {
 
         this.addSerializer(AuthenticationMethod::class.java, AuthenticationMethodSerializer())
         this.addDeserializer(AuthenticationMethod::class.java, AuthenticationMethodDeserializer())
+    }
+
+    companion object {
+        val INSTANCE by lazy { OAuth2CommonsJacksonModule() }
     }
 }

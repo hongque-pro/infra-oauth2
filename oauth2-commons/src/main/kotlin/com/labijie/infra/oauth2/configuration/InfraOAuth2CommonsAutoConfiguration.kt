@@ -2,8 +2,11 @@ package com.labijie.infra.oauth2.configuration
 
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
 import com.labijie.infra.oauth2.mvc.OAuth2ServerCommonsController
+import com.labijie.infra.oauth2.serialization.jackson.OAuth2CommonsJacksonModule
+import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -19,6 +22,7 @@ import org.springframework.core.Ordered
  */
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
+@AutoConfigureBefore(JacksonAutoConfiguration::class)
 @EnableConfigurationProperties(OAuth2ServerCommonsProperties::class)
 class InfraOAuth2CommonsAutoConfiguration: ApplicationContextAware {
 
@@ -26,6 +30,12 @@ class InfraOAuth2CommonsAutoConfiguration: ApplicationContextAware {
     @ConditionalOnMissingBean
     fun oauth2ServerCommonsController(): OAuth2ServerCommonsController {
         return OAuth2ServerCommonsController()
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(OAuth2CommonsJacksonModule::class)
+    fun oauth2CommonsJacksonModule(): OAuth2CommonsJacksonModule {
+        return OAuth2CommonsJacksonModule.INSTANCE
     }
 
     override fun setApplicationContext(applicationContext: ApplicationContext) {

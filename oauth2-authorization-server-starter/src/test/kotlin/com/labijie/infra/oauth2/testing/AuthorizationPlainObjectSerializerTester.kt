@@ -116,7 +116,7 @@ class AuthorizationPlainObjectSerializerTester {
                 clientId = randomString(10)
                 principalName = "user_${randomString(6)}"
                 grantType = listOf("authorization_code", "client_credentials", "password").random()
-                scopes = if (Random.nextBoolean()) randomStringSet(16) else emptySet()
+                scopes = if (Random.nextBoolean()) randomStringSet(16).toHashSet() else hashSetOf()
                 state = if (Random.nextBoolean()) randomString(8) else null
                 authorizationCodeToken = if (Random.nextBoolean()) randomToken() else null
                 accessToken = if (Random.nextBoolean()) randomAccessToken() else null

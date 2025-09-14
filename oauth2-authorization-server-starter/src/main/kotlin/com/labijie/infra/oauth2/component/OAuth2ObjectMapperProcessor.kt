@@ -7,16 +7,21 @@ package com.labijie.infra.oauth2.component
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2CommonsJacksonModule
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.config.BeanPostProcessor
 
 
 class OAuth2ObjectMapperProcessor : BeanPostProcessor {
+
+    private val logger = LoggerFactory.getLogger(OAuth2ObjectMapperProcessor::class.java)
+
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any? {
         val mapper = bean as? ObjectMapper
         if(mapper != null) {
             if(mapper != JacksonHelper.defaultObjectMapper && mapper != JacksonHelper.webCompatibilityMapper) {
-                mapper.registerModules(OAuth2CommonsJacksonModule())
+                mapper.registerModules(OAuth2CommonsJacksonModule.INSTANCE)
             }
+            logger.info("OAuth2CommonsJacksonModule registered.")
         }
         return bean
     }

@@ -32,6 +32,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
+import org.springframework.http.converter.HttpMessageConverter
+import org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -44,6 +46,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.token.JwtGenerator
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 
 @Configuration(proxyBeanMethods = false)
@@ -239,8 +242,8 @@ class OAuth2ServerAutoConfiguration {
                     )
                 }
 
-                JacksonHelper.defaultObjectMapper.registerModules(OAuth2CommonsJacksonModule())
-                JacksonHelper.webCompatibilityMapper.registerModules(OAuth2CommonsJacksonModule())
+                JacksonHelper.defaultObjectMapper.registerModules(OAuth2CommonsJacksonModule.INSTANCE)
+                JacksonHelper.webCompatibilityMapper.registerModules(OAuth2CommonsJacksonModule.INSTANCE)
 
                 if (keyGetter.isDefaultKeys()) {
                     val warn = StringBuilder()

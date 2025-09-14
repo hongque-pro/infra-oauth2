@@ -251,7 +251,8 @@ class OAuth2ServerTester : OAuth2Tester() {
         )
             .andExpect(status().isOk)
 
-        r.readToMap()
+        val map = r.readToMap()
+
     }
 
     @Test

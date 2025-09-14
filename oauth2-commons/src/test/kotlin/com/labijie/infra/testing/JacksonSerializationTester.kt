@@ -16,7 +16,7 @@ import kotlin.test.assertEquals
  */
 class JacksonSerializationTester {
     val mapper = ObjectMapper().apply {
-        registerModules(OAuth2CommonsJacksonModule())
+        registerModules(OAuth2CommonsJacksonModule.INSTANCE)
     }
 
     inline fun <reified T> writeAndRead(value: T): T {

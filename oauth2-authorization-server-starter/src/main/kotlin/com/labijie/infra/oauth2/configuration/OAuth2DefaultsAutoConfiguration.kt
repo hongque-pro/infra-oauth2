@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 /**
  *
@@ -32,4 +33,6 @@ class OAuth2DefaultsAutoConfiguration {
         logger.info("OAuth2 authorization service use InMemoryOAuth2AuthorizationService, this implementation only supports single instances.")
         return InMemoryOAuth2AuthorizationService()
     }
+
+
 }

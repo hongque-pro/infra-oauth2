@@ -26,7 +26,7 @@ object CookieUtils {
             configure(SerializationFeature.WRITE_ENUMS_USING_INDEX, true)
             setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
-            registerModules(OAuth2CommonsJacksonModule())
+            registerModules(OAuth2CommonsJacksonModule.INSTANCE)
         }
     }
 
