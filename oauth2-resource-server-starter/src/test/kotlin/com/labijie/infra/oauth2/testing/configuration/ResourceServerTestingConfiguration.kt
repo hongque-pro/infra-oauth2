@@ -6,7 +6,6 @@ import com.labijie.infra.oauth2.client.configuration.InfraOidcUserConverterAutoC
 import com.labijie.infra.oauth2.configuration.InfraOAuth2CommonsAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2DependenciesAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerAutoConfiguration
-import com.labijie.infra.oauth2.configuration.OAuth2ServerBeanPostProcessorAutoConfiguration
 import com.labijie.infra.oauth2.configuration.OAuth2ServerSecurityAutoConfiguration
 import com.labijie.infra.oauth2.resource.configuration.ResourceServerAutoConfiguration
 import com.labijie.infra.oauth2.resource.configuration.ResourceServerSecurityAutoConfiguration
@@ -22,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder
     InfraOAuth2CommonsAutoConfiguration::class,
     CachingAutoConfiguration::class,
     OAuth2DependenciesAutoConfiguration::class,
-    OAuth2ServerBeanPostProcessorAutoConfiguration::class,
     OAuth2ServerAutoConfiguration::class,
     OAuth2ServerSecurityAutoConfiguration::class,
     InfraOidcUserConverterAutoConfiguration::class,
