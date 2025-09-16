@@ -8,21 +8,23 @@ import com.labijie.infra.oauth2.TokenSerializableObject.Companion.asPlain
 import com.labijie.infra.oauth2.TokenSerializableObject.Companion.asSerializable
 import com.labijie.infra.oauth2.UserSerializableObject.Companion.asPlain
 import com.labijie.infra.oauth2.UserSerializableObject.Companion.asSerializable
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.protobuf.ProtoNumber
 
-
+@ExperimentalSerializationApi
 @Serializable
-internal data class UserSerializableObject(
-    var userid:String = "",
-    var username:String = "",
-    var credentialsNonExpired:Boolean = false,
-    var enabled:Boolean = false,
-    var password:String = "",
-    var accountNonExpired:Boolean = false,
-    var accountNonLocked:Boolean = false,
-    var twoFactorEnabled: Boolean = false,
-    var authorities: List<String> = emptyList(),
-    var attachedFields: Map<String, String> = emptyMap()
+internal data class UserSerializableObject constructor(
+    @ProtoNumber(1) var userid:String = "",
+    @ProtoNumber(2) var username:String = "",
+    @ProtoNumber(3) var credentialsNonExpired:Boolean = false,
+    @ProtoNumber(4) var enabled:Boolean = false,
+    @ProtoNumber(5) var password:String = "",
+    @ProtoNumber(6) var accountNonExpired:Boolean = false,
+    @ProtoNumber(7) var accountNonLocked:Boolean = false,
+    @ProtoNumber(8) var twoFactorEnabled: Boolean = false,
+    @ProtoNumber(9) var authorities: List<String> = emptyList(),
+    @ProtoNumber(10) var attachedFields: Map<String, String> = emptyMap()
 ) {
     companion object {
 
@@ -53,18 +55,19 @@ internal data class UserSerializableObject(
 }
 
 @Serializable
+@ExperimentalSerializationApi
 internal class AuthorizationSerializableObject {
-    var id: String = ""
-    var clientId: String = ""
-    var principalName: String = ""
-    var grantType: String = ""
-    var state: String? = null
-    var authorizationCodeToken: TokenSerializableObject? = null
-    var accessToken: AccessTokenSerializableObject? = null
-    var oidcIdToken: TokenSerializableObject? = null
-    var refreshToken: TokenSerializableObject? = null
-    var user: UserSerializableObject? = null
-    var scopes: HashSet<String> = HashSet(0)
+    @ProtoNumber(1) var id: String = ""
+    @ProtoNumber(2) var clientId: String = ""
+    @ProtoNumber(3) var principalName: String = ""
+    @ProtoNumber(4) var grantType: String = ""
+    @ProtoNumber(5) var state: String? = null
+    @ProtoNumber(6) var authorizationCodeToken: TokenSerializableObject? = null
+    @ProtoNumber(7) var accessToken: AccessTokenSerializableObject? = null
+    @ProtoNumber(8) var oidcIdToken: TokenSerializableObject? = null
+    @ProtoNumber(9) var refreshToken: TokenSerializableObject? = null
+    @ProtoNumber(10)  var user: UserSerializableObject? = null
+    @ProtoNumber(11)  var scopes: HashSet<String> = HashSet(0)
 
 
     companion object {
@@ -105,15 +108,19 @@ internal class AuthorizationSerializableObject {
 }
 
 @Serializable
-internal class MetadataSerializableValue(var type: MetadataType = MetadataType.Unknown, var value: ByteArray? = null)
+@ExperimentalSerializationApi
+internal class MetadataSerializableValue(
+    @ProtoNumber(1) var type: MetadataType = MetadataType.Unknown,
+    @ProtoNumber(2) var value: ByteArray? = null)
 
 @Serializable
+@ExperimentalSerializationApi
 internal class TokenSerializableObject(
-    var tokenValue: String = "",
-    var issuedAtEpochSecond: Long? = null,
-    var expiresAtEpochSecond: Long? = null,
-    var invalidated: Boolean? = null,
-    var claims: Map<String, MetadataSerializableValue>? = null
+    @ProtoNumber(1) var tokenValue: String = "",
+    @ProtoNumber(2) var issuedAtEpochSecond: Long? = null,
+    @ProtoNumber(3) var expiresAtEpochSecond: Long? = null,
+    @ProtoNumber(4) var invalidated: Boolean? = null,
+    @ProtoNumber(5)  var claims: Map<String, MetadataSerializableValue>? = null
 ) {
 
     companion object {
@@ -136,15 +143,16 @@ internal class TokenSerializableObject(
 }
 
 @Serializable
+@ExperimentalSerializationApi
 internal class AccessTokenSerializableObject(
-    var tokenValue: String = "",
-    var issuedAtEpochSecond: Long? = null,
-    var expiresAtEpochSecond: Long? = null,
-    var invalidated: Boolean? = null,
-    var claims: Map<String, MetadataSerializableValue>? = null,
+    @ProtoNumber(1) var tokenValue: String = "",
+    @ProtoNumber(2) var issuedAtEpochSecond: Long? = null,
+    @ProtoNumber(3) var expiresAtEpochSecond: Long? = null,
+    @ProtoNumber(4) var invalidated: Boolean? = null,
+    @ProtoNumber(5) var claims: Map<String, MetadataSerializableValue>? = null,
 
-    var tokenType: String = "",
-    var scopes: Array<String> = arrayOf(),
+    @ProtoNumber(6) var tokenType: String = "",
+    @ProtoNumber(7) var scopes: Array<String> = arrayOf(),
 ) {
 
     companion object {
