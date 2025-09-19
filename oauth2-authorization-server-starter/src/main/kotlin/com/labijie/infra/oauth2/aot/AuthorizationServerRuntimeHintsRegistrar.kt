@@ -6,6 +6,7 @@ import com.labijie.infra.oauth2.StandardOidcUser
 import com.labijie.infra.oauth2.StandardOidcUserInfo
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.configuration.OAuth2ClientOidcLoginProperties
+import com.labijie.infra.oauth2.client.provider.apple.AppleOneTimeIdentifier
 import com.labijie.infra.oauth2.configuration.AuthorizationServiceProperties
 import com.labijie.infra.oauth2.configuration.DefaultClientProperties
 import com.labijie.infra.oauth2.configuration.JwtSettings
@@ -55,7 +56,8 @@ class AuthorizationServerRuntimeHintsRegistrar : RuntimeHintsRegistrar {
                 TypeReference.of(StandardOidcUser::class.java),
                 TypeReference.of(StandardOidcUserInfo::class.java),
                 TypeReference.of(OAuth2ClientOidcLoginProperties::class.java),
-                TypeReference.of(OAuth2ClientLoginResponse::class.java)
+                TypeReference.of(OAuth2ClientLoginResponse::class.java),
+                TypeReference.of(AppleOneTimeIdentifier::class.java),
             )
         ) {
             it.withMembers(*MemberCategory.entries.toTypedArray())

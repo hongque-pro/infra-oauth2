@@ -2,17 +2,17 @@ package com.labijie.infra.oauth2.mvc
 
 import com.labijie.infra.oauth2.OAuth2ServerUtils.toAccessToken
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
-import com.labijie.infra.oauth2.client.IOAuth2ClientProviderService
-import com.labijie.infra.oauth2.client.IOidcLoginHandler
-import com.labijie.infra.oauth2.client.IOpenIDConnectService
-import com.labijie.infra.oauth2.client.OAuth2ClientErrorCodes
+import com.labijie.infra.oauth2.client.*
 import com.labijie.infra.oauth2.client.configuration.InfraOAuth2ClientProperties
 import com.labijie.infra.oauth2.client.exception.InvalidOAuth2ClientProviderException
+import com.labijie.infra.oauth2.client.provider.apple.AppleOneTimeIdentifier
+import com.labijie.infra.oauth2.client.provider.apple.IAppleIdOneTimeStore
 import com.labijie.infra.oauth2.filter.ClientRequired
 import com.labijie.infra.oauth2.mvc.OidcLoginResult.Companion.getUser
 import com.labijie.infra.oauth2.mvc.OidcLoginResult.Companion.isSuccess
 import com.labijie.infra.oauth2.service.IOAuth2ServerOidcTokenService
 import jakarta.validation.Valid
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.oauth2.client.registration.ClientRegistration
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
@@ -42,6 +42,12 @@ class OAuth2ClientLoginController(
     private val oidcLoginHandler: IOidcLoginHandler?,
     private val openIdTokenService: IOpenIDConnectService,
 ) {
+
+    companion object {
+        private val logger by lazy {
+            LoggerFactory.getLogger(OAuth2ClientLoginController::class.java)
+        }
+    }
 
     private val clients by lazy {
         val iterable = registeredClientRepository as? Iterable<*>

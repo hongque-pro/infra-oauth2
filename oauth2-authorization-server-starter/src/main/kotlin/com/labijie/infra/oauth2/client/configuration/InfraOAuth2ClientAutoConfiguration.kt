@@ -1,11 +1,16 @@
 package com.labijie.infra.oauth2.client.configuration
 
+import com.labijie.caching.ICacheManager
+import com.labijie.caching.memory.MemoryCacheManager
 import com.labijie.infra.oauth2.TwoFactorSignInHelper
 import com.labijie.infra.oauth2.client.*
 import com.labijie.infra.oauth2.client.extension.IOidcUserConverter
 import com.labijie.infra.oauth2.client.extension.IOpenIDConnectProvider
 import com.labijie.infra.oauth2.client.provider.apple.AppleAuthorizationCodeTokenResponseClient
 import com.labijie.infra.oauth2.client.provider.apple.AppleOAuth2UserService
+import com.labijie.infra.oauth2.client.provider.apple.CachingAppleIdOneTimeStore
+import com.labijie.infra.oauth2.client.provider.apple.IAppleIdOneTimeStore
+import com.labijie.infra.oauth2.client.provider.apple.ICachingAppleIdOneTimeStoreCustomizer
 import com.labijie.infra.oauth2.mvc.OAuth2ClientLoginController
 import com.labijie.infra.oauth2.service.IOAuth2ServerOidcTokenService
 import org.springframework.beans.factory.ObjectProvider
@@ -123,5 +128,14 @@ class InfraOAuth2ClientAutoConfiguration {
             oidcLoginHandler,
             openIdTokenService
         )
+    }
+
+    @ConditionalOnMissingBean(IAppleIdOneTimeStore::class)
+    fun cachingAppleOneTimeInfoStore(
+        customizers: ObjectProvider<ICachingAppleIdOneTimeStoreCustomizer>,
+        @Autowired(required = false)
+        cacheManager: ICacheManager? = null
+    ): CachingAppleIdOneTimeStore {
+        return CachingAppleIdOneTimeStore(cacheManager ?: MemoryCacheManager())
     }
 }
