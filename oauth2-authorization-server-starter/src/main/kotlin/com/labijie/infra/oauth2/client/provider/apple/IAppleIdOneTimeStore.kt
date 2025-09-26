@@ -9,4 +9,5 @@ package com.labijie.infra.oauth2.client.provider.apple
 interface IAppleIdOneTimeStore {
     fun save(key: String, info: AppleOneTimeIdentifier)
     fun get(key: String): AppleOneTimeIdentifier?
+    fun remove(key: String)
 }

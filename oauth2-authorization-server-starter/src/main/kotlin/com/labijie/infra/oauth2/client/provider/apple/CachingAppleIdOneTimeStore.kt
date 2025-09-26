@@ -15,7 +15,7 @@ class CachingAppleIdOneTimeStore(private val cacheManager: ICacheManager) : IApp
     val cacheRegion: String? = null
 
     private fun String.getCacheKey(): String {
-        return "apple_info:${this}"
+        return "apple_id:${this}"
     }
 
     override fun save(key: String, info: AppleOneTimeIdentifier) {
@@ -24,5 +24,9 @@ class CachingAppleIdOneTimeStore(private val cacheManager: ICacheManager) : IApp
 
     override fun get(key: String): AppleOneTimeIdentifier? {
         return cacheManager.get<AppleOneTimeIdentifier>(key.getCacheKey())
+    }
+
+    override fun remove(key: String) {
+        cacheManager.remove(key, cacheRegion)
     }
 }
