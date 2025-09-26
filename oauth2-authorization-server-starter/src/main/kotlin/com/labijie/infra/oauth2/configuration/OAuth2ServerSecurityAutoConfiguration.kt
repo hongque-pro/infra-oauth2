@@ -1,6 +1,7 @@
 package com.labijie.infra.oauth2.configuration
 
 import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
+import com.labijie.infra.oauth2.annotation.ConditionalOnSecurityEnabled
 import com.labijie.infra.oauth2.client.DelegatingAuthorizationCodeTokenResponseClient
 import com.labijie.infra.oauth2.client.DelegatingOAuth2UserService
 import com.labijie.infra.oauth2.client.extension.IOAuth2LoginCustomizer
@@ -36,6 +37,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(OAuth2ServerAutoConfiguration::class)
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE - 100)
+@ConditionalOnSecurityEnabled
 class OAuth2ServerSecurityAutoConfiguration() : ApplicationContextAware {
 
     companion object {

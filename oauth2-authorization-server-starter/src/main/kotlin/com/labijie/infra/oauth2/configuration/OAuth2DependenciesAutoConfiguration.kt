@@ -3,6 +3,7 @@ package com.labijie.infra.oauth2.configuration
 import com.labijie.caching.ICacheManager
 import com.labijie.infra.oauth2.IIdentityService
 import com.labijie.infra.oauth2.OAuth2ServerUtils
+import com.labijie.infra.oauth2.annotation.ConditionalOnSecurityEnabled
 import com.labijie.infra.oauth2.component.DefaultOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.component.IOAuth2ServerSecretsStore
@@ -46,6 +47,7 @@ import javax.sql.DataSource
 @AutoConfigureAfter(JdbcTemplateAutoConfiguration::class)
 @AutoConfigureBefore(OAuth2AuthorizationServerConfiguration::class)
 @EnableConfigurationProperties(OAuth2ServerProperties::class)
+@ConditionalOnSecurityEnabled
 class OAuth2DependenciesAutoConfiguration : ApplicationContextAware {
 
     private lateinit var springContext: ApplicationContext

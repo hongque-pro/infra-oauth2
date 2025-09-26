@@ -4,6 +4,7 @@ import com.labijie.infra.json.JacksonHelper
 import com.labijie.infra.oauth2.*
 import com.labijie.infra.oauth2.OAuth2Constants.ENDPOINT_CHECK_TOKEN
 import com.labijie.infra.oauth2.OAuth2ServerUtils.getIssuerOrDefault
+import com.labijie.infra.oauth2.annotation.ConditionalOnSecurityEnabled
 import com.labijie.infra.oauth2.authentication.ResourceOwnerClientAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationConverter
 import com.labijie.infra.oauth2.authentication.ResourceOwnerPasswordAuthenticationProvider
@@ -52,6 +53,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(OAuth2DependenciesAutoConfiguration::class)
 @AutoConfigureOrder(AutoConfigureOrder.DEFAULT_ORDER)
+@ConditionalOnSecurityEnabled
 class OAuth2ServerAutoConfiguration {
     companion object {
         private val logger: Logger by lazy {

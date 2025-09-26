@@ -1,5 +1,6 @@
 package com.labijie.infra.oauth2.configuration
 
+import com.labijie.infra.oauth2.annotation.ConditionalOnSecurityEnabled
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
  */
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
+@ConditionalOnSecurityEnabled
 class OAuth2DefaultsAutoConfiguration {
 
     companion object {

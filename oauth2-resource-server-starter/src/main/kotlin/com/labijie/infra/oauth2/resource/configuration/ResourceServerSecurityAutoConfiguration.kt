@@ -2,11 +2,12 @@ package com.labijie.infra.oauth2.resource.configuration
 
 import com.labijie.infra.oauth2.IResourceServerHttpSecurityConfigurer
 import com.labijie.infra.oauth2.OAuth2ExceptionHandler
+import com.labijie.infra.oauth2.annotation.ConditionalOnSecurityEnabled
 import com.labijie.infra.oauth2.buildMatchers
 import com.labijie.infra.oauth2.configuration.OAuth2ServerCommonsProperties
 import com.labijie.infra.oauth2.configuration.applyCommonsPolicy
-import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
 import com.labijie.infra.oauth2.resource.IResourceAuthorizationConfigurer
+import com.labijie.infra.oauth2.resource.OAuth2AuthenticationEntryPoint
 import com.labijie.infra.oauth2.resource.component.CookieSupportedBearerTokenResolver
 import com.labijie.infra.oauth2.resource.component.IOAuth2TokenCookieDecoder
 import com.labijie.infra.oauth2.resource.component.RequestMatcherPostProcessor
@@ -41,6 +42,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @AutoConfigureAfter(ResourceServerAutoConfiguration::class)
 @AutoConfigureBefore(OAuth2ResourceServerAutoConfiguration::class)
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
+@ConditionalOnSecurityEnabled
 class ResourceServerSecurityAutoConfiguration(
     @param: Autowired(required = false)
     private val cookieDecoder: IOAuth2TokenCookieDecoder?,

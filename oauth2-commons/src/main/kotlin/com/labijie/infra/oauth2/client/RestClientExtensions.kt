@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.labijie.infra.oauth2.AccessToken
 import com.labijie.infra.oauth2.OAuth2Utils
 import com.labijie.infra.oauth2.serialization.jackson.OAuth2CommonsJacksonModule
-import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.util.LinkedMultiValueMap
@@ -14,7 +13,6 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.toEntity
 import java.net.URI
-import java.util.*
 
 /**
  *
@@ -50,10 +48,9 @@ object RestClientExtensions {
                     .queryParam("token_type_hint", "Bearer")
                     .build()
             }
-            .header(
-                HttpHeaders.AUTHORIZATION,
-                "Basic " + Base64.getEncoder().encodeToString("$clientId:$clientSecret".toByteArray(Charsets.UTF_8))
-            )
+            .headers {
+                it.setBasicAuth(clientId, clientSecret)
+            }
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .toEntity<Void>()
@@ -70,7 +67,6 @@ object RestClientExtensions {
         oauth2ServerBaseUrl: String = "http://localhost:8080",
         oauth2ServerTokenPath: String = OAuth2Utils.DefaultServerEndpoints.TOKEN
     ): ResponseEntity<AccessToken> {
-
 
         val params: MultiValueMap<String, String> = LinkedMultiValueMap()
         params.add("grant_type", "password")
@@ -90,10 +86,9 @@ object RestClientExtensions {
                     .queryParam("password", password)
                     .build()
             }
-            .header(
-                HttpHeaders.AUTHORIZATION,
-                "Basic " + Base64.getEncoder().encodeToString("$clientId:$clientSecret".toByteArray(Charsets.UTF_8))
-            )
+            .headers {
+                it.setBasicAuth(clientId, clientSecret)
+            }
             .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .toEntity<String>()
@@ -106,4 +101,6 @@ object RestClientExtensions {
             ResponseEntity(token,it.headers, it.statusCode)
         }
     }
+
+
 }
