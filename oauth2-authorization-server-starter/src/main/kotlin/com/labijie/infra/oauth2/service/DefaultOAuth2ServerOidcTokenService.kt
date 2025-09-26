@@ -10,6 +10,7 @@ import com.labijie.infra.oauth2.client.provider.apple.IAppleIdOneTimeStore
 import com.labijie.infra.oauth2.component.IOAuth2ServerRSAKeyPair
 import com.labijie.infra.oauth2.exception.InvalidIdTokenException
 import com.labijie.infra.utils.ifNullOrBlank
+import com.labijie.infra.utils.throwIfNecessary
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.crypto.RSASSASigner
@@ -69,9 +70,16 @@ class DefaultOAuth2ServerOidcTokenService(
 
         if(user.provider.equals(OAuth2ClientProviderNames.APPLE, ignoreCase = true) && user.userId.isNotBlank() && !user.email.isNullOrBlank()) {
             appIdOneTimeStore?.let { store ->
-                if (store.get(user.userId) == null) {
-                    store.save(user.userId, AppleOneTimeIdentifier(user.username.orEmpty(), user.email.orEmpty()))
-                    logger.info("Apple id one-time information saved: name=${user.username}, email=${user.email}")
+                val name = user.username.orEmpty()
+                val email = user.email.orEmpty()
+                if (name.isNotBlank() || email.isNotBlank()) {
+                    try {
+                        store.save(user.userId, AppleOneTimeIdentifier(name, email))
+                        logger.info("Apple one-time identifier saved: name=${name}, email=${email}")
+                    }catch (e: Throwable) {
+                        logger.error("Save Apple one-time identifier failed.", e)
+                        e.throwIfNecessary()
+                    }
                 }
             }
         }
@@ -122,16 +130,16 @@ class DefaultOAuth2ServerOidcTokenService(
 
         if(user.provider.equals(OAuth2ClientProviderNames.APPLE, ignoreCase = true) && user.userId.isNotBlank() && (user.email.isNullOrBlank() || user.username.isNullOrBlank())) {
             appIdOneTimeStore?.let { store ->
-                if (store.get(user.userId) == null) {
+                if (user.username.isNullOrBlank() || user.email.isNullOrBlank()) {
                    store.get(user.userId)?.let {
                        appleId->
                        if(user.username.isNullOrBlank()) {
                            user.username = appleId.name
                        }
-                       if(user.username.isNullOrBlank()) {
-                           user.username = appleId.name
+                       if(user.email.isNullOrBlank()) {
+                           user.email = appleId.email
                        }
-                       logger.info("Apple id one-time information loaded: name=${appleId.name}, email=${appleId.email}")
+                       logger.info("Apple id one-time identifier loaded: name=${appleId.name}, email=${appleId.email}")
                     }
                 }
             }
