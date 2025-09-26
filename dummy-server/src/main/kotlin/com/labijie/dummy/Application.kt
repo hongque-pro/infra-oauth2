@@ -1,5 +1,6 @@
 package com.labijie.dummy
 
+import com.labijie.infra.oauth2.annotation.DisableWebSecurity
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
@@ -11,6 +12,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
  * @Description:
  */
 @SpringBootApplication(exclude = [DataSourceAutoConfiguration::class])
+@DisableWebSecurity
 class Application
 
 
